@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # Laravel Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: ple-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_NAME=PropheticLifeEmbassy
+      - APP_ENV=production
+      - APP_DEBUG=false
+      - APP_URL=http://localhost:8000
+      - DB_CONNECTION=pgsql
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_DATABASE=${DB_DATABASE:-ple_cms}
+      - DB_USERNAME=${DB_USERNAME:-ple_user}
+      - DB_PASSWORD=${DB_PASSWORD:-secret}
+      - CACHE_DRIVER=redis
+      - SESSION_DRIVER=redis
+      - QUEUE_CONNECTION=redis
+      - REDIS_HOST=redis
+    depends_on:
+      - db
+      - redis
+    networks:
+      - ple-network
+    volumes:
+      - ./backend/storage:/var/www/html/storage
+
+  # Vue.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ple-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - ple-network
+
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: ple-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${DB_DATABASE:-ple_cms}
+      - POSTGRES_USER=${DB_USERNAME:-ple_user}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-secret}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ple-network
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ple-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ple-network
+
+  # Adminer (Database Management - Optional)
+  adminer:
+    image: adminer
+    container_name: ple-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    networks:
+      - ple-network
+
+networks:
+  ple-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:

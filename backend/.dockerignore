@@ -1,0 +1,35 @@
+# Git
+.git
+.gitignore
+
+# Dependencies (will be installed in container)
+vendor/
+
+# IDE
+.idea
+.vscode
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Storage (mounted as volume)
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# Testing
+tests/
+phpunit.xml
+
+# Misc
+*.md
+!README.md
