@@ -116,12 +116,12 @@ function exportAttendance() {
     { key: 'count', label: 'Attendance Count' },
     { key: 'status', label: 'Status' }
   ]
-  
+
   const exportData = entries.value.map(e => ({
     ...e,
     status: e.approved ? 'Approved' : 'Pending'
   }))
-  
+
   exportToExcel(exportData, columns, 'attendance_report')
   notificationMessage.value = `Exported ${exportData.length} records to Excel`
   showNotification.value = true

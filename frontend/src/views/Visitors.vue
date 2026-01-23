@@ -111,11 +111,26 @@ function exportVisitors() {
 </script>
 
 <style scoped>
-.page-wrap { padding: 20px; }
-.page-header { margin-bottom: 16px; }
+.page-wrap {
+  padding: 20px;
+}
+
+.page-header {
+  margin-bottom: 16px;
+}
+
 @media (max-width: 576px) {
-  .page-header .btn { width: 100%; }
-  :deep(.form-control), :deep(select.form-select) { font-size: .95rem; }
-  :deep(.table) { font-size: .92rem; }
+  .page-header .btn {
+    width: 100%;
+  }
+
+  :deep(.form-control),
+  :deep(select.form-select) {
+    font-size: .95rem;
+  }
+
+  :deep(.table) {
+    font-size: .92rem;
+  }
 }
 </style>

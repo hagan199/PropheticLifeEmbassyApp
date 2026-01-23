@@ -113,7 +113,7 @@ function exportExpenses() {
     { key: 'note', label: 'Description' },
     { key: 'amount', label: 'Amount (GH₵)' }
   ]
-  
+
   exportToExcel(expenses.value, columns, 'expenses_report')
 }
 

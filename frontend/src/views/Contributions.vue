@@ -539,14 +539,14 @@ function exportReport() {
     { key: 'reference', label: 'Reference' },
     { key: 'recordedBy', label: 'Recorded By' }
   ]
-  
+
   const exportData = filteredContributions.value.map(c => ({
     ...c,
     memberName: c.memberName || 'Anonymous',
     type: typeLabel(c.type),
     paymentMethod: paymentLabel(c.paymentMethod)
   }))
-  
+
   exportToExcel(exportData, columns, 'contributions_report')
   showNotification('success', `Exported ${exportData.length} contributions to Excel`)
 }
