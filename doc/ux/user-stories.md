@@ -45,12 +45,14 @@
   - Changes stored as: `{before: {role: 'usher'}, after: {role: 'finance'}}`
 
 **Definition of Done**
+
 - ✅ Backend validation tests (duplicate phone, role rules)
 - ✅ Audit log entry verified for each operation
 - ✅ UI confirmation modal before deactivation
 - ✅ API response time <200ms for user list (100+ users)
 
 **Boundaries (Out of Scope)**
+
 - ❌ Password reset (user sets on first login)
 - ❌ Permission granularity beyond roles (no custom permissions)
 - ❌ Bulk user import (single add only in MVP)
@@ -89,12 +91,14 @@
   - Cannot approve future dates (validation: attendance_date ≤ TODAY)
 
 **Definition of Done**
+
 - ✅ Bulk approval performance test: 500+ records approved <2s
 - ✅ Audit log captures: approver_id, approval_status, timestamp, changes
 - ✅ SMS notification integration tested (Twilio sandbox)
 - ✅ Data isolation: rejected records not counted in any report
 
 **Boundaries (Out of Scope)**
+
 - ❌ Editing approved records (requires deletion + re-submission)
 - ❌ Attendance amendments (create new record if correction needed)
 - ❌ Attendance scheduling (only reactive recording)

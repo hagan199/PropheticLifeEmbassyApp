@@ -98,3 +98,4 @@
 ├─ 2FA Enabled: Toggle (for admin/finance)
 │
 ├─ [Cancel] [Save]
+```
