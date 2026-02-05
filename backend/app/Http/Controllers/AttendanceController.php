@@ -9,8 +9,10 @@ use App\Http\Requests\Attendance\BulkRejectRequest;
 use App\Http\Requests\Attendance\RejectAttendanceRequest;
 use App\Models\Attendance;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
+{
     /**
      * Record ministry unit attendance (unit, service, date, time, member, present/absent)
      *
@@ -38,7 +40,7 @@ class AttendanceController extends Controller
             'member_name' => $data['member_name'],
             'present' => $data['present'],
             'status' => 'pending',
-            'submitted_by' => auth()->id(),
+            'submitted_by' => Auth::id(),
             'submitted_at' => now(),
         ]);
 
@@ -48,71 +50,7 @@ class AttendanceController extends Controller
             'data' => $attendance,
         ], 201);
     }
-{
-    /**
-     * Get all attendance records
-     */
-    public function index(Request $request)
-    {
-        $query = Attendance::with(['submittedBy', 'approvedBy']);
-
-        // Filter by service type
-        if ($request->has('service_type') && $request->service_type) {
-            $query->where('service_type', $request->service_type);
-        }
-
-        // Filter by status
-        if ($request->has('status') && $request->status) {
-            $query->where('status', $request->status);
-        }
-
-        // Filter by date range
-        if ($request->has('date_from') && $request->date_from) {
-            $query->whereDate('service_date', '>=', $request->date_from);
-        }
-        if ($request->has('date_to') && $request->date_to) {
-            $query->whereDate('service_date', '<=', $request->date_to);
-        }
-
-        $attendance = $query->orderBy('service_date', 'desc')->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $attendance->map(function ($a) {
-                return [
-                    'id' => $a->id,
-                    'service_type' => $a->service_type,
-                    'service_date' => $a->service_date->format('Y-m-d'),
-                    'count' => $a->count,
-                    'status' => $a->status,
-                    'notes' => $a->notes,
-                    'submitted_by' => [
-                        'id' => $a->submittedBy?->id,
-                        'name' => $a->submittedBy?->name ?? 'Unknown',
-                        'avatar' => $a->submittedBy?->avatar,
-                    ],
-                    'submitted_at' => $a->submitted_at ? $a->submitted_at->diffForHumans() : $a->created_at->diffForHumans(),
-                    'approved_by' => $a->approvedBy?->name,
-                    'approved_at' => $a->approved_at?->diffForHumans(),
-                    'rejection_reason' => $a->rejection_reason,
-                    'created_at' => $a->created_at->toISOString(),
-                ];
-            }),
-            'total' => $attendance->count(),
-            'stats' => [
-                'pending' => Attendance::where('status', 'pending')->count(),
-                'approved' => Attendance::where('status', 'approved')->count(),
-                'rejected' => Attendance::where('status', 'rejected')->count(),
-                'approved_today' => Attendance::where('status', 'approved')
-                    ->whereDate('approved_at', Carbon::today())
-                    ->count(),
-                'total_week' => Attendance::whereBetween('service_date', [
-                    Carbon::now()->startOfWeek(),
-                    Carbon::now()->endOfWeek()
-                ])->sum('count'),
-            ],
-        ]);
-    }
+    // ...existing code...
 
     /**
      * Record attendance
@@ -125,7 +63,7 @@ class AttendanceController extends Controller
             'count' => $request->count ?? 0,
             'status' => 'pending',
             'notes' => $request->notes,
-            'submitted_by' => auth()->id(),
+            'submitted_by' => Auth::id(),
             'submitted_at' => now(),
         ]);
 
@@ -255,7 +193,7 @@ class AttendanceController extends Controller
     {
         Attendance::whereIn('id', $request->ids)->update([
             'status' => 'approved',
-            'approved_by' => auth()->id(),
+            'approved_by' => Auth::id(),
             'approved_at' => now(),
         ]);
 
@@ -272,7 +210,7 @@ class AttendanceController extends Controller
     {
         Attendance::whereIn('id', $request->ids)->update([
             'status' => 'rejected',
-            'approved_by' => auth()->id(),
+            'approved_by' => Auth::id(),
             'approved_at' => now(),
             'rejection_reason' => $request->reason,
         ]);
@@ -299,7 +237,7 @@ class AttendanceController extends Controller
 
         $attendance->update([
             'status' => 'approved',
-            'approved_by' => auth()->id(),
+            'approved_by' => Auth::id(),
             'approved_at' => now(),
         ]);
 
@@ -325,7 +263,7 @@ class AttendanceController extends Controller
 
         $attendance->update([
             'status' => 'rejected',
-            'approved_by' => auth()->id(),
+            'approved_by' => Auth::id(),
             'approved_at' => now(),
             'rejection_reason' => $request->reason,
         ]);
@@ -342,7 +280,7 @@ class AttendanceController extends Controller
     public function mySubmissions()
     {
         $submissions = Attendance::with(['approvedBy'])
-            ->where('submitted_by', auth()->id())
+            ->where('submitted_by', Auth::id())
             ->orderBy('service_date', 'desc')
             ->get();
 

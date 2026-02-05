@@ -7,6 +7,7 @@ use App\Http\Requests\Finance\StoreContributionRequest;
 use App\Http\Requests\Finance\StoreExpenseRequest;
 use App\Http\Requests\Finance\RejectExpenseRequest;
 use App\Http\Requests\Finance\StoreExpenseTypeRequest;
+use App\Models\ExpenseType;
 
 class FinanceController extends Controller
 {
@@ -228,14 +229,7 @@ class FinanceController extends Controller
      */
     public function expenseTypes()
     {
-        $types = [
-            ['id' => 'et-001', 'name' => 'Utilities', 'description' => 'Electricity, water, internet'],
-            ['id' => 'et-002', 'name' => 'Equipment', 'description' => 'Sound system, chairs, etc'],
-            ['id' => 'et-003', 'name' => 'Ministry', 'description' => 'Outreach, events'],
-            ['id' => 'et-004', 'name' => 'Office Supplies', 'description' => 'Stationery, printer ink'],
-            ['id' => 'et-005', 'name' => 'Transportation', 'description' => 'Fuel, vehicle maintenance'],
-        ];
-
+        $types = ExpenseType::active()->get(['id', 'name', 'description']);
         return response()->json([
             'success' => true,
             'data' => $types,
