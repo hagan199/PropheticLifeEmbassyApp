@@ -33,14 +33,16 @@ RUN chown -R www-data:www-data /var/www/html \
   && chmod -R 755 /var/www/html/storage \
   && chmod -R 755 /var/www/html/bootstrap/cache
 
-# Create .env from example if not exists
-RUN if [ ! -f .env ]; then cp .env.example .env; fi
+# Copy docker env file
+RUN if [ -f .env.docker ]; then cp .env.docker .env; elif [ ! -f .env ]; then cp .env.example .env; fi
 
 # Generate application key
 RUN php artisan key:generate --force
 
+# Make entrypoint executable
+RUN chmod +x docker-entrypoint.sh
+
 # Expose port
 EXPOSE 8000
 
-# Start Laravel server
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+CMD ["./docker-entrypoint.sh"]

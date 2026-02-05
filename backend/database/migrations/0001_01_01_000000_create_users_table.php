@@ -12,11 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('users', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name');
-            $table->string('email')->unique();
+            $table->string('phone')->unique(); // +233XXXXXXXXX format
+            $table->string('email')->nullable()->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('role', ['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader'])->default('usher');
+            $table->uuid('department_id')->nullable(); // Foreign key will be added later
+            $table->boolean('has_2fa')->default(false);
+            $table->boolean('can_approve_attendance')->default(false); // For delegated approval
+            $table->string('status')->default('active'); // active, inactive
+            $table->string('avatar')->nullable();
+            $table->timestamp('deactivated_at')->nullable();
+            $table->text('deactivation_reason')->nullable();
+            $table->timestamp('last_login_at')->nullable();
+            $table->string('last_login_ip')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });

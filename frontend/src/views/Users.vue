@@ -54,10 +54,14 @@
     <CCard>
       <CCardHeader class="d-flex justify-content-between align-items-center">
         <div class="fw-semibold">All Users</div>
-        <CBadge color="primary">{{ filteredUsers.length }} users</CBadge>
+        <CBadge color="primary">{{ filteredUsers.length }} / {{ totalUsersDisplay }} users</CBadge>
       </CCardHeader>
       <CCardBody>
-        <CTable hover responsive align="middle">
+        <div v-if="isLoadingUsers" class="text-center py-5">
+          <CSpinner color="primary" size="lg" />
+        </div>
+        <template v-else>
+          <CTable v-if="filteredUsers.length" hover responsive align="middle">
           <CTableHead>
             <CTableRow>
               <CTableHeaderCell>Name</CTableHeaderCell>
@@ -84,7 +88,7 @@
               <CTableDataCell>
                 <CBadge :color="roleColor(user.role)">{{ roleLabel(user.role) }}</CBadge>
               </CTableDataCell>
-              <CTableDataCell>{{ user.department || '—' }}</CTableDataCell>
+              <CTableDataCell>{{ user.departmentName || '—' }}</CTableDataCell>
               <CTableDataCell>
                 <CBadge :color="user.status === 'active' ? 'success' : 'secondary'">
                   {{ user.status }}
@@ -105,22 +109,33 @@
               </CTableDataCell>
             </CTableRow>
           </CTableBody>
-        </CTable>
-
-        <!-- Pagination -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
-          <div class="text-muted small">
-            Showing {{ (currentPage - 1) * perPage + 1 }} to {{ Math.min(currentPage * perPage, filteredUsers.length) }}
-            of {{ filteredUsers.length }}
+          </CTable>
+          <div v-else class="text-center py-5 text-muted">
+            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+            No users found for the current filters.
           </div>
-          <CPagination>
-            <CPaginationItem :disabled="currentPage === 1" @click="currentPage--">Previous</CPaginationItem>
-            <CPaginationItem v-for="p in totalPages" :key="p" :active="p === currentPage" @click="currentPage = p">
-              {{ p }}
-            </CPaginationItem>
-            <CPaginationItem :disabled="currentPage === totalPages" @click="currentPage++">Next</CPaginationItem>
-          </CPagination>
-        </div>
+
+          <!-- Pagination -->
+          <div v-if="filteredUsers.length" class="d-flex justify-content-between align-items-center mt-3">
+            <div class="text-muted small">
+              Showing {{ (currentPage - 1) * perPage + 1 }} to
+              {{ Math.min(currentPage * perPage, filteredUsers.length) }}
+              of {{ filteredUsers.length }}
+            </div>
+            <CPagination>
+              <CPaginationItem :disabled="currentPage === 1" @click="currentPage--">Previous</CPaginationItem>
+              <CPaginationItem v-for="p in totalPages" :key="p" :active="p === currentPage"
+                @click="currentPage = p">
+                {{ p }}
+              </CPaginationItem>
+              <CPaginationItem :disabled="currentPage === totalPages" @click="currentPage++">Next</CPaginationItem>
+            </CPagination>
+          </div>
+        </template>
+
+        <CAlert v-if="tableError" color="danger" class="mt-3">
+          {{ tableError }}
+        </CAlert>
       </CCardBody>
     </CCard>
 
@@ -160,15 +175,18 @@
             </CCol>
             <CCol md="6">
               <CFormLabel>Department <span v-if="requiresDepartment" class="text-danger">*</span></CFormLabel>
-              <CFormSelect v-model="form.department" :invalid="!!errors.department">
+              <CFormSelect v-model="form.departmentId" :invalid="!!errors.departmentId" :disabled="isLoadingDepartments">
                 <option value="">Select department...</option>
-                <option v-for="d in departments" :key="d.id" :value="d.name">{{ d.name }}</option>
+                <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
               </CFormSelect>
-              <div v-if="errors.department" class="text-danger small mt-1">{{ errors.department }}</div>
+              <div v-if="errors.departmentId" class="text-danger small mt-1">{{ errors.departmentId }}</div>
+              <div v-if="departmentError" class="text-danger small mt-1">{{ departmentError }}</div>
             </CCol>
-            <CCol md="6">
-              <CFormLabel>2FA Enabled</CFormLabel>
-              <CFormSwitch v-model="form.has2fa" label="Require two-factor authentication" />
+            <CCol md="6" v-if="!isEditing">
+              <CFormLabel>Password <span class="text-danger">*</span></CFormLabel>
+              <CFormInput v-model="form.password" type="password" autocomplete="new-password"
+                :invalid="!!errors.password" />
+              <div v-if="errors.password" class="text-danger small mt-1">{{ errors.password }}</div>
             </CCol>
           </CRow>
         </CForm>
@@ -207,85 +225,169 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import {
   CCard, CCardBody, CCardHeader, CRow, CCol, CButton, CTable, CTableHead, CTableBody,
   CTableRow, CTableHeaderCell, CTableDataCell, CBadge, CAvatar, CFormInput, CFormSelect,
-  CFormLabel, CFormTextarea, CFormSwitch, CInputGroup, CInputGroupText, CModal, CModalHeader,
+  CFormLabel, CFormTextarea, CInputGroup, CInputGroupText, CModal, CModalHeader,
   CModalTitle, CModalBody, CModalFooter, CForm, CAlert, CPagination, CPaginationItem, CSpinner
 } from '@coreui/vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { exportToExcel } from '../utils/export.js'
+import { usersApi, departmentsApi, rolesApi } from '../api'
 
-// Data
-const roleOptions = [
-  { value: 'admin', label: 'Admin', color: 'danger' },
-  { value: 'pastor', label: 'Pastor', color: 'primary' },
-  { value: 'usher', label: 'Usher', color: 'info' },
-  { value: 'finance', label: 'Finance Officer', color: 'success' },
-  { value: 'pr_follow_up', label: 'PR / Follow-up', color: 'warning' },
-  { value: 'department_leader', label: 'Department Leader', color: 'secondary' }
-]
+const roleColorMap = {
+  admin: { label: 'Admin', color: 'danger' },
+  pastor: { label: 'Pastor', color: 'primary' },
+  usher: { label: 'Usher', color: 'info' },
+  finance: { label: 'Finance Officer', color: 'success' },
+  pr_follow_up: { label: 'PR / Follow-up', color: 'warning' },
+  department_leader: { label: 'Department Leader', color: 'secondary' }
+}
 
-const departments = ref([
-  { id: 1, name: 'Media' },
-  { id: 2, name: 'Prayer Team' },
-  { id: 3, name: 'Ushering' },
-  { id: 4, name: 'Choir' },
-  { id: 5, name: 'Welfare' }
-])
+const roleOptions = ref(
+  Object.entries(roleColorMap).map(([value, meta]) => ({
+    value,
+    label: meta.label,
+    color: meta.color
+  }))
+)
 
-const users = ref([
-  { id: 1, name: 'Admin User', phone: '+233241234567', email: 'admin@ple.org', role: 'admin', department: null, status: 'active', lastLogin: '2h ago', avatar: 'https://i.pravatar.cc/40?img=1' },
-  { id: 2, name: 'Pastor Tower', phone: '+233201234567', email: 'pastor@ple.org', role: 'pastor', department: null, status: 'active', lastLogin: '1d ago', avatar: 'https://i.pravatar.cc/40?img=2' },
-  { id: 3, name: 'Kofi Mensah', phone: '+233551234567', email: 'kofi@ple.org', role: 'usher', department: 'Ushering', status: 'active', lastLogin: '3h ago', avatar: 'https://i.pravatar.cc/40?img=3' },
-  { id: 4, name: 'Ama Serwaa', phone: '+233271234567', email: 'ama@ple.org', role: 'finance', department: null, status: 'active', lastLogin: '5h ago', avatar: 'https://i.pravatar.cc/40?img=4' },
-  { id: 5, name: 'Yaw Boateng', phone: '+233501234567', email: 'yaw@ple.org', role: 'pr_follow_up', department: null, status: 'active', lastLogin: '1h ago', avatar: 'https://i.pravatar.cc/40?img=5' },
-  { id: 6, name: 'Akosua Darko', phone: '+233261234567', email: 'akosua@ple.org', role: 'department_leader', department: 'Media', status: 'inactive', lastLogin: '1w ago', avatar: 'https://i.pravatar.cc/40?img=6' }
-])
+const departments = ref([])
+const users = ref([])
+const totalUsers = ref(0)
+const isLoadingUsers = ref(false)
+const tableError = ref('')
+const isLoadingDepartments = ref(false)
+const departmentError = ref('')
 
-// Filters
 const filters = reactive({ search: '', role: '', status: '' })
 const currentPage = ref(1)
 const perPage = 25
 
 const filteredUsers = computed(() => {
-  return users.value.filter(u => {
-    if (filters.search && !u.name.toLowerCase().includes(filters.search.toLowerCase()) &&
-      !u.phone.includes(filters.search)) return false
+  return users.value.filter((u) => {
+    if (filters.search) {
+      const term = filters.search.toLowerCase()
+      const matches =
+        u.name?.toLowerCase().includes(term) ||
+        u.phone?.toLowerCase().includes(term) ||
+        u.email?.toLowerCase().includes(term)
+      if (!matches) return false
+    }
     if (filters.role && u.role !== filters.role) return false
     if (filters.status && u.status !== filters.status) return false
     return true
   })
 })
 
-const totalPages = computed(() => Math.ceil(filteredUsers.value.length / perPage))
+const totalUsersDisplay = computed(() => totalUsers.value || users.value.length || 0)
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredUsers.value.length / perPage)))
 const paginatedUsers = computed(() => {
   const start = (currentPage.value - 1) * perPage
   return filteredUsers.value.slice(start, start + perPage)
 })
 
-function applyFilters() { currentPage.value = 1 }
+function applyFilters() {
+  currentPage.value = 1
+}
+
 function resetFilters() {
   filters.search = ''
   filters.role = ''
   filters.status = ''
   currentPage.value = 1
+  fetchUsers()
 }
 
-// Modal
+watch(
+  () => [filters.role, filters.status],
+  () => {
+    currentPage.value = 1
+    fetchUsers()
+  }
+)
+
 const showModal = ref(false)
 const isEditing = ref(false)
 const saving = ref(false)
-const form = reactive({ id: null, phone: '', name: '', email: '', role: '', department: '', has2fa: false })
-const errors = reactive({ phone: '', name: '', role: '', department: '' })
+const form = reactive({
+  id: null,
+  phone: '',
+  name: '',
+  email: '',
+  role: '',
+  departmentId: '',
+  password: ''
+})
+const errors = reactive({ phone: '', name: '', role: '', departmentId: '', password: '' })
 
 const requiresDepartment = computed(() => ['usher', 'department_leader'].includes(form.role))
 
+const showDeactivateModal = ref(false)
+const userToDeactivate = ref(null)
+const deactivateReason = ref('')
+
+const notification = reactive({ show: false, type: 'success', message: '' })
+
+onMounted(() => {
+  fetchUsers()
+  fetchDepartments()
+  fetchRoles()
+})
+
+async function fetchUsers() {
+  isLoadingUsers.value = true
+  tableError.value = ''
+  try {
+    const params = {}
+    if (filters.role) params.role = filters.role
+    if (filters.status) params.is_active = filters.status === 'active'
+    const { data } = await usersApi.getAll(params)
+    users.value = (data.data || []).map(mapUser)
+    totalUsers.value = data.total ?? users.value.length
+  } catch (error) {
+    const message = error.response?.data?.message || 'Unable to load users.'
+    tableError.value = message
+    showNotification('danger', message)
+  } finally {
+    isLoadingUsers.value = false
+  }
+}
+
+async function fetchDepartments() {
+  isLoadingDepartments.value = true
+  departmentError.value = ''
+  try {
+    const { data } = await departmentsApi.getAll()
+    departments.value = data.data || []
+  } catch (error) {
+    departmentError.value = error.response?.data?.message || 'Failed to load departments.'
+  } finally {
+    isLoadingDepartments.value = false
+  }
+}
+
+async function fetchRoles() {
+  try {
+    const { data } = await rolesApi.getAll()
+    if (Array.isArray(data.data)) {
+      roleOptions.value = data.data.map((role) => ({
+        value: role.id,
+        label: role.name,
+        color: roleColorMap[role.id]?.color || 'secondary'
+      }))
+    }
+  } catch (error) {
+    console.warn('Failed to load roles', error)
+  }
+}
+
 function openAddModal() {
   isEditing.value = false
-  Object.assign(form, { id: null, phone: '', name: '', email: '', role: '', department: '', has2fa: false })
-  Object.assign(errors, { phone: '', name: '', role: '', department: '' })
+  Object.assign(form, { id: null, phone: '', name: '', email: '', role: '', departmentId: '', password: '' })
+  clearErrors()
   showModal.value = true
 }
 
@@ -293,27 +395,91 @@ function editUser(user) {
   isEditing.value = true
   Object.assign(form, {
     id: user.id,
-    phone: user.phone.replace('+233', ''),
+    phone: stripCountryCode(user.phone),
     name: user.name,
-    email: user.email,
+    email: user.email || '',
     role: user.role,
-    department: user.department || '',
-    has2fa: user.has2fa || false
+    departmentId: getDepartmentIdByName(user.departmentName),
+    password: ''
   })
-  Object.assign(errors, { phone: '', name: '', role: '', department: '' })
+  clearErrors()
   showModal.value = true
 }
 
-function closeModal() { showModal.value = false }
+function closeModal() {
+  showModal.value = false
+}
+
+function clearErrors() {
+  Object.assign(errors, { phone: '', name: '', role: '', departmentId: '', password: '' })
+}
+
+/**
+ * Validate phone number
+ * - Must be at least 9 digits
+ * - No repeating patterns (e.g., 0504040404, 0555555555)
+ * - Allows Ghana numbers (0XX) and international (+XXX)
+ */
+function validatePhone(phone) {
+  const digits = (phone || '').replace(/\D/g, '')
+  
+  // Must have at least 9 digits
+  if (digits.length < 9) {
+    return 'Phone number must be at least 9 digits'
+  }
+  
+  // Check for excessive repeating digits (more than 5 same digits in a row)
+  if (/(.)\1{5,}/.test(digits)) {
+    return 'Invalid phone number - too many repeating digits'
+  }
+  
+  // Check for repeating patterns like 040404 or 123123
+  const lastEight = digits.slice(-8)
+  // Check for 2-digit repeating pattern (e.g., 04040404)
+  if (/^(\d{2})\1{3}$/.test(lastEight)) {
+    return 'Invalid phone number - repeating pattern detected'
+  }
+  // Check for 4-digit repeating pattern (e.g., 12341234)
+  if (/^(\d{4})\1$/.test(lastEight)) {
+    return 'Invalid phone number - repeating pattern detected'
+  }
+  
+  // Valid Ghana mobile prefixes
+  const ghanaPrefixes = ['20', '23', '24', '25', '26', '27', '28', '29', '50', '54', '55', '56', '57', '59']
+  
+  // Check if it's a Ghana number
+  let localNumber = digits
+  if (digits.startsWith('233')) {
+    localNumber = digits.slice(3)
+  } else if (digits.startsWith('0')) {
+    localNumber = digits.slice(1)
+  }
+  
+  // If it looks like a Ghana number, validate the prefix
+  if (localNumber.length === 9) {
+    const prefix = localNumber.slice(0, 2)
+    if (!ghanaPrefixes.includes(prefix)) {
+      // Allow it as international number if not matching Ghana prefix
+      if (!phone.startsWith('+') && !digits.startsWith('00')) {
+        return 'Invalid Ghana mobile number prefix'
+      }
+    }
+  }
+  
+  return null // Valid
+}
 
 function validateForm() {
   let valid = true
-  Object.assign(errors, { phone: '', name: '', role: '', department: '' })
+  clearErrors()
 
-  if (!form.phone.trim() || form.phone.length < 9) {
-    errors.phone = 'Valid phone number required'
+  // Phone validation
+  const phoneError = validatePhone(form.phone)
+  if (phoneError) {
+    errors.phone = phoneError
     valid = false
   }
+  
   if (!form.name.trim()) {
     errors.name = 'Name is required'
     valid = false
@@ -322,56 +488,128 @@ function validateForm() {
     errors.role = 'Role is required'
     valid = false
   }
-  if (requiresDepartment.value && !form.department) {
-    errors.department = 'Department required for this role'
+  if (requiresDepartment.value && !form.departmentId) {
+    errors.departmentId = 'Department required for this role'
+    valid = false
+  }
+  if (!isEditing.value && !form.password.trim()) {
+    errors.password = 'Password is required'
     valid = false
   }
   return valid
 }
 
-function saveUser() {
+function normalizePhone(input) {
+  if (!input) return ''
+  
+  // Remove all non-digit characters except +
+  const cleaned = input.replace(/[^\d+]/g, '')
+  
+  // If already starts with +, it's international - keep as is
+  if (cleaned.startsWith('+')) {
+    return cleaned
+  }
+  
+  const digits = cleaned.replace(/\D/g, '')
+  if (!digits) return ''
+  
+  // If starts with 00, convert to + (international format)
+  if (digits.startsWith('00')) {
+    return `+${digits.slice(2)}`
+  }
+  
+  // If starts with 233 (Ghana), add +
+  if (digits.startsWith('233')) {
+    return `+${digits}`
+  }
+  
+  // If starts with 0, it's a local Ghana number - convert to +233
+  if (digits.startsWith('0')) {
+    return `+233${digits.slice(1)}`
+  }
+  
+  // Otherwise assume it's Ghana without leading 0
+  return `+233${digits}`
+}
+
+function stripCountryCode(phone) {
+  if (!phone) return ''
+  return phone.replace(/^\+?233/, '')
+}
+
+function getDepartmentIdByName(name) {
+  if (!name) return ''
+  const dept = departments.value.find((d) => d.name === name)
+  return dept?.id || ''
+}
+
+function departmentNameById(id) {
+  if (!id) return null
+  return departments.value.find((d) => d.id === id)?.name || null
+}
+
+function mapUser(user) {
+  return {
+    id: user.id,
+    name: user.name,
+    phone: user.phone,
+    email: user.email,
+    role: user.role,
+    departmentName: user.department ?? user.department_name ?? null,
+    status: user.is_active === false ? 'inactive' : 'active',
+    lastLogin: user.last_login ?? user.lastLogin ?? null,
+    avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`
+  }
+}
+
+async function saveUser() {
   if (!validateForm()) return
   saving.value = true
 
-  setTimeout(() => {
+  const basePayload = {
+    phone: normalizePhone(form.phone),
+    name: form.name.trim(),
+    email: form.email || null,
+    role: form.role,
+    department_id: form.departmentId || null
+  }
+
+  try {
     if (isEditing.value) {
-      const idx = users.value.findIndex(u => u.id === form.id)
-      if (idx !== -1) {
-        users.value[idx] = {
-          ...users.value[idx],
-          name: form.name,
-          email: form.email,
-          role: form.role,
-          department: form.department || null,
-          has2fa: form.has2fa
-        }
-      }
-      showNotification('success', 'User updated successfully')
-    } else {
-      const newId = Math.max(...users.value.map(u => u.id)) + 1
-      users.value.push({
-        id: newId,
-        name: form.name,
-        phone: '+233' + form.phone,
-        email: form.email,
-        role: form.role,
-        department: form.department || null,
-        status: 'active',
-        lastLogin: null,
-        has2fa: form.has2fa,
-        avatar: `https://i.pravatar.cc/40?img=${newId + 10}`
+      const response = await usersApi.update(form.id, basePayload)
+      updateUserInList(form.id, {
+        name: basePayload.name,
+        email: basePayload.email,
+        role: basePayload.role,
+        departmentName: departmentNameById(form.departmentId) ||
+          users.value.find((u) => u.id === form.id)?.departmentName
       })
-      showNotification('success', 'User created successfully')
+      showNotification('success', response.data?.message || 'User updated successfully')
+    } else {
+      const response = await usersApi.create({ ...basePayload, password: form.password })
+      const createdUser = mapUser({
+        ...response.data?.data,
+        department: departmentNameById(form.departmentId)
+      })
+      users.value = [createdUser, ...users.value]
+      totalUsers.value += 1
+      showNotification('success', response.data?.message || 'User created successfully')
     }
-    saving.value = false
     closeModal()
-  }, 500)
+  } catch (error) {
+    const message = error.response?.data?.message || 'Failed to save user'
+    showNotification('danger', message)
+  } finally {
+    saving.value = false
+  }
 }
 
-// Deactivate
-const showDeactivateModal = ref(false)
-const userToDeactivate = ref(null)
-const deactivateReason = ref('')
+function updateUserInList(id, payload) {
+  const index = users.value.findIndex((u) => u.id === id)
+  if (index !== -1) {
+    users.value[index] = { ...users.value[index], ...payload }
+  }
+}
 
 function confirmDeactivate(user) {
   userToDeactivate.value = user
@@ -379,20 +617,30 @@ function confirmDeactivate(user) {
   showDeactivateModal.value = true
 }
 
-function deactivateUser() {
-  const user = users.value.find(u => u.id === userToDeactivate.value.id)
-  if (user) user.status = 'inactive'
-  showDeactivateModal.value = false
-  showNotification('info', `${userToDeactivate.value.name} has been deactivated`)
+async function deactivateUser() {
+  if (!userToDeactivate.value) return
+  try {
+    await usersApi.deactivate(userToDeactivate.value.id, { reason: deactivateReason.value || undefined })
+    updateUserInList(userToDeactivate.value.id, { status: 'inactive' })
+    showNotification('info', `${userToDeactivate.value.name} has been deactivated`)
+    showDeactivateModal.value = false
+  } catch (error) {
+    const message = error.response?.data?.message || 'Failed to deactivate user'
+    showNotification('danger', message)
+  }
 }
 
-function reactivateUser(user) {
-  user.status = 'active'
-  showNotification('success', `${user.name} has been reactivated`)
+async function reactivateUser(user) {
+  try {
+    await usersApi.reactivate(user.id)
+    updateUserInList(user.id, { status: 'active' })
+    showNotification('success', `${user.name} has been reactivated`)
+  } catch (error) {
+    const message = error.response?.data?.message || 'Failed to reactivate user'
+    showNotification('danger', message)
+  }
 }
 
-// Notification
-const notification = reactive({ show: false, type: 'success', message: '' })
 function showNotification(type, message) {
   notification.type = type
   notification.message = message
@@ -400,23 +648,21 @@ function showNotification(type, message) {
   setTimeout(() => { notification.show = false }, 3000)
 }
 
-// Helpers
 function roleColor(role) {
-  return roleOptions.find(r => r.value === role)?.color || 'secondary'
+  return roleOptions.value.find(r => r.value === role)?.color || 'secondary'
 }
 function roleLabel(role) {
-  return roleOptions.find(r => r.value === role)?.label || role
+  return roleOptions.value.find(r => r.value === role)?.label || role
 }
 
-// Export Users
 function exportUsers() {
   const columns = [
     { key: 'name', header: 'Name' },
     { key: 'phone', header: 'Phone' },
     { key: 'email', header: 'Email' },
     { key: 'role', header: 'Role', transform: (v) => roleLabel(v) },
-    { key: 'department', header: 'Department' },
-    { key: 'status', header: 'Status', transform: (v) => v?.charAt(0).toUpperCase() + v?.slice(1) },
+    { key: 'departmentName', header: 'Department' },
+    { key: 'status', header: 'Status', transform: (v) => v ? v.charAt(0).toUpperCase() + v.slice(1) : v },
     { key: 'lastLogin', header: 'Last Login' }
   ]
   exportToExcel(filteredUsers.value, columns, `Users_Report_${new Date().toISOString().split('T')[0]}`)

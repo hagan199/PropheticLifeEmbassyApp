@@ -289,7 +289,7 @@
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import {
   CCard, CCardBody, CCardHeader, CRow, CCol, CButton, CTable, CTableHead, CTableBody,
   CTableRow, CTableHeaderCell, CTableDataCell, CBadge, CAvatar, CFormInput, CFormSelect,
@@ -298,52 +298,71 @@ import {
 } from '@coreui/vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { exportToExcel, formatDateForExport } from '../utils/export.js'
+import { attendanceApi } from '../api/attendance.js'
 
-// Sample data
-const records = ref([
-  {
-    id: 1, serviceType: 'sunday', date: '2026-01-19', count: 145, status: 'pending',
-    submittedBy: { name: 'Kofi Mensah', avatar: 'https://i.pravatar.cc/40?img=3' },
-    submittedAt: '2h ago', notes: 'Great turnout!'
-  },
-  {
-    id: 2, serviceType: 'friday', date: '2026-01-17', count: 98, status: 'pending',
-    submittedBy: { name: 'Ama Serwaa', avatar: 'https://i.pravatar.cc/40?img=4' },
-    submittedAt: '3d ago', notes: ''
-  },
-  {
-    id: 3, serviceType: 'sunday', date: '2026-01-12', count: 132, status: 'approved',
-    submittedBy: { name: 'Kofi Mensah', avatar: 'https://i.pravatar.cc/40?img=3' },
-    submittedAt: '1w ago', approvedBy: 'Admin User', notes: ''
-  },
-  {
-    id: 4, serviceType: 'midweek', date: '2026-01-15', count: 45, status: 'rejected',
-    submittedBy: { name: 'Yaw Boateng', avatar: 'https://i.pravatar.cc/40?img=5' },
-    submittedAt: '5d ago', rejectionReason: 'Count seems incorrect, please verify', notes: ''
-  },
-  {
-    id: 5, serviceType: 'friday', date: '2026-01-10', count: 88, status: 'approved',
-    submittedBy: { name: 'Ama Serwaa', avatar: 'https://i.pravatar.cc/40?img=4' },
-    submittedAt: '2w ago', approvedBy: 'Admin User', notes: ''
-  }
-])
+// Data
+const records = ref([])
+const stats = ref({
+  pending: 0,
+  approved: 0,
+  rejected: 0,
+  approved_today: 0,
+  total_week: 0
+})
+const loading = ref(false)
 
 // Filters
 const filters = reactive({
   dateFrom: '',
   dateTo: '',
   service: '',
-  status: 'pending',
+  status: '',
   submittedBy: ''
+})
+
+// Fetch data from API
+async function fetchAttendance() {
+  loading.value = true
+  try {
+    const params = {}
+    if (filters.status) params.status = filters.status
+    if (filters.service) params.service_type = filters.service
+    if (filters.dateFrom) params.date_from = filters.dateFrom
+    if (filters.dateTo) params.date_to = filters.dateTo
+    
+    const response = await attendanceApi.getAll(params)
+    if (response.data.success) {
+      records.value = response.data.data.map(r => ({
+        id: r.id,
+        serviceType: r.service_type,
+        date: r.service_date,
+        count: r.count,
+        status: r.status,
+        submittedBy: r.submitted_by,
+        submittedAt: r.submitted_at,
+        approvedBy: r.approved_by,
+        rejectionReason: r.rejection_reason,
+        notes: r.notes
+      }))
+      if (response.data.stats) {
+        stats.value = response.data.stats
+      }
+    }
+  } catch (error) {
+    console.error('Failed to fetch attendance:', error)
+    showNotification('danger', 'Failed to load attendance records')
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchAttendance()
 })
 
 const filteredRecords = computed(() => {
   return records.value.filter(r => {
-    if (filters.status && r.status !== filters.status) return false
-    if (filters.service && r.serviceType !== filters.service) return false
-    if (filters.dateFrom && r.date < filters.dateFrom) return false
-    if (filters.dateTo && r.date > filters.dateTo) return false
-    if (filters.submittedBy && !r.submittedBy.name.toLowerCase().includes(filters.submittedBy.toLowerCase())) return false
+    if (filters.submittedBy && r.submittedBy?.name && !r.submittedBy.name.toLowerCase().includes(filters.submittedBy.toLowerCase())) return false
     return true
   })
 })
@@ -352,15 +371,16 @@ function resetFilters() {
   filters.dateFrom = ''
   filters.dateTo = ''
   filters.service = ''
-  filters.status = 'pending'
+  filters.status = ''
   filters.submittedBy = ''
+  fetchAttendance()
 }
 
-// Stats
-const pendingCount = computed(() => records.value.filter(r => r.status === 'pending').length)
-const approvedTodayCount = computed(() => records.value.filter(r => r.status === 'approved').length)
-const rejectedCount = computed(() => records.value.filter(r => r.status === 'rejected').length)
-const totalWeekCount = computed(() => records.value.reduce((a, r) => a + r.count, 0))
+// Stats from API
+const pendingCount = computed(() => stats.value.pending)
+const approvedTodayCount = computed(() => stats.value.approved_today)
+const rejectedCount = computed(() => stats.value.rejected)
+const totalWeekCount = computed(() => stats.value.total_week)
 
 // Selection
 const selectedIds = ref([])
@@ -390,10 +410,15 @@ function toggleSelect(id) {
 // Approve/Reject
 const notification = reactive({ show: false, type: 'success', message: '' })
 
-function approveRecord(record) {
-  record.status = 'approved'
-  record.approvedBy = 'Admin User'
-  showNotification('success', `Approved attendance for ${formatDate(record.date)}`)
+async function approveRecord(record) {
+  try {
+    await attendanceApi.approve(record.id)
+    showNotification('success', `Approved attendance for ${formatDate(record.date)}`)
+    fetchAttendance() // Refresh data
+  } catch (error) {
+    console.error('Failed to approve:', error)
+    showNotification('danger', 'Failed to approve attendance')
+  }
 }
 
 const showRejectModal = ref(false)
@@ -406,11 +431,16 @@ function openRejectModal(record) {
   showRejectModal.value = true
 }
 
-function rejectRecord() {
+async function rejectRecord() {
   if (rejectingRecord.value) {
-    rejectingRecord.value.status = 'rejected'
-    rejectingRecord.value.rejectionReason = rejectReason.value
-    showNotification('info', `Rejected attendance. Usher notified.`)
+    try {
+      await attendanceApi.reject(rejectingRecord.value.id, rejectReason.value)
+      showNotification('info', `Rejected attendance. Usher notified.`)
+      fetchAttendance() // Refresh data
+    } catch (error) {
+      console.error('Failed to reject:', error)
+      showNotification('danger', 'Failed to reject attendance')
+    }
   }
   showRejectModal.value = false
 }
@@ -422,16 +452,16 @@ function bulkApprove() {
   showBulkApproveModal.value = true
 }
 
-function confirmBulkApprove() {
-  selectedIds.value.forEach(id => {
-    const record = records.value.find(r => r.id === id)
-    if (record) {
-      record.status = 'approved'
-      record.approvedBy = 'Admin User'
-    }
-  })
-  showNotification('success', `Approved ${selectedIds.value.length} records`)
-  selectedIds.value = []
+async function confirmBulkApprove() {
+  try {
+    await attendanceApi.bulkApprove(selectedIds.value)
+    showNotification('success', `Approved ${selectedIds.value.length} records`)
+    selectedIds.value = []
+    fetchAttendance() // Refresh data
+  } catch (error) {
+    console.error('Failed to bulk approve:', error)
+    showNotification('danger', 'Failed to approve records')
+  }
   showBulkApproveModal.value = false
 }
 

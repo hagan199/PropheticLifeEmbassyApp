@@ -17,13 +17,60 @@
       <CButton :color="tab === 'serviceType' ? 'primary' : 'light'" size="sm" @click="tab = 'serviceType'">Service</CButton>
     </div>
 
-    
-    <div v-if="tab === 'service'">
+    <!-- Service Types Tab -->
+    <div v-if="tab === 'serviceType'">
       <CRow class="g-4">
         <CCol lg="6">
           <CCard>
             <CCardHeader class="d-flex justify-content-between align-items-center">
-              <div class="fw-semibold">Service Type</div>
+              <div class="fw-semibold">Service Types</div>
+              <div class="d-flex">
+                <CFormInput v-model="serviceTypeName" placeholder="New service type" class="me-2" />
+                <CButton color="success" @click="addServiceType">Add</CButton>
+              </div>
+            </CCardHeader>
+            <CCardBody>
+              <CListGroup>
+                <CListGroupItem v-for="s in serviceTypes" :key="s.id"
+                  class="d-flex justify-content-between align-items-center">
+                  <span v-if="editingServiceType !== s.id">{{ s.name }}</span>
+                  <CFormInput v-else v-model="editServiceTypeName" size="sm" style="max-width: 200px;" />
+                  <div>
+                    <template v-if="editingServiceType === s.id">
+                      <CButton color="success" size="sm" class="me-2" @click="saveServiceType(s.id)">Save</CButton>
+                      <CButton color="light" size="sm" @click="cancelEditServiceType">Cancel</CButton>
+                    </template>
+                    <template v-else>
+                      <CButton color="light" size="sm" class="me-2" @click="startEditServiceType(s)">Edit</CButton>
+                      <CButton color="danger" size="sm" @click="removeServiceType(s.id)">Delete</CButton>
+                    </template>
+                  </div>
+                </CListGroupItem>
+                <CListGroupItem v-if="serviceTypes.length === 0" class="text-muted">
+                  No service types yet. Add one above.
+                </CListGroupItem>
+              </CListGroup>
+            </CCardBody>
+          </CCard>
+        </CCol>
+        <CCol lg="6">
+          <CCard>
+            <CCardHeader class="fw-semibold">Tips</CCardHeader>
+            <CCardBody>
+              <div class="text-muted">Define service types like Sunday Service, Midweek Service, Prayer Meeting, Special Service, etc.</div>
+            </CCardBody>
+          </CCard>
+        </CCol>
+      </CRow>
+    </div>
+
+    <!-- Categories Tab -->
+    <div v-else-if="tab === 'categories'">
+      <CRow class="g-4">
+        <CCol lg="6">
+          <CCard>
+            <CCardHeader class="d-flex justify-content-between align-items-center">
+              <div class="fw-semibold">Expense Categories</div>
               <div class="d-flex">
                 <CFormInput v-model="catName" placeholder="New category" class="me-2" />
                 <CButton color="success" @click="addCategory">Add</CButton>
@@ -31,13 +78,23 @@
             </CCardHeader>
             <CCardBody>
               <CListGroup>
-                <CListGroupItem v-for="c in serviceTypes" :key="c.id"
+                <CListGroupItem v-for="c in categories" :key="c.id"
                   class="d-flex justify-content-between align-items-center">
-                  <span>{{ c.name }}</span>
+                  <span v-if="editingCategory !== c.id">{{ c.name }}</span>
+                  <CFormInput v-else v-model="editCategoryName" size="sm" style="max-width: 200px;" />
                   <div>
-                    <CButton color="light" size="sm" class="me-2" @click="renameCategory(c.id)">Rename</CButton>
-                    <CButton color="danger" size="sm" @click="removeCategory(c.id)">Delete</CButton>
+                    <template v-if="editingCategory === c.id">
+                      <CButton color="success" size="sm" class="me-2" @click="saveCategory(c.id)">Save</CButton>
+                      <CButton color="light" size="sm" @click="cancelEditCategory">Cancel</CButton>
+                    </template>
+                    <template v-else>
+                      <CButton color="light" size="sm" class="me-2" @click="startEditCategory(c)">Edit</CButton>
+                      <CButton color="danger" size="sm" @click="removeCategory(c.id)">Delete</CButton>
+                    </template>
                   </div>
+                </CListGroupItem>
+                <CListGroupItem v-if="categories.length === 0" class="text-muted">
+                  No categories yet. Add one above.
                 </CListGroupItem>
               </CListGroup>
             </CCardBody>
@@ -68,9 +125,23 @@
             <CCardBody>
               <CListGroup>
                 <CListGroupItem v-for="r in roles" :key="r.id" class="d-flex justify-content-between align-items-center"
-                  :class="{ active: selectedRole && selectedRole.id === r.id }" @click="selectRole(r)">
-                  <span>{{ r.name }}</span>
-                  <CBadge color="secondary">{{ r.permissions.length }} perms</CBadge>
+                  :class="{ active: selectedRole && selectedRole.id === r.id }">
+                  <div class="d-flex align-items-center flex-grow-1" @click="selectRole(r)">
+                    <span v-if="editingRoleId !== r.id">{{ r.name }}</span>
+                    <CFormInput v-else v-model="editRoleName" size="sm" style="max-width: 150px;" @click.stop />
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <template v-if="editingRoleId === r.id">
+                      <CButton color="success" size="sm" @click.stop="saveRoleName(r.id)">Save</CButton>
+                      <CButton color="light" size="sm" @click.stop="cancelEditRole">Cancel</CButton>
+                    </template>
+                    <template v-else>
+                      <CButton color="light" size="sm" @click.stop="startEditRole(r)">
+                        <i class="bi bi-pencil"></i>
+                      </CButton>
+                      <CBadge color="secondary">{{ r.permissions.length }} perms</CBadge>
+                    </template>
+                  </div>
                 </CListGroupItem>
               </CListGroup>
             </CCardBody>
@@ -106,9 +177,23 @@
               <CListGroup>
                 <CListGroupItem v-for="u in filteredUsers" :key="u.id"
                   class="d-flex justify-content-between align-items-center"
-                  :class="{ active: selectedUser && selectedUser.id === u.id }" @click="selectUser(u)">
-                  <span>{{ u.name }}</span>
-                  <CBadge color="secondary">{{ roleNameById(u.roleId) }}</CBadge>
+                  :class="{ active: selectedUser && selectedUser.id === u.id }">
+                  <div class="d-flex align-items-center flex-grow-1" @click="selectUser(u)">
+                    <span v-if="editingUserId !== u.id">{{ u.name }}</span>
+                    <CFormInput v-else v-model="editUserName" size="sm" style="max-width: 180px;" @click.stop />
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    <template v-if="editingUserId === u.id">
+                      <CButton color="success" size="sm" @click.stop="saveUserName(u.id)">Save</CButton>
+                      <CButton color="light" size="sm" @click.stop="cancelEditUser">Cancel</CButton>
+                    </template>
+                    <template v-else>
+                      <CButton color="light" size="sm" @click.stop="startEditUser(u)">
+                        <i class="bi bi-pencil"></i>
+                      </CButton>
+                      <CBadge color="secondary">{{ roleNameById(u.roleId) }}</CBadge>
+                    </template>
+                  </div>
                 </CListGroupItem>
               </CListGroup>
             </CCardBody>
@@ -173,19 +258,76 @@ function loadCategories() {
 function saveCategories() { localStorage.setItem('expense_categories', JSON.stringify(categories.value)) }
 function addCategory() {
   if (!catName.value.trim()) return
-  const id = categories.value.length ? categories.value[categories.value.length - 1].id + 1 : 1
+  const id = categories.value.length ? Math.max(...categories.value.map(c => c.id)) + 1 : 1
   categories.value = categories.value.concat([{ id, name: catName.value.trim() }])
   catName.value = ''
   saveCategories()
 }
 function removeCategory(id) { categories.value = categories.value.filter(c => c.id !== id); saveCategories() }
-function renameCategory(id) {
-  const c = categories.value.find(x => x.id === id)
-  if (!c) return
-  const nn = prompt('Rename category', c.name)
-  if (nn && nn.trim()) { c.name = nn.trim(); saveCategories() }
+
+// Category editing
+const editingCategory = ref(null)
+const editCategoryName = ref('')
+function startEditCategory(c) {
+  editingCategory.value = c.id
+  editCategoryName.value = c.name
 }
-onMounted(loadCategories)
+function saveCategory(id) {
+  if (!editCategoryName.value.trim()) return
+  const c = categories.value.find(x => x.id === id)
+  if (c) { c.name = editCategoryName.value.trim(); saveCategories() }
+  editingCategory.value = null
+  editCategoryName.value = ''
+}
+function cancelEditCategory() {
+  editingCategory.value = null
+  editCategoryName.value = ''
+}
+onMounted(() => {
+  loadCategories()
+  loadServiceTypes()
+})
+
+// Service Types
+const serviceTypes = ref([])
+const serviceTypeName = ref('')
+const editingServiceType = ref(null)
+const editServiceTypeName = ref('')
+
+function loadServiceTypes() {
+  const raw = localStorage.getItem('service_types')
+  const defaults = [
+    { id: 1, name: 'Sunday Service' },
+    { id: 2, name: 'Midweek Service' },
+    { id: 3, name: 'Prayer Meeting' },
+    { id: 4, name: 'Special Service' }
+  ]
+  try { serviceTypes.value = raw ? JSON.parse(raw) : defaults } catch { serviceTypes.value = defaults }
+}
+function saveServiceTypes() { localStorage.setItem('service_types', JSON.stringify(serviceTypes.value)) }
+function addServiceType() {
+  if (!serviceTypeName.value.trim()) return
+  const id = serviceTypes.value.length ? Math.max(...serviceTypes.value.map(s => s.id)) + 1 : 1
+  serviceTypes.value = serviceTypes.value.concat([{ id, name: serviceTypeName.value.trim() }])
+  serviceTypeName.value = ''
+  saveServiceTypes()
+}
+function removeServiceType(id) { serviceTypes.value = serviceTypes.value.filter(s => s.id !== id); saveServiceTypes() }
+function startEditServiceType(s) {
+  editingServiceType.value = s.id
+  editServiceTypeName.value = s.name
+}
+function saveServiceType(id) {
+  if (!editServiceTypeName.value.trim()) return
+  const s = serviceTypes.value.find(x => x.id === id)
+  if (s) { s.name = editServiceTypeName.value.trim(); saveServiceTypes() }
+  editingServiceType.value = null
+  editServiceTypeName.value = ''
+}
+function cancelEditServiceType() {
+  editingServiceType.value = null
+  editServiceTypeName.value = ''
+}
 
 // Roles
 const roles = ref([
@@ -205,13 +347,40 @@ const permissions = ref([
 ])
 const selectedRole = ref(null)
 const roleName = ref('')
+const editingRoleId = ref(null)
+const editRoleName = ref('')
+
 function selectRole(r) { selectedRole.value = { ...r, permissions: [...r.permissions] } }
 function addRole() {
   if (!roleName.value.trim()) return
-  const id = roles.value.length ? roles.value[roles.value.length - 1].id + 1 : 1
+  const id = roles.value.length ? Math.max(...roles.value.map(r => r.id)) + 1 : 1
   roles.value = roles.value.concat([{ id, name: roleName.value.trim(), permissions: [] }])
   roleName.value = ''
 }
+
+// Role name editing
+function startEditRole(r) {
+  editingRoleId.value = r.id
+  editRoleName.value = r.name
+}
+function saveRoleName(id) {
+  if (!editRoleName.value.trim()) return
+  const role = roles.value.find(r => r.id === id)
+  if (role) {
+    role.name = editRoleName.value.trim()
+    // Update selectedRole if it's the same role
+    if (selectedRole.value && selectedRole.value.id === id) {
+      selectedRole.value.name = editRoleName.value.trim()
+    }
+  }
+  editingRoleId.value = null
+  editRoleName.value = ''
+}
+function cancelEditRole() {
+  editingRoleId.value = null
+  editRoleName.value = ''
+}
+
 function labelFor(p) {
   return p
     .replace('.read', ' — View')
@@ -240,9 +409,36 @@ const users = ref([
 const selectedUser = ref(null)
 const selectedRoleId = ref(null)
 const userSearch = ref('')
+const editingUserId = ref(null)
+const editUserName = ref('')
+
 const filteredUsers = computed(() => users.value.filter(u => u.name.toLowerCase().includes(userSearch.value.toLowerCase())))
 function roleNameById(id) { const r = roles.value.find(r => r.id === id); return r ? r.name : '—' }
 function selectUser(u) { selectedUser.value = { ...u, perms: [...u.perms] }; selectedRoleId.value = u.roleId }
+
+// User name editing
+function startEditUser(u) {
+  editingUserId.value = u.id
+  editUserName.value = u.name
+}
+function saveUserName(id) {
+  if (!editUserName.value.trim()) return
+  const user = users.value.find(u => u.id === id)
+  if (user) {
+    user.name = editUserName.value.trim()
+    // Update selectedUser if it's the same user
+    if (selectedUser.value && selectedUser.value.id === id) {
+      selectedUser.value.name = editUserName.value.trim()
+    }
+  }
+  editingUserId.value = null
+  editUserName.value = ''
+}
+function cancelEditUser() {
+  editingUserId.value = null
+  editUserName.value = ''
+}
+
 function applyRole() {
   if (!selectedUser.value) return
   const role = roles.value.find(r => r.id === selectedRoleId.value)

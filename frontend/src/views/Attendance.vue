@@ -19,10 +19,16 @@
     <CRow class="g-4">
       <CCol md="6">
         <CCard>
-          <CCardHeader class="fw-semibold">Record Attendance</CCardHeader>
+          <CCardHeader class="fw-semibold">Record Ministry Unit Attendance</CCardHeader>
           <CCardBody>
             <CForm @submit.prevent="addEntry">
               <CRow class="g-3">
+                <CCol md="6">
+                  <CFormLabel>Ministry Unit</CFormLabel>
+                  <CFormSelect v-model="form.unit">
+                    <option v-for="unit in ministryUnits" :key="unit" :value="unit">{{ unit }}</option>
+                  </CFormSelect>
+                </CCol>
                 <CCol md="6">
                   <CFormLabel>Service</CFormLabel>
                   <CFormSelect v-model="form.service">
@@ -36,10 +42,20 @@
                   <CFormInput type="date" v-model="form.date" />
                 </CCol>
                 <CCol md="6">
-                  <CFormLabel>Count</CFormLabel>
-                  <CFormInput type="number" min="0" v-model.number="form.count" />
+                  <CFormLabel>Time</CFormLabel>
+                  <CFormInput type="time" v-model="form.time" />
                 </CCol>
               </CRow>
+              <div class="mt-3">
+                <div class="fw-semibold mb-2">Mark Attendance</div>
+                <div v-for="member in members" :key="member.id" class="d-flex align-items-center mb-2 gap-2">
+                  <span>{{ member.name }}</span>
+                  <CButton :color="form.present[member.id] ? 'success' : 'secondary'" size="sm"
+                    @click="togglePresent(member.id)">
+                    {{ form.present[member.id] ? 'Present' : 'Absent' }}
+                  </CButton>
+                </div>
+              </div>
               <div class="mt-3 d-flex justify-content-end">
                 <CButton color="success" type="submit">Save</CButton>
               </div>
@@ -57,19 +73,23 @@
             <CTable hover responsive>
               <CTableHead>
                 <CTableRow>
+                  <CTableHeaderCell scope="col">Unit</CTableHeaderCell>
                   <CTableHeaderCell scope="col">Service</CTableHeaderCell>
                   <CTableHeaderCell scope="col">Date</CTableHeaderCell>
-                  <CTableHeaderCell scope="col" class="text-end">Count</CTableHeaderCell>
+                  <CTableHeaderCell scope="col">Time</CTableHeaderCell>
+                  <CTableHeaderCell scope="col">Member</CTableHeaderCell>
+                  <CTableHeaderCell scope="col">Status</CTableHeaderCell>
                 </CTableRow>
               </CTableHead>
               <CTableBody>
                 <CTableRow v-for="e in entries" :key="e.id">
+                  <CTableDataCell>{{ e.unit }}</CTableDataCell>
                   <CTableDataCell>{{ e.service }}</CTableDataCell>
                   <CTableDataCell>{{ e.date }}</CTableDataCell>
-                  <CTableDataCell class="text-end">{{ e.count }}</CTableDataCell>
-                  <CTableDataCell v-if="auth.user && auth.user.role === 'Super Admin'">
-                    <CButton v-if="!e.approved" color="primary" size="sm" @click="approveEntry(e.id)">Approve</CButton>
-                    <CBadge v-else color="success">Approved</CBadge>
+                  <CTableDataCell>{{ e.time }}</CTableDataCell>
+                  <CTableDataCell>{{ e.memberName }}</CTableDataCell>
+                  <CTableDataCell>
+                    <CBadge :color="e.present ? 'success' : 'danger'">{{ e.present ? 'Present' : 'Absent' }}</CBadge>
                   </CTableDataCell>
                 </CTableRow>
               </CTableBody>
@@ -82,27 +102,83 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { CRow, CCol, CCard, CCardBody, CCardHeader, CForm, CFormLabel, CFormInput, CFormSelect, CButton, CBadge, CTable, CTableHead, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell, CAlert } from '@coreui/vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { exportToExcel } from '../utils/export.js'
+import { attendanceApi } from '../api/attendance.js'
+import { ministryApi } from '../api/ministry.js'
 
 import { useAuthStore } from '../store/auth'
 const auth = useAuthStore()
-const form = ref({ service: 'Sunday', date: new Date().toISOString().slice(0, 10), count: 0 })
-const entries = ref([
-  { id: 1, service: 'Sunday', date: new Date().toISOString().slice(0, 10), count: 120, approved: false },
-  { id: 2, service: 'Wednesday', date: new Date(Date.now() - 86400000).toISOString().slice(0, 10), count: 85, approved: false }
-])
+const ministryUnits = ref([])
+const members = ref([])
+
+onMounted(async () => {
+  // Fetch ministry units from API
+  const res = await ministryApi.getUnits()
+  ministryUnits.value = res.data?.data || []
+  // Fetch members for first unit
+  if (ministryUnits.value.length) {
+    await fetchMembers(ministryUnits.value[0].id)
+    form.value.unit = ministryUnits.value[0].id
+  }
+})
+
+watch(() => form.value.unit, async (unitId) => {
+  if (unitId) await fetchMembers(unitId)
+})
+
+async function fetchMembers(unitId) {
+  const res = await ministryApi.getUnitMembers(unitId)
+  members.value = res.data?.data || []
+}
+
+const form = ref({ unit: ministryUnits.value[0], service: 'Sunday', date: new Date().toISOString().slice(0, 10), time: '09:00', present: {} })
+const entries = ref([])
 const notificationMessage = ref('')
 const showNotification = ref(false)
-function addEntry() {
-  const id = entries.value.length ? entries.value[entries.value.length - 1].id + 1 : 1
-  entries.value = entries.value.concat([{ id, service: form.value.service, date: form.value.date, count: form.value.count, approved: false }])
-  form.value = { service: 'Sunday', date: new Date().toISOString().slice(0, 10), count: 0 }
-  notificationMessage.value = 'Attendance entry added successfully!'
+async function addEntry() {
+  const idStart = entries.value.length ? entries.value[entries.value.length - 1].id + 1 : 1
+  let added = 0
+  for (const member of members.value) {
+    if (form.value.present[member.id] !== undefined) {
+      // Save to backend
+      try {
+        await attendanceApi.createUnitAttendance({
+          unit: form.value.unit,
+          service: form.value.service,
+          date: form.value.date,
+          time: form.value.time,
+          member_id: member.id,
+          member_name: member.name,
+          present: !!form.value.present[member.id]
+        })
+      } catch (err) {
+        // Optionally handle error
+      }
+      entries.value.push({
+        id: idStart + added,
+        unit: form.value.unit,
+        service: form.value.service,
+        date: form.value.date,
+        time: form.value.time,
+        memberId: member.id,
+        memberName: member.name,
+        present: !!form.value.present[member.id]
+      })
+      added++
+    }
+  }
+  // Reset form
+  form.value = { unit: ministryUnits.value[0], service: 'Sunday', date: new Date().toISOString().slice(0, 10), time: '09:00', present: {} }
+  notificationMessage.value = 'Attendance recorded!'
   showNotification.value = true
   setTimeout(() => { showNotification.value = false }, 2500)
+}
+
+function togglePresent(memberId) {
+  form.value.present[memberId] = !form.value.present[memberId]
 }
 function approveEntry(id) {
   const entry = entries.value.find(e => e.id === id)

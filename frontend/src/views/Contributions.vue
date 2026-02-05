@@ -6,9 +6,9 @@
 
     <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div>
-        <h2 class="title">Contributions</h2>
+        <h2 class="title">Partnership Contributions</h2>
         <Breadcrumbs />
-        <div class="text-muted">Track tithes, offerings, and special contributions</div>
+        <div class="text-muted">Track tithes, offerings, and partnership contributions</div>
       </div>
       <div class="d-flex gap-2">
         <CButton color="light" @click="exportReport">
@@ -258,14 +258,17 @@
         <CForm>
           <CRow class="g-3">
             <CCol md="12">
-              <CFormLabel>Contributor</CFormLabel>
+              <CFormLabel>Partner/Contributor</CFormLabel>
               <div class="d-flex gap-2">
                 <CFormSelect v-model="form.memberId" class="flex-fill">
                   <option value="">Anonymous</option>
-                  <option v-for="m in members" :key="m.id" :value="m.id">{{ m.name }} - {{ m.phone }}</option>
+                  <option v-for="m in members" :key="m.id" :value="m.id">{{ m.name }}{{ m.phone ? ' - ' + m.phone : '' }}</option>
                 </CFormSelect>
-                <CButton color="light" @click="showMemberSearch = true">
+                <CButton color="light" @click="showMemberSearch = true" title="Search">
                   <i class="bi bi-search"></i>
+                </CButton>
+                <CButton color="success" @click="showAddPartnerModal = true" title="Add New Partner">
+                  <i class="bi bi-person-plus"></i>
                 </CButton>
               </div>
             </CCol>
@@ -369,11 +372,42 @@
         </CButton>
       </CModalFooter>
     </CModal>
+
+    <!-- Add Partner Modal -->
+    <CModal :visible="showAddPartnerModal" @close="showAddPartnerModal = false">
+      <CModalHeader>
+        <CModalTitle>Add New Partner</CModalTitle>
+      </CModalHeader>
+      <CModalBody>
+        <CForm>
+          <CRow class="g-3">
+            <CCol md="12">
+              <CFormLabel>Name <span class="text-danger">*</span></CFormLabel>
+              <CFormInput v-model="newPartner.name" placeholder="Enter partner's full name" />
+            </CCol>
+            <CCol md="12">
+              <CFormLabel>Phone Number <span class="text-danger">*</span></CFormLabel>
+              <CFormInput v-model="newPartner.phone" placeholder="e.g. 0241234567" />
+            </CCol>
+            <CCol md="12">
+              <CFormLabel>Email</CFormLabel>
+              <CFormInput v-model="newPartner.email" type="email" placeholder="Enter email address" />
+            </CCol>
+          </CRow>
+        </CForm>
+      </CModalBody>
+      <CModalFooter>
+        <CButton color="secondary" @click="showAddPartnerModal = false">Cancel</CButton>
+        <CButton color="primary" @click="saveNewPartner" :disabled="!newPartner.name || !newPartner.phone">
+          <i class="bi bi-check me-1"></i> Add Partner
+        </CButton>
+      </CModalFooter>
+    </CModal>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import {
   CCard, CCardBody, CCardHeader, CCardFooter, CRow, CCol, CButton, CTable, CTableHead, CTableBody,
   CTableRow, CTableHeaderCell, CTableDataCell, CBadge, CAvatar, CFormInput, CFormSelect,
@@ -382,13 +416,34 @@ import {
 } from '@coreui/vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { exportToExcel } from '../utils/export.js'
+import { usersApi } from '../api/users.js'
 
-// Sample members for dropdown
-const members = ref([
-  { id: 1, name: 'Kwame Asante', phone: '0241234567' },
-  { id: 2, name: 'Ama Mensah', phone: '0201234567' },
-  { id: 3, name: 'Kofi Boateng', phone: '0551234567' }
-])
+// Members/Partners for dropdown
+const members = ref([])
+const loadingMembers = ref(false)
+
+// Fetch users/partners from API
+async function fetchMembers() {
+  loadingMembers.value = true
+  try {
+    const response = await usersApi.getAll({ status: 'active' })
+    if (response.data.success) {
+      members.value = response.data.data.map(u => ({
+        id: u.id,
+        name: u.name,
+        phone: u.phone || ''
+      }))
+    }
+  } catch (error) {
+    console.error('Failed to fetch members:', error)
+  } finally {
+    loadingMembers.value = false
+  }
+}
+
+onMounted(() => {
+  fetchMembers()
+})
 
 // Contributions data
 const contributions = ref([
@@ -412,7 +467,48 @@ const perPage = 10
 const showContributionModal = ref(false)
 const showReceiptModal = ref(false)
 const showMemberSearch = ref(false)
+const showAddPartnerModal = ref(false)
 const editingId = ref(null)
+
+// New Partner form
+const newPartner = reactive({
+  name: '',
+  phone: '',
+  email: ''
+})
+
+// Save new partner
+async function saveNewPartner() {
+  if (!newPartner.name || !newPartner.phone) return
+  try {
+    const response = await usersApi.create({
+      name: newPartner.name,
+      phone: newPartner.phone,
+      email: newPartner.email || null,
+      role: 'member',
+      status: 'active'
+    })
+    if (response.data.success) {
+      showNotification('success', 'Partner added successfully')
+      // Add to local list and select
+      const newMember = {
+        id: response.data.data.id,
+        name: newPartner.name,
+        phone: newPartner.phone
+      }
+      members.value.push(newMember)
+      form.memberId = newMember.id
+      // Reset form
+      newPartner.name = ''
+      newPartner.phone = ''
+      newPartner.email = ''
+      showAddPartnerModal.value = false
+    }
+  } catch (error) {
+    console.error('Failed to add partner:', error)
+    showNotification('danger', error.response?.data?.message || 'Failed to add partner')
+  }
+}
 const selectedReceipt = ref(null)
 const selectedMonth = ref('2026-01')
 

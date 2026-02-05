@@ -402,11 +402,23 @@ function moduleIcon(module) {
 
 <style scoped>
 .page-wrap {
-  padding: 20px;
+  padding: 1.5rem;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 .page-header {
-  margin-bottom: 16px;
+  margin-bottom: 1.5rem;
+}
+
+.page-header .title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
 }
 
 .stat-icon {
@@ -417,13 +429,231 @@ function moduleIcon(module) {
   align-items: center;
   justify-content: center;
   font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 .cursor-pointer {
   cursor: pointer;
+  transition: all 0.2s ease;
 }
 
 .cursor-pointer:hover {
-  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .page-wrap {
+    padding: 1rem;
+  }
+
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 1rem;
+  }
+
+  .page-header .title {
+    font-size: 1.5rem;
+  }
+
+  .page-header > div:last-child {
+    width: 100%;
+  }
+
+  .page-header .btn {
+    width: 100%;
+  }
+
+  /* Filters responsive */
+  :deep(.card-body .row) {
+    gap: 0.75rem;
+  }
+
+  /* Stats cards */
+  .stat-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1rem;
+  }
+
+  /* Table adjustments */
+  :deep(.table) {
+    font-size: 0.8125rem;
+  }
+
+  :deep(.table th),
+  :deep(.table td) {
+    padding: 0.625rem 0.5rem !important;
+  }
+
+  :deep(.table .text-truncate) {
+    max-width: 150px !important;
+  }
+}
+
+@media (max-width: 576px) {
+  .page-wrap {
+    padding: 0.875rem;
+  }
+
+  .page-header .title {
+    font-size: 1.375rem;
+  }
+
+  /* Hide some columns on very small screens */
+  :deep(.table th:nth-child(5)),
+  :deep(.table td:nth-child(5)),
+  :deep(.table th:nth-child(6)),
+  :deep(.table td:nth-child(6)) {
+    display: none;
+  }
+
+  /* Filter layout */
+  :deep(.card-body .col-md-2),
+  :deep(.card-body .col-md-3) {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* Card styling */
+:deep(.card) {
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s ease;
+}
+
+:deep(.card:hover) {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06), 0 12px 24px rgba(0, 0, 0, 0.06);
+}
+
+:deep(.card-body) {
+  padding: 1.25rem;
+}
+
+/* Table styling */
+:deep(.table) {
+  margin: 0;
+}
+
+:deep(.table thead th) {
+  background: #f8fafc;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  border: none;
+  padding: 1rem !important;
+}
+
+.theme-dark :deep(.table thead th) {
+  background: rgba(15, 23, 42, 0.8);
+  color: #94a3b8;
+}
+
+:deep(.table tbody tr) {
+  transition: background 0.2s ease;
+}
+
+:deep(.table tbody tr:hover) {
+  background: rgba(99, 102, 241, 0.03);
+}
+
+:deep(.table tbody td) {
+  padding: 1rem !important;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.theme-dark :deep(.table tbody td) {
+  border-color: #334155;
+}
+
+/* Form controls */
+:deep(.form-control),
+:deep(.form-select) {
+  border-radius: 10px;
+  border: 1.5px solid #e2e8f0;
+  padding: 0.625rem 1rem;
+  transition: all 0.2s ease;
+}
+
+:deep(.form-control:focus),
+:deep(.form-select:focus) {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+}
+
+:deep(.form-label) {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #64748b;
+  margin-bottom: 0.375rem;
+}
+
+/* Button styling */
+:deep(.btn-light) {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+:deep(.btn-light:hover) {
+  background: #e2e8f0;
+  transform: translateY(-1px);
+}
+
+/* Pagination */
+:deep(.pagination) {
+  gap: 0.25rem;
+}
+
+:deep(.page-item .page-link) {
+  border-radius: 8px;
+  border: none;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+:deep(.page-item.active .page-link) {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  color: white;
+}
+
+/* Badge styling */
+:deep(.badge) {
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 0.375em 0.625em;
+}
+
+/* Modal styling */
+:deep(.modal-content) {
+  border: none;
+  border-radius: 16px;
+}
+
+:deep(.modal-header) {
+  border-bottom: 1px solid #e2e8f0;
+  padding: 1.25rem 1.5rem;
+}
+
+:deep(.modal-body) {
+  padding: 1.5rem;
+}
+
+.theme-dark :deep(.modal-content) {
+  background: #1e293b;
+}
+
+.theme-dark :deep(.modal-header) {
+  border-color: #334155;
 }
 </style>

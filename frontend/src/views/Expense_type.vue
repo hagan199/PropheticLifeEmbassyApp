@@ -1,4 +1,17 @@
 <template>
+  <!-- Rename Category Modal -->
+  <CModal :visible="showRenameModal" @close="showRenameModal = false" size="sm" backdrop="static">
+    <CModalHeader>
+      <CModalTitle>Rename category</CModalTitle>
+    </CModalHeader>
+    <CModalBody>
+      <CFormInput v-model="renameInput" />
+    </CModalBody>
+    <CModalFooter class="d-flex justify-content-end gap-2">
+      <CButton color="success" @click="confirmRename">OK</CButton>
+      <CButton color="light" @click="showRenameModal = false">Cancel</CButton>
+    </CModalFooter>
+  </CModal>
   <div class="page-wrap">
     <div class="page-header d-flex justify-content-between align-items-center">
       <div>
@@ -42,6 +55,10 @@
 </template>
 
 <script setup>
+import { CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter } from '@coreui/vue'
+const showRenameModal = ref(false)
+const renameInput = ref('')
+let renameCatId = null
 import { ref, onMounted } from 'vue'
 import { CRow, CCol, CCard, CCardBody, CCardHeader, CListGroup, CListGroupItem, CButton, CFormInput } from '@coreui/vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
@@ -73,8 +90,18 @@ function addCat() {
 function renameCat(id) {
   const c = cats.value.find(x => x.id === id)
   if (!c) return
-  const nn = prompt('Rename category', c.name)
-  if (nn && nn.trim()) { c.name = nn.trim(); saveCats() }
+  renameCatId = id
+  renameInput.value = c.name
+  showRenameModal.value = true
+}
+
+function confirmRename() {
+  const c = cats.value.find(x => x.id === renameCatId)
+  if (c && renameInput.value.trim()) {
+    c.name = renameInput.value.trim()
+    saveCats()
+  }
+  showRenameModal.value = false
 }
 function deleteCat(id) { cats.value = cats.value.filter(c => c.id !== id); saveCats() }
 onMounted(loadCats)
