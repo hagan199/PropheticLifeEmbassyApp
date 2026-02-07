@@ -16,14 +16,14 @@ class ExpenseFactory extends Factory
     {
         return [
             'expense_type_id' => ExpenseType::factory(),
-            'category' => fake()->randomElement(['Utilities', 'Maintenance', 'Supplies', 'Staff', 'Other']),
-            'amount' => fake()->randomFloat(2, 50, 10000),
-            'expense_date' => fake()->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
-            'description' => fake()->sentence(),
+            'category' => $this->faker->randomElement(['Utilities', 'Maintenance', 'Supplies', 'Staff', 'Other']),
+            'amount' => $this->faker->randomFloat(2, 50, 10000),
+            'expense_date' => $this->faker->dateTimeBetween('-3 months', 'now')->format('Y-m-d'),
+            'description' => $this->faker->sentence(),
             'receipt_path' => null,
-            'status' => fake()->randomElement(['pending_approval', 'approved', 'rejected']),
+            'status' => $this->faker->randomElement(['pending_approval', 'approved', 'rejected']),
             'rejection_reason' => null,
-            'notes' => fake()->optional()->sentence(),
+            'notes' => $this->faker->optional()->sentence(),
             'submitted_by' => User::factory(),
             'submitted_at' => now(),
             'approved_by' => null,
@@ -33,7 +33,7 @@ class ExpenseFactory extends Factory
 
     public function approved(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => 'approved',
             'approved_by' => User::factory(),
             'approved_at' => now(),
@@ -42,9 +42,9 @@ class ExpenseFactory extends Factory
 
     public function rejected(): static
     {
-        return $this->state(fn (array $attributes) => [
+        return $this->state(fn(array $attributes) => [
             'status' => 'rejected',
-            'rejection_reason' => fake()->sentence(),
+            'rejection_reason' => $this->faker->sentence(),
         ]);
     }
 }

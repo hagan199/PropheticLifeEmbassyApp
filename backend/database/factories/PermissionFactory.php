@@ -15,10 +15,10 @@ class PermissionFactory extends Factory
     $modules = ['users', 'attendance', 'contributions', 'expenses', 'visitors', 'broadcasts', 'reports'];
 
     return [
-      'name' => fake()->unique()->word() . '.' . fake()->word(),
-      'display_name' => fake()->words(3, true),
-      'module' => fake()->randomElement($modules),
-      'description' => fake()->sentence(),
+      'name' => $this->faker->unique()->word() . '.' . $this->faker->word(),
+      'display_name' => $this->faker->words(3, true),
+      'module' => $this->faker->randomElement($modules),
+      'description' => $this->faker->sentence(),
     ];
   }
 }

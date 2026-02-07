@@ -229,7 +229,69 @@ class DashboardController extends Controller
                 'expenses' => $expenses,
             ],
             'visitor_conversion' => $visitorConversion,
-            'department_distribution' => [], // Can be populated from departments table
+            'department_distribution' => [], 
+            // Finance Breakdowns
+            'finance_category' => [
+                'labels' => Contribution::whereBetween('date', [$start, $end])
+                    ->select('type')
+                    ->distinct()
+                    ->pluck('type'),
+                'data' => Contribution::whereBetween('date', [$start, $end])
+                    ->groupBy('type')
+                    ->selectRaw('sum(amount) as total')
+                    ->pluck('total')
+            ],
+            'finance_method' => [
+                'labels' => Contribution::whereBetween('date', [$start, $end])
+                     ->select('payment_method')
+                     ->distinct()
+                     ->pluck('payment_method'),
+                'data' => Contribution::whereBetween('date', [$start, $end])
+                     ->groupBy('payment_method')
+                     ->selectRaw('sum(amount) as total')
+                     ->pluck('total')
+            ],
+             'expense_category' => [
+                'labels' => Expense::whereBetween('expense_date', [$start, $end])
+                     ->select('category')
+                     ->distinct()
+                     ->pluck('category'),
+                'data' => Expense::whereBetween('expense_date', [$start, $end])
+                     ->groupBy('category')
+                     ->selectRaw('sum(amount) as total')
+                     ->pluck('total')
+            ],
+            // Visitor Analytics
+            'visitor_sources' => [
+                'labels' => Visitor::whereBetween('first_visit_date', [$start, $end])
+                     ->select('source')
+                     ->distinct()
+                     ->pluck('source'),
+                'data' => Visitor::whereBetween('first_visit_date', [$start, $end])
+                     ->groupBy('source')
+                     ->selectRaw('count(*) as total')
+                     ->pluck('total')
+            ],
+            // Member Stats
+            'user_growth' => [
+                'labels' => User::selectRaw("DATE_FORMAT(created_at, '%Y-%m') as date")
+                    ->whereBetween('created_at', [$start->subMonths(6), $end]) // Always show 6 month trend
+                    ->groupBy('date')
+                    ->pluck('date'),
+                'data' => User::selectRaw("count(*) as total")
+                    ->whereBetween('created_at', [$start->subMonths(6), $end])
+                    ->groupBy(User::raw("DATE_FORMAT(created_at, '%Y-%m')"))
+                    ->pluck('total')
+            ],
+            'user_roles' => [
+                'labels' => User::select('role')->distinct()->pluck('role'),
+                'data' => User::groupBy('role')->selectRaw('count(*) as total')->pluck('total')
+            ],
+            // Department Stats
+            'department_distribution' => [
+                'labels' => \App\Models\Department::pluck('name'),
+                'data' => \App\Models\Department::pluck('member_count')
+            ]
         ];
 
         return response()->json([

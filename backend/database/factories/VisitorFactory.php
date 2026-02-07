@@ -13,17 +13,17 @@ class VisitorFactory extends Factory
   public function definition(): array
   {
     return [
-      'name' => fake()->name(),
-      'phone' => '+233' . fake()->numerify('#########'),
-      'email' => fake()->optional()->safeEmail(),
-      'category' => fake()->randomElement(['Visitor', 'Partner']),
-      'source' => fake()->randomElement(['Friend', 'Social Media', 'Walk-in', 'Other']),
-      'source_detail' => fake()->optional()->sentence(),
-      'ministry_interest' => fake()->randomElements(['Youth', 'Counseling', 'Giving', 'Fellowship', 'Other'], rand(1, 3)),
-      'initial_notes' => fake()->optional()->paragraph(),
-      'first_visit_date' => fake()->dateTimeBetween('-6 months', 'now')->format('Y-m-d'),
-      'status' => fake()->randomElement(['not_contacted', 'contacted', 'engaged', 'converted']),
-      'next_follow_up_date' => fake()->boolean(70) ? fake()->dateTimeBetween('now', '+1 month')->format('Y-m-d') : null,
+      'name' => $this->faker->name(),
+      'phone' => '+233' . $this->faker->numerify('#########'),
+      'email' => $this->faker->optional()->safeEmail(),
+      'category' => $this->faker->randomElement(['Visitor', 'Partner']),
+      'source' => $this->faker->randomElement(['Friend', 'Social Media', 'Walk-in', 'Other']),
+      'source_detail' => $this->faker->optional()->sentence(),
+      'ministry_interest' => $this->faker->randomElements(['Youth', 'Counseling', 'Giving', 'Fellowship', 'Other'], rand(1, 3)),
+      'initial_notes' => $this->faker->optional()->paragraph(),
+      'first_visit_date' => $this->faker->dateTimeBetween('-6 months', 'now')->format('Y-m-d'),
+      'status' => $this->faker->randomElement(['not_contacted', 'contacted', 'engaged', 'converted']),
+      'next_follow_up_date' => $this->faker->boolean(70) ? $this->faker->dateTimeBetween('now', '+1 month')->format('Y-m-d') : null,
       'created_by' => User::factory(),
     ];
   }
@@ -39,7 +39,7 @@ class VisitorFactory extends Factory
   {
     return $this->state(fn(array $attributes) => [
       'status' => 'contacted',
-      'next_follow_up_date' => fake()->dateTimeBetween('now', '+1 week')->format('Y-m-d'),
+      'next_follow_up_date' => $this->faker->dateTimeBetween('now', '+1 week')->format('Y-m-d'),
     ]);
   }
 }

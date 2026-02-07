@@ -6,11 +6,14 @@ namespace Database\Seeders;
 use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class RoleAndPermissionSeeder extends Seeder
 {
   public function run(): void
   {
+    // Truncate tables with CASCADE for PostgreSQL
+    \DB::statement('TRUNCATE TABLE role_permissions, roles, permissions RESTART IDENTITY CASCADE');
     // Create Roles
     $roles = [
       ['name' => 'admin', 'display_name' => 'Administrator', 'description' => 'Full system access', 'is_system' => true],
@@ -22,7 +25,7 @@ class RoleAndPermissionSeeder extends Seeder
     ];
 
     foreach ($roles as $role) {
-      Role::create($role);
+      Role::updateOrCreate(['name' => $role['name']], $role);
     }
 
     // Create Permissions

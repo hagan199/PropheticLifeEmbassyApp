@@ -30,22 +30,48 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $users = $this->getMockUsers();
+        $query = \App\Models\User::query()->with('department');
 
-        // Filter by role if provided
+        // Filter by role
         if ($request->has('role')) {
-            $users = array_filter($users, fn($u) => $u['role'] === $request->role);
+            $query->where('role', $request->role);
         }
 
         // Filter by active status
         if ($request->has('is_active')) {
-            $users = array_filter($users, fn($u) => $u['is_active'] == $request->is_active);
+            $isActive = filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN);
+            if ($isActive) {
+                $query->whereNull('deactivated_at');
+            } else {
+                $query->whereNotNull('deactivated_at');
+            }
         }
+
+        // Filter by department
+        if ($request->has('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        // Search by name, email, or phone
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'ILIKE', "%{$search}%")
+                  ->orWhere('email', 'ILIKE', "%{$search}%")
+                  ->orWhere('phone', 'ILIKE', "%{$search}%");
+            });
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', 20);
+        $users = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
         return response()->json([
             'success' => true,
-            'data' => array_values($users),
-            'total' => count($users),
+            'data' => $users->items(),
+            'total' => $users->total(),
+            'current_page' => $users->currentPage(),
+            'last_page' => $users->lastPage(),
         ]);
     }
 
@@ -54,12 +80,23 @@ class UserController extends Controller
      */
     public function members(Request $request)
     {
-        $members = $this->getMockMembers();
+        $query = \App\Models\User::query()
+            ->select('id', 'name', 'email', 'phone', 'role', 'department_id')
+            ->whereNull('deactivated_at');
+
+        // Filter by role if provided
+        if ($request->has('role')) {
+            $query->where('role', $request->role);
+        }
+
+        // Limit for autocomplete
+        $limit = $request->get('limit', 100);
+        $members = $query->orderBy('name')->limit($limit)->get();
 
         return response()->json([
             'success' => true,
             'data' => $members,
-            'total' => count($members),
+            'total' => $members->count(),
         ]);
     }
 
@@ -68,19 +105,25 @@ class UserController extends Controller
      */
     public function searchMembers(Request $request)
     {
-        $query = strtolower($request->get('q', ''));
-        $members = $this->getMockMembers();
+        $search = $request->get('q', '');
 
-        if ($query) {
-            $members = array_filter($members, function ($member) use ($query) {
-                return str_contains(strtolower($member['name']), $query) ||
-                    str_contains(strtolower($member['phone']), $query);
+        $query = \App\Models\User::query()
+            ->select('id', 'name', 'email', 'phone', 'role')
+            ->whereNull('deactivated_at');
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'ILIKE', "%{$search}%")
+                  ->orWhere('phone', 'ILIKE', "%{$search}%")
+                  ->orWhere('email', 'ILIKE', "%{$search}%");
             });
         }
 
+        $members = $query->orderBy('name')->limit(50)->get();
+
         return response()->json([
             'success' => true,
-            'data' => array_values($members),
+            'data' => $members,
         ]);
     }
 
@@ -89,24 +132,31 @@ class UserController extends Controller
      */
     public function store(StoreUserRequest $request)
     {
-
-        // Mock response
-        $newUser = [
-            'id' => 'user-' . rand(1000, 9999),
+        $user = \App\Models\User::create([
             'name' => $request->name,
-            'phone' => $request->phone,
             'email' => $request->email,
+            'phone' => $request->phone,
+            'password' => bcrypt($request->password ?? 'password123'),
             'role' => $request->role,
-            'role_name' => $this->getRoleName($request->role),
-            'is_active' => true,
-            'avatar' => 'https://i.pravatar.cc/150?img=' . rand(1, 70),
-            'created_at' => now()->toISOString(),
-        ];
+            'department_id' => $request->department_id,
+            'status' => 'active',
+        ]);
+
+        // Log audit
+        \App\Models\AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'users.create',
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'changes' => json_encode($user->toArray()),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
 
         return response()->json([
             'success' => true,
             'message' => 'User created successfully',
-            'data' => $newUser,
+            'data' => $user->load('department'),
         ], 201);
     }
 
@@ -115,8 +165,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $users = $this->getMockUsers();
-        $user = collect($users)->firstWhere('id', $id);
+        $user = \App\Models\User::with('department')->find($id);
 
         if (!$user) {
             return response()->json([

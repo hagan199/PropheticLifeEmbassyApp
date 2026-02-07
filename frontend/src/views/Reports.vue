@@ -76,459 +76,27 @@
 
     <!-- Visitor Reports -->
     <div v-else-if="activeTab === 'visitors'" class="report-section">
-      <!-- Summary Cards -->
-      <div class="summary-grid mb-4">
-        <div class="summary-card visitors">
-          <div class="card-icon">
-            <i class="bi bi-person-plus-fill"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ visitorStats.total }}</div>
-            <div class="card-label">Total Visitors</div>
-            <div class="card-trend" :class="visitorStats.trend >= 0 ? 'up' : 'down'">
-              <i :class="visitorStats.trend >= 0 ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
-              {{ Math.abs(visitorStats.trend) }}% vs last period
-            </div>
-          </div>
-        </div>
-        <div class="summary-card first-timers">
-          <div class="card-icon">
-            <i class="bi bi-star-fill"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ visitorStats.firstTimers }}</div>
-            <div class="card-label">First-Time Visitors</div>
-            <div class="card-sub">{{ visitorStats.firstTimerPercent }}% of total</div>
-          </div>
-        </div>
-        <div class="summary-card returning">
-          <div class="card-icon">
-            <i class="bi bi-arrow-repeat"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ visitorStats.returning }}</div>
-            <div class="card-label">Returning Visitors</div>
-            <div class="card-sub">{{ visitorStats.returningPercent }}% retention</div>
-          </div>
-        </div>
-        <div class="summary-card converted">
-          <div class="card-icon">
-            <i class="bi bi-person-check-fill"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ visitorStats.converted }}</div>
-            <div class="card-label">Converted to Members</div>
-            <div class="card-sub">{{ visitorStats.conversionRate }}% conversion</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Weekly Breakdown Chart -->
-      <div class="chart-card mb-4">
-        <div class="chart-header">
-          <h3><i class="bi bi-bar-chart-fill"></i> Weekly Visitor Breakdown</h3>
-          <div class="chart-legend">
-            <span class="legend-item first-time"><span class="dot"></span> First-Time</span>
-            <span class="legend-item returning"><span class="dot"></span> Returning</span>
-          </div>
-        </div>
-        <div class="chart-body">
-          <div class="bar-chart">
-            <div
-              v-for="(week, idx) in weeklyVisitors"
-              :key="idx"
-              class="bar-group"
-            >
-              <div class="bars">
-                <div
-                  class="bar first-time"
-                  :style="{ height: getBarHeight(week.firstTime) + '%' }"
-                  :title="`First-Time: ${week.firstTime}`"
-                >
-                  <span class="bar-value">{{ week.firstTime }}</span>
-                </div>
-                <div
-                  class="bar returning"
-                  :style="{ height: getBarHeight(week.returning) + '%' }"
-                  :title="`Returning: ${week.returning}`"
-                >
-                  <span class="bar-value">{{ week.returning }}</span>
-                </div>
-              </div>
-              <div class="bar-label">{{ week.label }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Visitor Table -->
-      <div class="data-card">
-        <div class="card-header">
-          <h3><i class="bi bi-table"></i> Visitor Details</h3>
-          <div class="header-actions">
-            <input
-              type="text"
-              class="search-input"
-              placeholder="Search visitors..."
-              v-model="visitorSearch"
-            />
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Visit Date</th>
-                <th>Type</th>
-                <th>Source</th>
-                <th>Follow-up Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="visitor in filteredVisitors" :key="visitor.id">
-                <td>
-                  <div class="cell-with-avatar">
-                    <div class="avatar">{{ getInitials(visitor.name) }}</div>
-                    <div>
-                      <div class="primary-text">{{ visitor.name }}</div>
-                      <div class="secondary-text">{{ visitor.phone }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td>{{ formatDate(visitor.visitDate) }}</td>
-                <td>
-                  <span class="badge" :class="visitor.type === 'first_time' ? 'badge-primary' : 'badge-secondary'">
-                    {{ visitor.type === 'first_time' ? 'First Time' : 'Returning' }}
-                  </span>
-                </td>
-                <td>{{ visitor.source || 'Walk-in' }}</td>
-                <td>
-                  <span class="status-badge" :class="getStatusClass(visitor.followUpStatus)">
-                    {{ visitor.followUpStatus || 'Pending' }}
-                  </span>
-                </td>
-                <td>
-                  <button class="action-btn" title="View Details">
-                    <i class="bi bi-eye"></i>
-                  </button>
-                </td>
-              </tr>
-              <tr v-if="filteredVisitors.length === 0">
-                <td colspan="6" class="empty-state">
-                  <i class="bi bi-inbox"></i>
-                  <span>No visitors found</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <VisitorAnalytics />
     </div>
 
     <!-- Partner/Contribution Reports -->
     <div v-else-if="activeTab === 'partners'" class="report-section">
-      <!-- Summary Cards -->
-      <div class="summary-grid mb-4">
-        <div class="summary-card contributions">
-          <div class="card-icon">
-            <i class="bi bi-cash-coin"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ formatCurrency(partnerStats.totalContributions) }}</div>
-            <div class="card-label">Total Contributions</div>
-            <div class="card-trend" :class="partnerStats.trend >= 0 ? 'up' : 'down'">
-              <i :class="partnerStats.trend >= 0 ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
-              {{ Math.abs(partnerStats.trend) }}% vs last period
-            </div>
-          </div>
-        </div>
-        <div class="summary-card partners">
-          <div class="card-icon">
-            <i class="bi bi-people-fill"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ partnerStats.totalPartners }}</div>
-            <div class="card-label">Active Partners</div>
-            <div class="card-sub">{{ partnerStats.newPartners }} new this period</div>
-          </div>
-        </div>
-        <div class="summary-card average">
-          <div class="card-icon">
-            <i class="bi bi-graph-up-arrow"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ formatCurrency(partnerStats.averageContribution) }}</div>
-            <div class="card-label">Average Contribution</div>
-            <div class="card-sub">Per transaction</div>
-          </div>
-        </div>
-        <div class="summary-card tithes">
-          <div class="card-icon">
-            <i class="bi bi-percent"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ formatCurrency(partnerStats.tithes) }}</div>
-            <div class="card-label">Tithes</div>
-            <div class="card-sub">{{ partnerStats.tithePercent }}% of total</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Contribution Breakdown -->
-      <div class="row g-4 mb-4">
-        <div class="col-lg-6">
-          <div class="chart-card h-100">
-            <div class="chart-header">
-              <h3><i class="bi bi-pie-chart-fill"></i> Contribution Types</h3>
-            </div>
-            <div class="chart-body">
-              <div class="donut-chart-wrap">
-                <div class="donut-chart">
-                  <svg viewBox="0 0 36 36">
-                    <circle
-                      v-for="(segment, idx) in contributionTypes"
-                      :key="idx"
-                      cx="18"
-                      cy="18"
-                      r="15.915"
-                      fill="transparent"
-                      :stroke="segment.color"
-                      stroke-width="3"
-                      :stroke-dasharray="`${segment.percent} ${100 - segment.percent}`"
-                      :stroke-dashoffset="getStrokeOffset(idx)"
-                    />
-                  </svg>
-                  <div class="donut-center">
-                    <div class="center-value">{{ contributionTypes.length }}</div>
-                    <div class="center-label">Types</div>
-                  </div>
-                </div>
-                <div class="donut-legend">
-                  <div v-for="type in contributionTypes" :key="type.name" class="legend-row">
-                    <span class="legend-color" :style="{ background: type.color }"></span>
-                    <span class="legend-name">{{ type.name }}</span>
-                    <span class="legend-value">{{ formatCurrency(type.amount) }}</span>
-                    <span class="legend-percent">{{ type.percent }}%</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg-6">
-          <div class="chart-card h-100">
-            <div class="chart-header">
-              <h3><i class="bi bi-graph-up"></i> Weekly Trend</h3>
-            </div>
-            <div class="chart-body">
-              <div class="line-chart">
-                <div class="chart-grid">
-                  <div v-for="i in 5" :key="i" class="grid-line"></div>
-                </div>
-                <svg class="line-svg" viewBox="0 0 400 200" preserveAspectRatio="none">
-                  <defs>
-                    <linearGradient id="lineGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:0.3" />
-                      <stop offset="100%" style="stop-color:#6366f1;stop-opacity:0" />
-                    </linearGradient>
-                  </defs>
-                  <path
-                    :d="areaPath"
-                    fill="url(#lineGradient)"
-                  />
-                  <path
-                    :d="linePath"
-                    fill="none"
-                    stroke="#6366f1"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                  <circle
-                    v-for="(point, idx) in weeklyContributions"
-                    :key="idx"
-                    :cx="getPointX(idx)"
-                    :cy="getPointY(point.amount)"
-                    r="4"
-                    fill="#6366f1"
-                    stroke="#fff"
-                    stroke-width="2"
-                  />
-                </svg>
-                <div class="chart-labels">
-                  <span v-for="week in weeklyContributions" :key="week.label">{{ week.label }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Top Partners Table -->
-      <div class="data-card">
-        <div class="card-header">
-          <h3><i class="bi bi-trophy-fill"></i> Top Contributors</h3>
-          <div class="header-actions">
-            <select v-model="partnerFilter" class="filter-select">
-              <option value="all">All Types</option>
-              <option value="tithe">Tithes</option>
-              <option value="offering">Offerings</option>
-              <option value="seed">Seeds</option>
-            </select>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Rank</th>
-                <th>Partner</th>
-                <th>Total Contributions</th>
-                <th>Transactions</th>
-                <th>Last Contribution</th>
-                <th>Trend</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(partner, idx) in topPartners" :key="partner.id">
-                <td>
-                  <div class="rank-badge" :class="getRankClass(idx)">
-                    {{ idx + 1 }}
-                  </div>
-                </td>
-                <td>
-                  <div class="cell-with-avatar">
-                    <div class="avatar partner">{{ getInitials(partner.name) }}</div>
-                    <div>
-                      <div class="primary-text">{{ partner.name }}</div>
-                      <div class="secondary-text">Member since {{ partner.memberSince }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td class="amount-cell">{{ formatCurrency(partner.totalAmount) }}</td>
-                <td>{{ partner.transactions }}</td>
-                <td>{{ formatDate(partner.lastContribution) }}</td>
-                <td>
-                  <div class="trend-indicator" :class="partner.trend >= 0 ? 'up' : 'down'">
-                    <i :class="partner.trend >= 0 ? 'bi bi-caret-up-fill' : 'bi bi-caret-down-fill'"></i>
-                    {{ Math.abs(partner.trend) }}%
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+      <FinanceAnalytics />
     </div>
 
     <!-- Attendance Reports -->
     <div v-else-if="activeTab === 'attendance'" class="report-section">
-      <!-- Summary Cards -->
-      <div class="summary-grid mb-4">
-        <div class="summary-card attendance">
-          <div class="card-icon">
-            <i class="bi bi-calendar-check-fill"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ attendanceStats.avgAttendance }}</div>
-            <div class="card-label">Average Attendance</div>
-            <div class="card-trend" :class="attendanceStats.trend >= 0 ? 'up' : 'down'">
-              <i :class="attendanceStats.trend >= 0 ? 'bi bi-arrow-up' : 'bi bi-arrow-down'"></i>
-              {{ Math.abs(attendanceStats.trend) }}% vs last period
-            </div>
-          </div>
-        </div>
-        <div class="summary-card peak">
-          <div class="card-icon">
-            <i class="bi bi-graph-up-arrow"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ attendanceStats.peakAttendance }}</div>
-            <div class="card-label">Peak Attendance</div>
-            <div class="card-sub">{{ attendanceStats.peakDate }}</div>
-          </div>
-        </div>
-        <div class="summary-card services">
-          <div class="card-icon">
-            <i class="bi bi-collection-fill"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ attendanceStats.totalServices }}</div>
-            <div class="card-label">Total Services</div>
-            <div class="card-sub">In selected period</div>
-          </div>
-        </div>
-        <div class="summary-card growth">
-          <div class="card-icon">
-            <i class="bi bi-trending-up"></i>
-          </div>
-          <div class="card-content">
-            <div class="card-value">{{ attendanceStats.growthRate }}%</div>
-            <div class="card-label">Growth Rate</div>
-            <div class="card-sub">Month over month</div>
-          </div>
-        </div>
-      </div>
+      <AttendanceAnalytics />
+    </div>
+    
+    <!-- Member Reports -->
+    <div v-else-if="activeTab === 'members'" class="report-section">
+      <MemberAnalytics />
+    </div>
 
-      <!-- Attendance by Service Type -->
-      <div class="chart-card mb-4">
-        <div class="chart-header">
-          <h3><i class="bi bi-bar-chart-line-fill"></i> Attendance by Service Type</h3>
-        </div>
-        <div class="chart-body">
-          <div class="horizontal-bars">
-            <div v-for="service in serviceAttendance" :key="service.name" class="h-bar-row">
-              <div class="h-bar-label">{{ service.name }}</div>
-              <div class="h-bar-track">
-                <div
-                  class="h-bar-fill"
-                  :style="{ width: service.percent + '%', background: service.color }"
-                >
-                  <span class="h-bar-value">{{ service.count }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Weekly Attendance Table -->
-      <div class="data-card">
-        <div class="card-header">
-          <h3><i class="bi bi-calendar-week"></i> Weekly Breakdown</h3>
-        </div>
-        <div class="table-responsive">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Week</th>
-                <th>Sunday Service</th>
-                <th>Midweek</th>
-                <th>Special Events</th>
-                <th>Total</th>
-                <th>Change</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="week in weeklyAttendance" :key="week.week">
-                <td class="week-cell">{{ week.week }}</td>
-                <td>{{ week.sunday }}</td>
-                <td>{{ week.midweek }}</td>
-                <td>{{ week.special }}</td>
-                <td class="total-cell">{{ week.total }}</td>
-                <td>
-                  <div class="trend-indicator" :class="week.change >= 0 ? 'up' : 'down'">
-                    <i :class="week.change >= 0 ? 'bi bi-caret-up-fill' : 'bi bi-caret-down-fill'"></i>
-                    {{ Math.abs(week.change) }}%
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
+    <!-- Department Reports -->
+    <div v-else-if="activeTab === 'departments'" class="report-section">
+      <DepartmentAnalytics />
     </div>
 
     <!-- Toast Notification -->
@@ -542,9 +110,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref } from 'vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
-import { visitorApi, financeApi, attendanceApi } from '../api'
+import AttendanceAnalytics from '../components/analytics/AttendanceAnalytics.vue'
+import FinanceAnalytics from '../components/analytics/FinanceAnalytics.vue'
+import VisitorAnalytics from '../components/analytics/VisitorAnalytics.vue'
+import MemberAnalytics from '../components/analytics/MemberAnalytics.vue'
+import DepartmentAnalytics from '../components/analytics/DepartmentAnalytics.vue'
 
 // State
 const loading = ref(false)
@@ -566,7 +138,9 @@ const filters = ref({
 const tabs = [
   { id: 'visitors', label: 'Visitors', icon: 'bi bi-person-plus' },
   { id: 'partners', label: 'Contributions', icon: 'bi bi-cash-coin' },
-  { id: 'attendance', label: 'Attendance', icon: 'bi bi-calendar-check' }
+  { id: 'attendance', label: 'Attendance', icon: 'bi bi-calendar-check' },
+  { id: 'members', label: 'Members', icon: 'bi bi-people' },
+  { id: 'departments', label: 'Departments', icon: 'bi bi-diagram-3' },
 ]
 
 // Date presets

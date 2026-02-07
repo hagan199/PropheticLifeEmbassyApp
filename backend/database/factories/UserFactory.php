@@ -17,19 +17,19 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'phone' => '+233' . fake()->numerify('#########'),
-            'email' => fake()->unique()->safeEmail(),
+            'name' => $this->faker->name(),
+            'phone' => '+233' . $this->faker->numerify('#########'),
+            'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
-            'role' => fake()->randomElement(['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader']),
+            'role' => $this->faker->randomElement(['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader']),
             'department_id' => null,
             'has_2fa' => false,
             'can_approve_attendance' => false,
             'status' => 'active',
             'avatar' => null,
-            'last_login_at' => fake()->optional()->dateTimeThisMonth(),
-            'last_login_ip' => fake()->optional()->ipv4(),
+            'last_login_at' => $this->faker->optional()->dateTimeThisMonth(),
+            'last_login_ip' => $this->faker->optional()->ipv4(),
             'remember_token' => Str::random(10),
         ];
     }
@@ -86,7 +86,7 @@ class UserFactory extends Factory
         return $this->state(fn(array $attributes) => [
             'status' => 'inactive',
             'deactivated_at' => now(),
-            'deactivation_reason' => fake()->sentence(),
+            'deactivation_reason' => $this->faker->sentence(),
         ]);
     }
 }

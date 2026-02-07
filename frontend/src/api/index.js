@@ -34,9 +34,9 @@ api.interceptors.response.use(
       localStorage.removeItem("auth_token");
       localStorage.removeItem("auth_user");
 
-      // Redirect to login if not already there
-      if (window.location.pathname !== "/login") {
-        window.location.href = "/login";
+      // Redirect to signin if not already there
+      if (window.location.pathname !== "/signin" && window.location.pathname !== "/login") {
+        window.location.href = "/signin";
       }
     }
 

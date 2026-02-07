@@ -1,0 +1,28 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 5
+    paths:
+        - app
+        - routes
+        - database/seeders
+        - database/factories
+    excludePaths:
+        - app/Helpers/CodeReviewAgent.php
+
+    # Laravel-specific configurations
+    checkMissingIterableValueType: false
+    checkGenericClassInNonGenericObjectType: false
+
+    # Ignore common Laravel patterns
+    ignoreErrors:
+        - '#Call to an undefined method Illuminate\\Database\\Eloquent\\Builder#'
+        - '#Access to an undefined property Illuminate\\Database\\Eloquent\\Model#'
+
+    # Memory limit for large codebases
+    tmpDir: storage/phpstan
+
+    # Performance optimizations
+    parallel:
+        maximumNumberOfProcesses: 4

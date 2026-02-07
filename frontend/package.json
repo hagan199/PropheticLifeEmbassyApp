@@ -12,6 +12,7 @@
     "@coreui/coreui": "^5.0.0",
     "@coreui/vue": "^5.0.0",
     "@coreui/vue-chartjs": "^3.0.0",
+    "@tanstack/vue-query": "^5.92.9",
     "axios": "^1.13.4",
     "bootstrap": "^5.3.3",
     "bootstrap-icons": "^1.11.3",

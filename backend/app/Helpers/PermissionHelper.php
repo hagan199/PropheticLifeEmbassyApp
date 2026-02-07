@@ -5,80 +5,15 @@ namespace App\Helpers;
 class PermissionHelper
 {
     /**
-     * Get permissions for a role
+     * Get permissions for a role from database (with caching)
      *
      * @param string $role
      * @return array
      */
     public static function getPermissions(string $role): array
     {
-        return match ($role) {
-            'admin' => [
-                'users.view',
-                'users.create',
-                'users.update',
-                'users.delete',
-                'attendance.view',
-                'attendance.approve',
-                'attendance.reject',
-                'visitors.view',
-                'visitors.create',
-                'visitors.update',
-                'visitors.delete',
-                'followups.view',
-                'followups.create',
-                'contributions.view',
-                'contributions.create',
-                'expenses.view',
-                'expenses.approve',
-                'expenses.reject',
-                'departments.view',
-                'departments.create',
-                'departments.update',
-                'departments.delete',
-                'broadcasts.send',
-                'audit.view',
-                'settings.manage',
-            ],
-            'pastor' => [
-                'attendance.view',
-                'members.view',
-                'departments.view',
-                'reports.view',
-            ],
-            'usher' => [
-                'attendance.record',
-                'attendance.view_own',
-                'members.search',
-            ],
-            'finance' => [
-                'contributions.view',
-                'contributions.create',
-                'contributions.update',
-                'expenses.view',
-                'expenses.create',
-                'expenses.approve',
-                'expenses.reject',
-                'reports.view',
-                'reports.export',
-            ],
-            'pr_follow_up' => [
-                'visitors.view',
-                'visitors.create',
-                'visitors.update',
-                'followups.view',
-                'followups.create',
-                'followups.update',
-                'broadcasts.send',
-            ],
-            'department_leader' => [
-                'department.view_own',
-                'department.manage_members',
-                'members.view',
-                'attendance.view_department',
-            ],
-            default => [],
-        };
+        // Use database instead of hardcoded values
+        return \App\Services\PermissionCacheService::getRolePermissions($role);
     }
 
     /**

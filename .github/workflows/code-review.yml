@@ -1,0 +1,132 @@
+name: Code Review
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+jobs:
+  code-quality:
+    name: Code Quality Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pgsql, mbstring, exif, pcntl, bcmath, gd, zip, opcache
+          coverage: none
+
+      - name: Cache Composer dependencies
+        uses: actions/cache@v4
+        with:
+          path: backend/vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: composer install --prefer-dist --no-progress --no-interaction
+
+      - name: Create PHPStan cache directory
+        working-directory: ./backend
+        run: mkdir -p storage/phpstan
+
+      - name: Run PHPStan
+        working-directory: ./backend
+        run: vendor/bin/phpstan analyse --error-format=github --no-progress
+
+      - name: Run Laravel Pint
+        working-directory: ./backend
+        run: vendor/bin/pint --test
+
+      - name: Run Custom Code Review
+        working-directory: ./backend
+        run: php artisan code:review
+
+  security-check:
+    name: Security Audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Security Audit
+        working-directory: ./backend
+        run: |
+          composer audit --no-dev || echo "Security audit completed with warnings"
+
+  tests:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ple_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo, pgsql, mbstring, exif, pcntl, bcmath, gd, zip
+          coverage: xdebug
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: composer install --prefer-dist --no-progress
+
+      - name: Prepare Laravel Application
+        working-directory: ./backend
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan config:clear
+
+      - name: Run Database Migrations
+        working-directory: ./backend
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: ple_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+        run: php artisan migrate --force
+
+      - name: Run Tests
+        working-directory: ./backend
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_DATABASE: ple_test
+          DB_USERNAME: postgres
+          DB_PASSWORD: postgres
+        run: php artisan test

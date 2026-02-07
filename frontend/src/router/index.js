@@ -183,13 +183,22 @@ router.beforeEach((to, from, next) => {
   const token = localStorage.getItem("auth_token");
   const user = JSON.parse(localStorage.getItem("auth_user") || "null");
 
+  // If navigating to signin from a protected route (likely due to session expiry),
+  // clear any stale tokens to prevent redirect loop
+  if (to.path === "/signin" && from.meta.requiresAuth) {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+    return next();
+  }
+
   // Check if route requires auth
   if (to.meta.requiresAuth && !token) {
     return next("/signin");
   }
 
   // Redirect to dashboard if already logged in and trying to access signin
-  if (to.path === "/signin" && token) {
+  // Only redirect if both token and user exist (to avoid issues with stale tokens)
+  if (to.path === "/signin" && token && user) {
     return next("/dashboard");
   }
 
