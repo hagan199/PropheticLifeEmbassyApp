@@ -791,6 +791,20 @@ async function reactivateUser(user) {
   }
 }
 
+function getRandomColor(name) {
+  const colors = [
+    'avatar-purple',
+    'avatar-blue',
+    'avatar-green',
+    'avatar-orange',
+    'avatar-pink',
+    'avatar-red'
+  ]
+  // Generate consistent color based on name
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return colors[hash % colors.length]
+}
+
 function exportUsers() {
   const columns = [
     { key: 'name', header: 'Name' },
@@ -1609,5 +1623,36 @@ function exportUsers() {
   .empty-subtitle {
     font-size: 0.9rem;
   }
+}
+
+/* ======== AVATAR COLORS ======== */
+:deep(.avatar-purple) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+}
+
+:deep(.avatar-blue) {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%) !important;
+  color: white !important;
+}
+
+:deep(.avatar-green) {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+  color: white !important;
+}
+
+:deep(.avatar-orange) {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%) !important;
+  color: white !important;
+}
+
+:deep(.avatar-pink) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+  color: white !important;
+}
+
+:deep(.avatar-red) {
+  background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%) !important;
+  color: white !important;
 }
 </style>
