@@ -1,67 +1,58 @@
 <template>
   <div class="page-wrap">
-    <CAlert v-if="notification.show" :color="notification.type" dismissible @close="notification.show = false">
-      {{ notification.message }}
-    </CAlert>
-
-    <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-      <div>
-        <h2 class="title">Users</h2>
-        <Breadcrumbs />
-        <div class="text-muted">Manage users, roles, and access control</div>
-      </div>
-      <div class="d-flex gap-2">
-        <CButton color="light" @click="exportUsers">
-          <i class="bi bi-file-earmark-excel me-1"></i> Export
-        </CButton>
-        <CButton color="primary" @click="openAddModal">
-          <i class="bi bi-plus-lg me-1"></i> Add User
-        </CButton>
-      </div>
-    </div>
+    <PageHeader title="Users" subtitle="Manage users, roles, and access control">
+      <template #actions>
+        <div class="d-flex gap-2">
+          <CButton color="light" @click="exportUsers">
+            <i class="bi bi-file-earmark-excel me-1"></i> Export
+          </CButton>
+          <CButton color="primary" @click="openAddModal">
+            <i class="bi bi-plus-lg me-1"></i> Add User
+          </CButton>
+        </div>
+      </template>
+    </PageHeader>
 
     <!-- Filters -->
-    <CCard class="mb-4">
-      <CCardBody>
-        <CRow class="g-3 align-items-end">
-          <CCol md="4">
-            <CFormLabel>Search</CFormLabel>
-            <CFormInput v-model="filters.search" placeholder="Name or phone..." @input="applyFilters" />
-          </CCol>
-          <CCol md="3">
-            <CFormLabel>Role</CFormLabel>
-            <CFormSelect v-model="filters.role" @change="applyFilters">
-              <option value="">All Roles</option>
-              <option v-for="r in roleOptions" :key="r.value" :value="r.value">{{ r.label }}</option>
-            </CFormSelect>
-          </CCol>
-          <CCol md="3">
-            <CFormLabel>Status</CFormLabel>
-            <CFormSelect v-model="filters.status" @change="applyFilters">
-              <option value="">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </CFormSelect>
-          </CCol>
-          <CCol md="2">
-            <CButton color="light" class="w-100" @click="resetFilters">Reset</CButton>
-          </CCol>
-        </CRow>
-      </CCardBody>
-    </CCard>
+    <MaterialCard class="mb-4">
+      <template #header></template>
+      <CRow class="g-3 align-items-end">
+        <CCol md="4">
+          <CFormLabel>Search</CFormLabel>
+          <CFormInput v-model="filters.search" placeholder="Name or phone..." @input="applyFilters" />
+        </CCol>
+        <CCol md="3">
+          <CFormLabel>Role</CFormLabel>
+          <CFormSelect v-model="filters.role" @change="applyFilters">
+            <option value="">All Roles</option>
+            <option v-for="r in roleOptions" :key="r.value" :value="r.value">{{ r.label }}</option>
+          </CFormSelect>
+        </CCol>
+        <CCol md="3">
+          <CFormLabel>Status</CFormLabel>
+          <CFormSelect v-model="filters.status" @change="applyFilters">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </CFormSelect>
+        </CCol>
+        <CCol md="2">
+          <CButton color="light" class="w-100" @click="resetFilters">Reset</CButton>
+        </CCol>
+      </CRow>
+    </MaterialCard>
 
     <!-- Users Table -->
-    <CCard>
-      <CCardHeader class="d-flex justify-content-between align-items-center">
+    <MaterialCard>
+      <template #header>
         <div class="fw-semibold">All Users</div>
-        <CBadge color="primary">{{ filteredUsers.length }} / {{ totalUsersDisplay }} users</CBadge>
-      </CCardHeader>
-      <CCardBody>
-        <div v-if="isLoadingUsers" class="text-center py-5">
-          <CSpinner color="primary" size="lg" />
-        </div>
-        <template v-else>
-          <CTable v-if="filteredUsers.length" hover responsive align="middle">
+        <CBadge color="primary">{{ users.length }} of {{ totalUsers }} users</CBadge>
+      </template>
+      <div v-if="isLoadingUsers" class="text-center py-5">
+        <CSpinner color="primary" size="lg" />
+      </div>
+      <template v-else>
+        <CTable v-if="users.length" hover responsive align="middle">
           <CTableHead>
             <CTableRow>
               <CTableHeaderCell>Name</CTableHeaderCell>
@@ -74,27 +65,53 @@
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            <CTableRow v-for="user in paginatedUsers" :key="user.id">
+            <CTableRow v-for="user in paginatedUsers" :key="user.id" class="user-row">
               <CTableDataCell>
-                <div class="d-flex align-items-center">
-                  <CAvatar :src="user.avatar" size="sm" class="me-2" />
-                  <div>
-                    <div class="fw-semibold">{{ user.name }}</div>
-                    <div class="text-muted small">{{ user.email }}</div>
+                <div class="user-profile-cell">
+                  <CAvatar :src="user.avatar" size="md" class="user-avatar-modern" :class="getRandomColor(user.name)">
+                    <span v-if="!user.avatar">{{ user.name.charAt(0).toUpperCase() }}</span>
+                  </CAvatar>
+                  <div class="user-identity">
+                    <div class="user-name">{{ user.name }}</div>
+                    <div class="user-email text-muted">{{ user.email }}</div>
                   </div>
                 </div>
               </CTableDataCell>
-              <CTableDataCell>{{ user.phone }}</CTableDataCell>
-              <CTableDataCell>
-                <CBadge :color="roleColor(user.role)">{{ roleLabel(user.role) }}</CBadge>
+              <CTableDataCell class="user-phone">
+                <i class="bi bi-telephone-fill me-2 text-primary opacity-50"></i>{{ user.phone || '—' }}
               </CTableDataCell>
-              <CTableDataCell>{{ user.departmentName || '—' }}</CTableDataCell>
               <CTableDataCell>
-                <CBadge :color="user.status === 'active' ? 'success' : 'secondary'">
-                  {{ user.status }}
-                </CBadge>
+                <div class="d-flex flex-wrap gap-1">
+                  <!-- Multiple Roles Support -->
+                  <template v-if="user.roles && user.roles.length > 0">
+                    <CBadge v-for="r in user.roles" :key="r.id" :color="roleColor(r.name)" class="role-badge-modern">
+                      <i :class="roleIcon(r.name)" class="me-1"></i>
+                      {{ r.display_name || r.name }}
+                    </CBadge>
+                  </template>
+                  <!-- Backward compatibility for single role field -->
+                  <CBadge v-else :color="roleColor(user.role)" class="role-badge-modern">
+                    <i :class="roleIcon(user.role)" class="me-1"></i>
+                    {{ roleLabel(user.role) }}
+                  </CBadge>
+                </div>
               </CTableDataCell>
-              <CTableDataCell class="text-muted">{{ user.lastLogin || 'Never' }}</CTableDataCell>
+              <CTableDataCell class="text-secondary fw-medium">
+                {{ user.department?.name || '—' }}
+              </CTableDataCell>
+              <CTableDataCell>
+                <div class="status-indicator" :class="user.status">
+                  <span class="status-dot"></span>
+                  <span class="status-text">{{ user.status.toUpperCase() }}</span>
+                </div>
+              </CTableDataCell>
+              <CTableDataCell class="text-muted small">
+                <div v-if="user.lastLogin" class="d-flex align-items-center">
+                  <i class="bi bi-clock-history me-1"></i>
+                  {{ user.lastLogin }}
+                </div>
+                <span v-else>Never</span>
+              </CTableDataCell>
               <CTableDataCell class="text-end">
                 <CButton color="light" size="sm" class="me-1" @click="editUser(user)">
                   <i class="bi bi-pencil"></i>
@@ -109,38 +126,40 @@
               </CTableDataCell>
             </CTableRow>
           </CTableBody>
-          </CTable>
-          <div v-else class="text-center py-5 text-muted">
-            <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-            No users found for the current filters.
-          </div>
+        </CTable>
+        <div v-else class="text-center py-5 text-muted">
+          <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+          No users found for the current filters.
+        </div>
 
-          <!-- Pagination -->
-          <div v-if="filteredUsers.length" class="d-flex justify-content-between align-items-center mt-3">
-            <div class="text-muted small">
-              Showing {{ (currentPage - 1) * perPage + 1 }} to
-              {{ Math.min(currentPage * perPage, filteredUsers.length) }}
-              of {{ filteredUsers.length }}
-            </div>
-            <CPagination>
-              <CPaginationItem :disabled="currentPage === 1" @click="currentPage--">Previous</CPaginationItem>
-              <CPaginationItem v-for="p in totalPages" :key="p" :active="p === currentPage"
-                @click="currentPage = p">
-                {{ p }}
-              </CPaginationItem>
-              <CPaginationItem :disabled="currentPage === totalPages" @click="currentPage++">Next</CPaginationItem>
-            </CPagination>
+        <!-- Pagination -->
+        <div v-if="users.length" class="pagination-container">
+          <div class="pagination-info">
+            Showing <span class="fw-bold text-dark">{{ (currentPage - 1) * perPage + 1 }}</span> to
+            <span class="fw-bold text-dark">{{ Math.min(currentPage * perPage, totalUsers) }}</span>
+            of <span class="fw-bold text-dark">{{ totalUsers }}</span> users
           </div>
-        </template>
+          <CPagination class="mb-0">
+            <CPaginationItem :disabled="currentPage === 1" @click="currentPage--" aria-label="Previous">
+              <i class="bi bi-chevron-left"></i>
+            </CPaginationItem>
+            <CPaginationItem v-for="p in totalPages" :key="p" :active="p === currentPage" @click="currentPage = p">
+              {{ p }}
+            </CPaginationItem>
+            <CPaginationItem :disabled="currentPage === totalPages" @click="currentPage++" aria-label="Next">
+              <i class="bi bi-chevron-right"></i>
+            </CPaginationItem>
+          </CPagination>
+        </div>
+      </template>
 
-        <CAlert v-if="tableError" color="danger" class="mt-3">
-          {{ tableError }}
-        </CAlert>
-      </CCardBody>
-    </CCard>
+      <CAlert v-if="tableError" color="danger" class="mt-3">
+        {{ tableError }}
+      </CAlert>
+    </MaterialCard>
 
     <!-- Add/Edit Modal -->
-    <CModal :visible="showModal" @close="closeModal" size="lg">
+    <CModal :visible="showModal" @close="closeModal" class="modal-bottom-sheet" size="lg">
       <CModalHeader>
         <CModalTitle>{{ isEditing ? 'Edit User' : 'Add New User' }}</CModalTitle>
       </CModalHeader>
@@ -165,17 +184,22 @@
               <CFormLabel>Email</CFormLabel>
               <CFormInput v-model="form.email" type="email" />
             </CCol>
-            <CCol md="6">
-              <CFormLabel>Role <span class="text-danger">*</span></CFormLabel>
-              <CFormSelect v-model="form.role" :invalid="!!errors.role">
-                <option value="">Select role...</option>
-                <option v-for="r in roleOptions" :key="r.value" :value="r.value">{{ r.label }}</option>
-              </CFormSelect>
-              <div v-if="errors.role" class="text-danger small mt-1">{{ errors.role }}</div>
+            <CCol md="12">
+              <CFormLabel>Roles <span class="text-danger">*</span></CFormLabel>
+              <div class="role-multi-select">
+                <div v-for="r in roleOptions" :key="r.value" class="role-chip"
+                  :class="{ 'active': form.role_ids.includes(r.value) }" @click="toggleFormRole(r.value)">
+                  <i :class="roleIcon(roleLabelByValue(r.value))"></i>
+                  {{ r.label }}
+                  <i v-if="form.role_ids.includes(r.value)" class="bi bi-check-lg ms-1"></i>
+                </div>
+              </div>
+              <div v-if="errors.role_ids" class="text-danger small mt-1">{{ errors.role_ids }}</div>
             </CCol>
             <CCol md="6">
               <CFormLabel>Department <span v-if="requiresDepartment" class="text-danger">*</span></CFormLabel>
-              <CFormSelect v-model="form.departmentId" :invalid="!!errors.departmentId" :disabled="isLoadingDepartments">
+              <CFormSelect v-model="form.departmentId" :invalid="!!errors.departmentId"
+                :disabled="isLoadingDepartments">
                 <option value="">Select department...</option>
                 <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
               </CFormSelect>
@@ -201,7 +225,7 @@
     </CModal>
 
     <!-- Deactivate Confirmation Modal -->
-    <CModal :visible="showDeactivateModal" @close="showDeactivateModal = false">
+    <CModal :visible="showDeactivateModal" @close="showDeactivateModal = false" class="modal-bottom-sheet">
       <CModalHeader>
         <CModalTitle>Deactivate User</CModalTitle>
       </CModalHeader>
@@ -224,25 +248,41 @@
   </div>
 </template>
 
+
 <script setup>
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import {
-  CCard, CCardBody, CCardHeader, CRow, CCol, CButton, CTable, CTableHead, CTableBody,
+  CRow, CCol, CButton, CTable, CTableHead, CTableBody,
   CTableRow, CTableHeaderCell, CTableDataCell, CBadge, CAvatar, CFormInput, CFormSelect,
   CFormLabel, CFormTextarea, CInputGroup, CInputGroupText, CModal, CModalHeader,
   CModalTitle, CModalBody, CModalFooter, CForm, CAlert, CPagination, CPaginationItem, CSpinner
 } from '@coreui/vue'
+import PageHeader from '../components/shared/PageHeader.vue'
+import MaterialCard from '../components/material/MaterialCard.vue'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
 import { exportToExcel } from '../utils/export.js'
 import { usersApi, departmentsApi, rolesApi } from '../api'
+import { useToast } from '../composables/useToast'
 
 const roleColorMap = {
-  admin: { label: 'Admin', color: 'danger' },
-  pastor: { label: 'Pastor', color: 'primary' },
-  usher: { label: 'Usher', color: 'info' },
-  finance: { label: 'Finance Officer', color: 'success' },
-  pr_follow_up: { label: 'PR / Follow-up', color: 'warning' },
-  department_leader: { label: 'Department Leader', color: 'secondary' }
+  admin: { label: 'Administrator', color: 'danger', icon: 'bi bi-shield-check' },
+  pastor: { label: 'Pastor', color: 'primary', icon: 'bi bi-book' },
+  usher: { label: 'Usher', color: 'info', icon: 'bi bi-people' },
+  finance: { color: 'success', label: 'Finance Officer', icon: 'bi bi-cash-coin' },
+  pr_follow_up: { color: 'warning', label: 'PR/Follow-up', icon: 'bi bi-megaphone' },
+  department_leader: { color: 'dark', label: 'Department Leader', icon: 'bi bi-diagram-3' }
+}
+
+function roleColor(role) {
+  return roleColorMap[role]?.color || 'secondary'
+}
+
+function roleIcon(role) {
+  return roleColorMap[role]?.icon || 'bi bi-person'
+}
+
+function roleLabel(role) {
+  return roleColorMap[role]?.label || role
 }
 
 const roleOptions = ref(
@@ -265,28 +305,28 @@ const filters = reactive({ search: '', role: '', status: '' })
 const currentPage = ref(1)
 const perPage = 25
 
-const filteredUsers = computed(() => {
-  return users.value.filter((u) => {
-    if (filters.search) {
-      const term = filters.search.toLowerCase()
-      const matches =
-        u.name?.toLowerCase().includes(term) ||
-        u.phone?.toLowerCase().includes(term) ||
-        u.email?.toLowerCase().includes(term)
-      if (!matches) return false
-    }
-    if (filters.role && u.role !== filters.role) return false
-    if (filters.status && u.status !== filters.status) return false
-    return true
-  })
+const totalUsersDisplay = computed(() => totalUsers.value)
+const totalPages = computed(() => Math.max(1, Math.ceil(totalUsers.value / perPage)))
+
+const paginatedUsers = computed(() => users.value)
+
+// Handle search with debounce
+let searchTimeout
+watch(() => filters.search, () => {
+  clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    currentPage.value = 1
+    fetchUsers()
+  }, 400)
 })
 
-const totalUsersDisplay = computed(() => totalUsers.value || users.value.length || 0)
+watch(() => [filters.role, filters.status], () => {
+  currentPage.value = 1
+  fetchUsers()
+})
 
-const totalPages = computed(() => Math.max(1, Math.ceil(filteredUsers.value.length / perPage)))
-const paginatedUsers = computed(() => {
-  const start = (currentPage.value - 1) * perPage
-  return filteredUsers.value.slice(start, start + perPage)
+watch(currentPage, () => {
+  fetchUsers()
 })
 
 function applyFilters() {
@@ -317,19 +357,24 @@ const form = reactive({
   phone: '',
   name: '',
   email: '',
-  role: '',
+  role: '', // Legacy
+  role_ids: [], // Multi-role support
   departmentId: '',
   password: ''
 })
-const errors = reactive({ phone: '', name: '', role: '', departmentId: '', password: '' })
+const errors = reactive({ phone: '', name: '', role_ids: '', departmentId: '', password: '' })
 
-const requiresDepartment = computed(() => ['usher', 'department_leader'].includes(form.role))
+const requiresDepartment = computed(() => {
+  // If any selected role is usher or dept leader
+  const selectedRoleNames = form.role_ids.map(id => roleOptions.value.find(o => o.value === id)?.label?.toLowerCase() || '')
+  return selectedRoleNames.some(name => ['usher', 'department leader'].includes(name))
+})
 
 const showDeactivateModal = ref(false)
 const userToDeactivate = ref(null)
 const deactivateReason = ref('')
 
-const notification = reactive({ show: false, type: 'success', message: '' })
+const toast = useToast()
 
 onMounted(() => {
   fetchUsers()
@@ -341,16 +386,21 @@ async function fetchUsers() {
   isLoadingUsers.value = true
   tableError.value = ''
   try {
-    const params = {}
+    const params = {
+      page: currentPage.value,
+      per_page: perPage
+    }
+    if (filters.search) params.search = filters.search
     if (filters.role) params.role = filters.role
     if (filters.status) params.is_active = filters.status === 'active'
+
     const { data } = await usersApi.getAll(params)
     users.value = (data.data || []).map(mapUser)
     totalUsers.value = data.total ?? users.value.length
   } catch (error) {
     const message = error.response?.data?.message || 'Unable to load users.'
     tableError.value = message
-    showNotification('danger', message)
+    toast.error(message)
   } finally {
     isLoadingUsers.value = false
   }
@@ -393,17 +443,39 @@ function openAddModal() {
 
 function editUser(user) {
   isEditing.value = true
+  const roleIds = user.roles?.map(r => r.id) || []
+
+  // If no roles array, fallback to single role mapping
+  if (roleIds.length === 0 && user.role) {
+    const roleOpt = roleOptions.value.find(o => o.value === user.role || o.label.toLowerCase() === user.role.toLowerCase())
+    if (roleOpt) roleIds.push(roleOpt.value)
+  }
+
   Object.assign(form, {
     id: user.id,
     phone: stripCountryCode(user.phone),
     name: user.name,
     email: user.email || '',
     role: user.role,
+    role_ids: roleIds,
     departmentId: getDepartmentIdByName(user.departmentName),
     password: ''
   })
   clearErrors()
   showModal.value = true
+}
+
+function toggleFormRole(roleId) {
+  const index = form.role_ids.indexOf(roleId)
+  if (index > -1) {
+    form.role_ids.splice(index, 1)
+  } else {
+    form.role_ids.push(roleId)
+  }
+}
+
+function roleLabelByValue(val) {
+  return roleOptions.value.find(o => o.value === val)?.label || val
 }
 
 function closeModal() {
@@ -422,17 +494,17 @@ function clearErrors() {
  */
 function validatePhone(phone) {
   const digits = (phone || '').replace(/\D/g, '')
-  
+
   // Must have at least 9 digits
   if (digits.length < 9) {
     return 'Phone number must be at least 9 digits'
   }
-  
+
   // Check for excessive repeating digits (more than 5 same digits in a row)
   if (/(.)\1{5,}/.test(digits)) {
     return 'Invalid phone number - too many repeating digits'
   }
-  
+
   // Check for repeating patterns like 040404 or 123123
   const lastEight = digits.slice(-8)
   // Check for 2-digit repeating pattern (e.g., 04040404)
@@ -443,10 +515,10 @@ function validatePhone(phone) {
   if (/^(\d{4})\1$/.test(lastEight)) {
     return 'Invalid phone number - repeating pattern detected'
   }
-  
+
   // Valid Ghana mobile prefixes
   const ghanaPrefixes = ['20', '23', '24', '25', '26', '27', '28', '29', '50', '54', '55', '56', '57', '59']
-  
+
   // Check if it's a Ghana number
   let localNumber = digits
   if (digits.startsWith('233')) {
@@ -454,7 +526,7 @@ function validatePhone(phone) {
   } else if (digits.startsWith('0')) {
     localNumber = digits.slice(1)
   }
-  
+
   // If it looks like a Ghana number, validate the prefix
   if (localNumber.length === 9) {
     const prefix = localNumber.slice(0, 2)
@@ -465,7 +537,7 @@ function validatePhone(phone) {
       }
     }
   }
-  
+
   return null // Valid
 }
 
@@ -479,13 +551,13 @@ function validateForm() {
     errors.phone = phoneError
     valid = false
   }
-  
+
   if (!form.name.trim()) {
     errors.name = 'Name is required'
     valid = false
   }
-  if (!form.role) {
-    errors.role = 'Role is required'
+  if (form.role_ids.length === 0) {
+    errors.role_ids = 'At least one role is required'
     valid = false
   }
   if (requiresDepartment.value && !form.departmentId) {
@@ -501,33 +573,33 @@ function validateForm() {
 
 function normalizePhone(input) {
   if (!input) return ''
-  
+
   // Remove all non-digit characters except +
   const cleaned = input.replace(/[^\d+]/g, '')
-  
+
   // If already starts with +, it's international - keep as is
   if (cleaned.startsWith('+')) {
     return cleaned
   }
-  
+
   const digits = cleaned.replace(/\D/g, '')
   if (!digits) return ''
-  
+
   // If starts with 00, convert to + (international format)
   if (digits.startsWith('00')) {
     return `+${digits.slice(2)}`
   }
-  
+
   // If starts with 233 (Ghana), add +
   if (digits.startsWith('233')) {
     return `+${digits}`
   }
-  
+
   // If starts with 0, it's a local Ghana number - convert to +233
   if (digits.startsWith('0')) {
     return `+233${digits.slice(1)}`
   }
-  
+
   // Otherwise assume it's Ghana without leading 0
   return `+233${digits}`
 }
@@ -555,7 +627,8 @@ function mapUser(user) {
     phone: user.phone,
     email: user.email,
     role: user.role,
-    departmentName: user.department ?? user.department_name ?? null,
+    roles: user.roles || [], // Multi-role support
+    departmentName: user.department?.name || (user.department ?? user.department_name ?? null),
     status: user.is_active === false ? 'inactive' : 'active',
     lastLogin: user.last_login ?? user.lastLogin ?? null,
     avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`
@@ -570,7 +643,8 @@ async function saveUser() {
     phone: normalizePhone(form.phone),
     name: form.name.trim(),
     email: form.email || null,
-    role: form.role,
+    role: form.role_ids[0], // Backwards compatibility: primary role
+    role_ids: form.role_ids,
     department_id: form.departmentId || null
   }
 
@@ -581,10 +655,11 @@ async function saveUser() {
         name: basePayload.name,
         email: basePayload.email,
         role: basePayload.role,
+        roles: response.data?.data?.roles || users.value.find(u => u.id === form.id)?.roles || [],
         departmentName: departmentNameById(form.departmentId) ||
           users.value.find((u) => u.id === form.id)?.departmentName
       })
-      showNotification('success', response.data?.message || 'User updated successfully')
+      toast.success(response.data?.message || 'User updated successfully')
     } else {
       const response = await usersApi.create({ ...basePayload, password: form.password })
       const createdUser = mapUser({
@@ -593,12 +668,12 @@ async function saveUser() {
       })
       users.value = [createdUser, ...users.value]
       totalUsers.value += 1
-      showNotification('success', response.data?.message || 'User created successfully')
+      toast.success(response.data?.message || 'User created successfully')
     }
     closeModal()
   } catch (error) {
     const message = error.response?.data?.message || 'Failed to save user'
-    showNotification('danger', message)
+    toast.error(message)
   } finally {
     saving.value = false
   }
@@ -622,11 +697,11 @@ async function deactivateUser() {
   try {
     await usersApi.deactivate(userToDeactivate.value.id, { reason: deactivateReason.value || undefined })
     updateUserInList(userToDeactivate.value.id, { status: 'inactive' })
-    showNotification('info', `${userToDeactivate.value.name} has been deactivated`)
+    toast.info(`${userToDeactivate.value.name} has been deactivated`)
     showDeactivateModal.value = false
   } catch (error) {
     const message = error.response?.data?.message || 'Failed to deactivate user'
-    showNotification('danger', message)
+    toast.error(message)
   }
 }
 
@@ -634,23 +709,13 @@ async function reactivateUser(user) {
   try {
     await usersApi.reactivate(user.id)
     updateUserInList(user.id, { status: 'active' })
-    showNotification('success', `${user.name} has been reactivated`)
+    toast.success(`${user.name} has been reactivated`)
   } catch (error) {
     const message = error.response?.data?.message || 'Failed to reactivate user'
-    showNotification('danger', message)
+    toast.error(message)
   }
 }
 
-function showNotification(type, message) {
-  notification.type = type
-  notification.message = message
-  notification.show = true
-  setTimeout(() => { notification.show = false }, 3000)
-}
-
-function roleColor(role) {
-  return roleOptions.value.find(r => r.value === role)?.color || 'secondary'
-}
 function roleLabel(role) {
   return roleOptions.value.find(r => r.value === role)?.label || role
 }
@@ -665,29 +730,594 @@ function exportUsers() {
     { key: 'status', header: 'Status', transform: (v) => v ? v.charAt(0).toUpperCase() + v.slice(1) : v },
     { key: 'lastLogin', header: 'Last Login' }
   ]
-  exportToExcel(filteredUsers.value, columns, `Users_Report_${new Date().toISOString().split('T')[0]}`)
-  showNotification('success', 'Users exported successfully')
+  exportToExcel(users.value, columns, `Users_Report_${new Date().toISOString().split('T')[0]}`)
+  toast.success('Users exported successfully')
 }
 </script>
 
 <style scoped>
+/* Minimal overrides */
 .page-wrap {
-  padding: 20px;
+  padding: var(--md-space-6);
 }
 
-.page-header {
-  margin-bottom: 16px;
+:deep(.table tbody tr) {
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+:deep(.table tbody tr:hover) {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  transform: scale(1.01);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+:deep(.table tbody td) {
+  padding: 18px;
+  vertical-align: middle;
+  color: #334155;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Stunning Avatar Styling */
+:deep(.avatar) {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  border: 3px solid transparent;
+  background: linear-gradient(white, white) padding-box,
+    linear-gradient(135deg, #667eea, #764ba2) border-box;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.avatar:hover) {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 10px 15px -3px rgba(102, 126, 234, 0.4);
+}
+
+/* Beautiful Badge Styling */
+:deep(.badge) {
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+:deep(.badge)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+:deep(.badge:hover)::before {
+  left: 100%;
+}
+
+:deep(.badge-danger) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+:deep(.badge-primary) {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+:deep(.badge-success) {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+:deep(.badge-warning) {
+  background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+:deep(.badge-info) {
+  background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  color: #334155;
+}
+
+:deep(.badge-secondary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+/* Stunning Button Styling */
+:deep(.btn) {
+  border-radius: 14px;
+  padding: 12px 24px;
+  font-weight: 700;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  position: relative;
+  overflow: hidden;
+  letter-spacing: 0.02em;
+}
+
+:deep(.btn)::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+:deep(.btn:hover)::before {
+  left: 100%;
+}
+
+:deep(.btn-primary) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.5);
+  color: white;
+}
+
+:deep(.btn-primary:hover) {
+  background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+  box-shadow: 0 15px 30px -5px rgba(102, 126, 234, 0.6);
+  transform: translateY(-3px);
+}
+
+:deep(.btn-light) {
+  background: white;
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  font-weight: 700;
+}
+
+:deep(.btn-light:hover) {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.2);
+}
+
+:deep(.btn-success) {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  box-shadow: 0 10px 20px -5px rgba(67, 233, 123, 0.5);
+}
+
+:deep(.btn-success:hover) {
+  box-shadow: 0 15px 30px -5px rgba(67, 233, 123, 0.6);
+  transform: translateY(-3px);
+}
+
+:deep(.btn-danger) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 10px 20px -5px rgba(245, 87, 108, 0.5);
+}
+
+:deep(.btn-danger:hover) {
+  box-shadow: 0 15px 30px -5px rgba(245, 87, 108, 0.6);
+  transform: translateY(-3px);
+}
+
+:deep(.btn-sm) {
+  padding: 8px 16px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+
+/* Beautiful Form Controls */
+:deep(.form-control),
+:deep(.form-select) {
+  border-radius: 14px;
+  border: 2px solid #e2e8f0;
+  padding: 12px 18px;
+  font-size: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+  font-weight: 500;
+}
+
+:deep(.form-control:focus),
+:deep(.form-select:focus) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1), 0 10px 20px -5px rgba(102, 126, 234, 0.2);
+  background: white;
+  transform: translateY(-2px);
+}
+
+:deep(.form-label) {
+  font-weight: 700;
+  color: #475569;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 8px;
+}
+
+/* Stunning Pagination */
+:deep(.pagination) {
+  gap: 8px;
+}
+
+:deep(.page-item) {
+  margin: 0;
+}
+
+:deep(.page-link) {
+  border-radius: 12px;
+  border: 2px solid #e2e8f0;
+  color: #667eea;
+  padding: 10px 18px;
+  font-weight: 700;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: white;
+}
+
+:deep(.page-link:hover) {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+  border-color: #667eea;
+  color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(102, 126, 234, 0.2);
+}
+
+:deep(.page-item.active .page-link) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: transparent;
+  color: white;
+  box-shadow: 0 10px 20px -5px rgba(102, 126, 234, 0.5);
+  transform: translateY(-2px);
+}
+
+/* Beautiful Loading Spinner */
+:deep(.spinner-border) {
+  width: 56px;
+  height: 56px;
+  border-width: 5px;
+  border-color: rgba(102, 126, 234, 0.2);
+  border-top-color: #667eea;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Stunning Empty State */
+.text-muted.py-5 {
+  padding: 64px 0 !important;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-radius: 20px;
+}
+
+.text-muted.py-5 .bi {
+  font-size: 80px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 20px;
+  opacity: 0.6;
+}
+
+/* Stunning Modal Design */
+:deep(.modal-content) {
+  border-radius: 24px;
+  border: none;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+:deep(.modal-header) {
+  border-bottom: 2px solid #f1f5f9;
+  padding: 24px 32px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+}
+
+:deep(.modal-title) {
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 24px;
+}
+
+:deep(.modal-body) {
+  padding: 32px;
+}
+
+:deep(.modal-footer) {
+  border-top: 2px solid #f1f5f9;
+  padding: 20px 32px;
+  background: #f8fafc;
+}
+
+/* Beautiful Alert */
+:deep(.alert) {
+  border-radius: 16px;
+  border: none;
+  padding: 16px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+:deep(.alert-success) {
+  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  color: white;
+}
+
+:deep(.alert-danger) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+}
+
+:deep(.alert-info) {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+/* Responsive Improvements */
 @media (max-width: 768px) {
+  .page-wrap {
+    padding: 16px;
+  }
+
   .page-header {
     flex-direction: column;
     align-items: flex-start;
+    padding: 16px;
+  }
+
+  .page-header .title {
+    font-size: 24px;
   }
 
   .page-header>div:last-child {
-    margin-top: 12px;
+    margin-top: 16px;
     width: 100%;
   }
+
+  :deep(.card-body) {
+    padding: 16px;
+  }
+
+  :deep(.table thead th) {
+    font-size: 11px;
+    padding: 12px 10px;
+  }
+
+  :deep(.table tbody td) {
+    padding: 12px 10px;
+    font-size: 13px;
+  }
 }
+
+/* Pagination Layout */
+.pagination-container {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  margin-top: 2rem !important;
+  padding: 1.5rem 1rem !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+.pagination-info {
+  font-size: 0.875rem !important;
+  color: #64748b !important;
+}
+
+/* --- Pagination Fix --- */
+:deep(.pagination) {
+  display: flex !important;
+  list-style: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  gap: 8px !important;
+}
+
+:deep(.pagination .page-item) {
+  margin: 0 !important;
+  display: list-item !important;
+  /* Ensure block/flex doesn't break bootstrap logic */
+}
+
+/* Remove bullets if they somehow persist */
+:deep(.pagination .page-item::before) {
+  display: none !important;
+}
+
+:deep(.page-link) {
+  border-radius: 12px !important;
+  border: none !important;
+  background: #f8fafc !important;
+  color: #64748b !important;
+  width: 40px !important;
+  height: 40px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 600 !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02) !important;
+}
+
+:deep(.page-item.active .page-link) {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+:deep(.page-link:hover:not(.active)) {
+  background: #f1f5f9 !important;
+  color: #334155 !important;
+  transform: translateY(-1px) !important;
+}
+
+/* --- Table Refinement --- */
+.user-row {
+  transition: all 0.3s ease;
+}
+
+.user-row:hover {
+  background-color: rgba(102, 126, 234, 0.04) !important;
+}
+
+.user-profile-cell {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.user-avatar-modern {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 14px !important;
+  font-weight: bold;
+  font-size: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.user-identity {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+.user-email {
+  font-size: 0.85rem;
+}
+
+.role-badge-modern {
+  padding: 8px 12px !important;
+  border-radius: 10px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.3px;
+  font-size: 0.75rem !important;
+  text-transform: uppercase;
+}
+
+/* Status Indicator */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 30px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.status-indicator.active {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.status-indicator.inactive {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.active .status-dot {
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.active .status-dot::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: inherit;
+  animation: pulse 2s infinite;
+}
+
+.inactive .status-dot {
+  background: #ef4444;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+
+  100% {
+    transform: scale(2.5);
+    opacity: 0;
+  }
+}
+
+/* Role Multi-Select */
+.role-multi-select {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.role-chip {
+  padding: 8px 16px;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #64748b;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.role-chip:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.role-chip.active {
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.role-chip.active i.bi-check-lg {
+  color: #667eea;
+}
+
+/* Scrollbar and rest persist below... */
 </style>
