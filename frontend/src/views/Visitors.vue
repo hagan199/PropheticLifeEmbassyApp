@@ -19,312 +19,392 @@
 
     <CRow class="g-4">
       <!-- Register Form Card -->
-      <CCol lg="5">
-        <div class="card hover-lift animate-fadeInUp stagger-1">
-          <div class="card-header d-flex align-items-center gap-3">
-            <div class="header-icon">
-              <i class="bi bi-person-plus-fill"></i>
-            </div>
-            <div>
-              <h5 class="mb-0 fw-semibold">Register Visitor</h5>
-              <small class="text-muted">Add a new visitor or partner</small>
-            </div>
-          </div>
-          <CCardBody>
-            <CForm @submit.prevent="addVisitor">
-              <div class="form-group mb-3">
-                <CFormLabel class="form-label-modern">
-                  <i class="bi bi-person me-2"></i>Full Name
-                </CFormLabel>
-                <CFormInput
-                  v-model="form.name"
-                  placeholder="Enter full name"
-                  class="form-input-modern"
-                />
+      <CCol lg="4">
+        <MaterialCard>
+          <template #header>
+            <div class="d-flex align-items-center gap-3">
+              <div class="header-icon-box bg-primary-subtle text-primary">
+                <i class="bi bi-person-plus-fill"></i>
               </div>
-
-              <div class="form-group mb-3">
-                <CFormLabel class="form-label-modern">
-                  <i class="bi bi-phone me-2"></i>Phone Number
-                  <span class="text-danger ms-1">*</span>
-                </CFormLabel>
-                <CFormInput
-                  v-model="form.phone"
-                  placeholder="e.g. 0241234567"
-                  :class="['form-input-modern', { 'is-invalid': phoneError }]"
-                />
-                <transition name="error-fade">
-                  <div v-if="phoneError" class="error-message">
-                    <i class="bi bi-exclamation-circle me-1"></i>{{ phoneError }}
-                  </div>
-                </transition>
+              <div>
+                <h3 class="md-title-large mb-1">Register Visitor</h3>
+                <p class="text-muted small mb-0">Add a new visitor or partner</p>
               </div>
+            </div>
+          </template>
 
-              <CRow class="g-3 mb-4">
-                <CCol sm="6">
-                  <CFormLabel class="form-label-modern">
-                    <i class="bi bi-tag me-2"></i>Category
-                  </CFormLabel>
-                  <CFormSelect v-model="form.category" class="form-input-modern">
-                    <option value="Visitor">Visitor</option>
-                    <option value="Partner">Partner</option>
-                  </CFormSelect>
-                </CCol>
-                <CCol sm="6">
-                  <CFormLabel class="form-label-modern">
-                    <i class="bi bi-calendar3 me-2"></i>Date
-                  </CFormLabel>
-                  <CFormInput type="date" v-model="form.date" class="form-input-modern" />
-                </CCol>
-              </CRow>
+          <CForm @submit.prevent="addVisitor" class="visitor-form">
+            <MaterialInput v-model="form.name" label="Full Name" required />
 
-              <CButton
-                color="primary"
-                type="submit"
-                class="w-100 btn-submit"
-                :disabled="isSubmitting"
-              >
-                <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
-                <i v-else class="bi bi-plus-lg me-2"></i>
-                {{ isSubmitting ? 'Saving...' : 'Register Visitor' }}
-              </CButton>
-            </CForm>
-          </CCardBody>
-        </div>
+            <CRow class="g-3">
+              <CCol sm="6">
+                <MaterialInput v-model="form.phone" label="Phone Number" required :error="phoneError" />
+              </CCol>
+              <CCol sm="6">
+                <MaterialInput v-model="form.occupation" label="Occupation/Job" />
+              </CCol>
+            </CRow>
 
-        <!-- Quick Stats -->
+            <CRow class="g-3">
+              <CCol sm="6">
+                <MaterialInput v-model="form.category" label="Category" type="select" required>
+                  <option value="Visitor">Visitor</option>
+                  <option value="Partner">Partner</option>
+                  <option value="Wants to be a Member">Wants to be a Member</option>
+                </MaterialInput>
+              </CCol>
+              <CCol sm="6">
+                <MaterialInput v-model="form.service_type" label="Service Type" type="select" required>
+                  <option value="Sunday">Sunday Service</option>
+                  <option value="Wednesday">Wednesday Mid-week</option>
+                  <option value="Special">Special Program</option>
+                </MaterialInput>
+              </CCol>
+            </CRow>
+
+            <MaterialInput type="date" v-model="form.date" label="First Visit Date" required />
+
+            <MaterialButton type="submit" class="w-100" :loading="isSubmitting" icon="bi bi-person-plus-fill">
+              Register Visitor
+            </MaterialButton>
+          </CForm>
+        </MaterialCard>
+
+        <!-- Dynamic Stats Card -->
         <div class="stats-grid mt-4">
-          <div class="mini-stat animate-fadeInUp stagger-2">
-            <div class="mini-stat-icon visitors">
+          <div class="md-mini-card animate-fadeInUp stagger-2">
+            <div class="icon-box visitors">
               <i class="bi bi-people"></i>
             </div>
-            <div class="mini-stat-content">
-              <div class="mini-stat-value">{{ visitorCount }}</div>
-              <div class="mini-stat-label">Visitors</div>
+            <div class="details">
+              <div class="value">{{ visitorCount }}</div>
+              <div class="label">Visitors</div>
             </div>
           </div>
-          <div class="mini-stat animate-fadeInUp stagger-3">
-            <div class="mini-stat-icon partners">
+          <div class="md-mini-card animate-fadeInUp stagger-3">
+            <div class="icon-box partners">
               <i class="bi bi-star"></i>
             </div>
-            <div class="mini-stat-content">
-              <div class="mini-stat-value">{{ partnerCount }}</div>
-              <div class="mini-stat-label">Partners</div>
+            <div class="details">
+              <div class="value">{{ partnerCount }}</div>
+              <div class="label">Partners</div>
+            </div>
+          </div>
+          <div class="md-mini-card animate-fadeInUp stagger-4 w-100 mt-2">
+            <div class="icon-box members">
+              <i class="bi bi-person-heart"></i>
+            </div>
+            <div class="details">
+              <div class="value">{{ memberCount }}</div>
+              <div class="label">Want to be Members</div>
             </div>
           </div>
         </div>
       </CCol>
 
       <!-- Recent Visitors Card -->
-      <CCol lg="7">
-        <div class="card hover-lift animate-fadeInUp stagger-2">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center gap-3">
-              <div class="header-icon">
-                <i class="bi bi-clock-history"></i>
+      <CCol lg="8">
+        <MaterialCard>
+          <template #header>
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="d-flex align-items-center gap-3">
+                <div class="header-icon-box bg-success-subtle text-success">
+                  <i class="bi bi-clock-history"></i>
+                </div>
+                <div>
+                  <h3 class="md-title-large mb-1">Recent Activity</h3>
+                  <p class="text-muted small mb-0">Follow up with your visitors</p>
+                </div>
               </div>
-              <div>
-                <h5 class="mb-0 fw-semibold">Recent Visitors</h5>
-                <small class="text-muted">Latest registered visitors</small>
-              </div>
-            </div>
-            <span class="badge-count">
-              <i class="bi bi-people-fill me-1"></i>
-              {{ total }}
-            </span>
-          </div>
-          <CCardBody class="p-0">
-            <div v-if="isLoading" class="table-loading">
-              <div v-for="i in 3" :key="i" class="skeleton-row">
-                <div class="skeleton skeleton-avatar"></div>
-                <div class="skeleton-content">
-                  <div class="skeleton skeleton-text" style="width: 60%"></div>
-                  <div class="skeleton skeleton-text" style="width: 40%"></div>
+              <div class="search-box">
+                <div class="input-group">
+                  <span class="input-group-text bg-transparent border-end-0">
+                    <i class="bi bi-search text-muted opacity-50"></i>
+                  </span>
+                  <input type="text" v-model="searchQuery" class="form-control border-start-0 ps-0"
+                    placeholder="Search name/phone...">
                 </div>
               </div>
             </div>
-            <div v-else-if="visitors.length === 0" class="empty-state">
-              <div class="empty-state-icon">
+          </template>
+
+          <div class="visitors-table-container">
+            <div v-if="isLoading" class="p-5 text-center">
+              <CSpinner color="primary" variant="grow" />
+              <p class="text-muted mt-2">Loading activity...</p>
+            </div>
+
+            <div v-else-if="visitors.length === 0" class="empty-state p-5 text-center">
+              <div class="empty-icon-wrap mb-3">
                 <i class="bi bi-person-x"></i>
               </div>
-              <h5 class="empty-state-title">No visitors yet</h5>
-              <p class="empty-state-text">Start by registering your first visitor using the form</p>
+              <h4 class="md-title-medium">No results found</h4>
+              <p class="text-muted small">Try a different search or register a new visitor</p>
             </div>
-            <div v-else class="table-responsive">
-              <table class="table table-modern">
-                <thead>
-                  <tr>
-                    <th>Visitor</th>
-                    <th>Phone</th>
-                    <th>Category</th>
-                    <th>Date</th>
-                    <th class="text-end">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr
-                    v-for="(v, index) in visitors"
-                    :key="v.id"
-                    class="table-row-animated"
-                    :style="{ animationDelay: `${index * 0.05}s` }"
-                  >
-                    <td>
-                      <div class="visitor-info">
-                        <div class="visitor-avatar" :class="v.category.toLowerCase()">
+
+            <div v-else>
+              <CTable hover borderless align="middle" class="mb-0">
+                <CTableHead>
+                  <CTableRow>
+                    <CTableHeaderCell class="bg-transparent text-muted small pb-3">VISITOR</CTableHeaderCell>
+                    <CTableHeaderCell class="bg-transparent text-muted small pb-3">OCCUPATION</CTableHeaderCell>
+                    <CTableHeaderCell class="bg-transparent text-muted small pb-3">CATEGORY</CTableHeaderCell>
+                    <CTableHeaderCell class="bg-transparent text-muted small pb-3">DATE</CTableHeaderCell>
+                    <CTableHeaderCell class="bg-transparent text-muted small pb-3 text-end">ACTIONS</CTableHeaderCell>
+                  </CTableRow>
+                </CTableHead>
+                <CTableBody>
+                  <CTableRow v-for="v in visitors" :key="v.id" class="visitor-row">
+                    <CTableDataCell>
+                      <div class="d-flex align-items-center gap-3">
+                        <CAvatar
+                          :color="v.category === 'Partner' ? 'success' : (v.category === 'Wants to be a Member' ? 'info' : 'primary')"
+                          size="md" class="visitor-avatar">
                           {{ getInitials(v.name) }}
+                        </CAvatar>
+                        <div>
+                          <div class="fw-bold text-dark">{{ v.name }}</div>
+                          <div class="text-muted x-small">
+                            <i class="bi bi-telephone-fill me-1 opacity-50"></i>{{ v.phone }}
+                          </div>
                         </div>
-                        <div class="visitor-name">{{ v.name || 'Unknown' }}</div>
                       </div>
-                    </td>
-                    <td>
-                      <span class="phone-number">
-                        <i class="bi bi-telephone me-1"></i>{{ v.phone }}
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div class="text-dark small">{{ v.occupation || 'Not specified' }}</div>
+                      <div class="text-muted x-small opacity-50">{{ v.service_type || 'Sunday' }} Service</div>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <span v-if="v.category === 'Wants to be a Member'"
+                        class="badge rounded-pill px-3 py-2 border-0 bg-info-subtle text-info">
+                        <i class="bi bi-person-heart me-1"></i>Member Int.
                       </span>
-                    </td>
-                    <td>
-                      <span :class="['category-badge', v.category.toLowerCase()]">
-                        <i :class="['bi', v.category === 'Partner' ? 'bi-star-fill' : 'bi-person']"></i>
+                      <span v-else class="badge rounded-pill px-3 py-2 border-0"
+                        :class="v.category === 'Partner' ? 'bg-success-subtle text-success' : 'bg-primary-subtle text-primary'">
+                        <i :class="['bi me-1', v.category === 'Partner' ? 'bi-star-fill' : 'bi-person']"></i>
                         {{ v.category }}
                       </span>
-                    </td>
-                    <td>
-                      <span class="date-text">
-                        <i class="bi bi-calendar3 me-1"></i>{{ formatDate(v.date) }}
-                      </span>
-                    </td>
-                    <td class="text-end">
-                      <button class="btn-action" @click="openEditVisitor(v)">
-                        <i class="bi bi-pencil"></i>
-                      </button>
-                      <button class="btn-action btn-action-danger" @click="confirmDelete(v)">
-                        <i class="bi bi-trash"></i>
-                      </button>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+                    </CTableDataCell>
+                    <CTableDataCell>
+                      <div class="text-dark fw-medium small">{{ formatDate(v.first_visit_date || v.date) }}</div>
+                      <div class="text-muted x-small opacity-50">Registered</div>
+                    </CTableDataCell>
+                    <CTableDataCell class="text-end">
+                      <div class="d-flex justify-content-end gap-2">
+                        <button class="md-icon-btn shadow-none bg-light text-primary" @click="openEditVisitor(v)"
+                          title="Edit">
+                          <i class="bi bi-pencil-fill"></i>
+                        </button>
+                        <button class="md-icon-btn shadow-none bg-light text-danger" @click="confirmDelete(v)"
+                          title="Delete">
+                          <i class="bi bi-trash3-fill"></i>
+                        </button>
+                      </div>
+                    </CTableDataCell>
+                  </CTableRow>
+                </CTableBody>
+              </CTable>
+
+              <!-- Pagination -->
+              <div class="d-flex justify-content-between align-items-center p-4 border-top">
+                <div class="text-muted small">
+                  Showing {{ (pagination.current_page - 1) * pagination.per_page + 1 }} -
+                  {{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }}
+                  of {{ pagination.total }} records
+                </div>
+                <CPagination align="end" class="mb-0">
+                  <CPaginationItem :disabled="pagination.current_page === 1"
+                    @click="changePage(pagination.current_page - 1)" pointer>
+                    <i class="bi bi-chevron-left"></i>
+                  </CPaginationItem>
+                  <CPaginationItem v-for="p in pagination.last_page" :key="p" :active="p === pagination.current_page"
+                    @click="changePage(p)" pointer>
+                    {{ p }}
+                  </CPaginationItem>
+                  <CPaginationItem :disabled="pagination.current_page === pagination.last_page"
+                    @click="changePage(pagination.current_page + 1)" pointer>
+                    <i class="bi bi-chevron-right"></i>
+                  </CPaginationItem>
+                </CPagination>
+              </div>
             </div>
-          </CCardBody>
-        </div>
+          </div>
+        </MaterialCard>
       </CCol>
     </CRow>
 
     <!-- Edit Modal -->
-    <CModal
-      :visible="editModalVisible"
-      @close="editModalVisible = false"
-      alignment="center"
-      backdrop="static"
-    >
-      <div class="modal-content-modern">
-        <CModalHeader class="modal-header-modern">
+    <CModal :visible="editModalVisible" @close="editModalVisible = false" alignment="center" backdrop="static"
+      class="modal-bottom-sheet">
+      <MaterialCard class="mb-0 border-0">
+        <template #header>
           <div class="d-flex align-items-center gap-3">
-            <div class="modal-icon">
+            <div class="header-icon-box bg-primary-subtle text-primary">
               <i class="bi bi-pencil-square"></i>
             </div>
             <div>
-              <CModalTitle class="fw-semibold">Edit Visitor</CModalTitle>
-              <small class="text-muted">Update visitor information</small>
+              <h3 class="md-title-large mb-1">Edit Visitor</h3>
+              <p class="text-muted small mb-0">Update visitor information</p>
             </div>
           </div>
-        </CModalHeader>
-        <CModalBody class="modal-body-modern">
-          <div class="form-group mb-3">
-            <CFormLabel class="form-label-modern">
-              <i class="bi bi-person me-2"></i>Name
-            </CFormLabel>
-            <CFormInput v-model="editVisitor.name" class="form-input-modern" />
-          </div>
-          <div class="form-group mb-3">
-            <CFormLabel class="form-label-modern">
-              <i class="bi bi-phone me-2"></i>Phone
-            </CFormLabel>
-            <CFormInput v-model="editVisitor.phone" class="form-input-modern" />
-          </div>
-          <div class="form-group mb-3">
-            <CFormLabel class="form-label-modern">
-              <i class="bi bi-tag me-2"></i>Category
-            </CFormLabel>
-            <CFormSelect v-model="editVisitor.category" class="form-input-modern">
-              <option value="Visitor">Visitor</option>
-              <option value="Partner">Partner</option>
-            </CFormSelect>
-          </div>
-          <div class="form-group">
-            <CFormLabel class="form-label-modern">
-              <i class="bi bi-calendar3 me-2"></i>Date
-            </CFormLabel>
-            <CFormInput type="date" v-model="editVisitor.date" class="form-input-modern" />
-          </div>
-        </CModalBody>
-        <CModalFooter class="modal-footer-modern">
-          <CButton color="light" @click="editModalVisible = false">
-            <i class="bi bi-x-lg me-2"></i>Cancel
-          </CButton>
-          <CButton color="primary" @click="saveEditVisitor">
-            <i class="bi bi-check-lg me-2"></i>Save Changes
-          </CButton>
-        </CModalFooter>
-      </div>
+        </template>
+
+        <CRow class="g-3 mb-4">
+          <CCol md="6">
+            <div class="md-input-wrapper">
+              <input v-model="editVisitor.name" type="text" class="md-input border-0" required placeholder=" " />
+              <label class="md-label-floating">Name</label>
+            </div>
+          </CCol>
+          <CCol md="6">
+            <div class="md-input-wrapper">
+              <input v-model="editVisitor.phone" type="text" class="md-input border-0" required placeholder=" " />
+              <label class="md-label-floating">Phone</label>
+            </div>
+          </CCol>
+        </CRow>
+
+        <CRow class="g-3 mb-4">
+          <CCol md="6">
+            <div class="md-input-wrapper">
+              <input v-model="editVisitor.occupation" type="text" class="md-input border-0" placeholder=" " />
+              <label class="md-label-floating">Occupation/Job</label>
+            </div>
+          </CCol>
+          <CCol md="6">
+            <div class="md-input-wrapper">
+              <select v-model="editVisitor.category" class="md-input border-0" required>
+                <option value="Visitor">Visitor</option>
+                <option value="Partner">Partner</option>
+                <option value="Wants to be a Member">Wants to be a Member</option>
+              </select>
+              <label class="md-label-floating">Category</label>
+            </div>
+          </CCol>
+        </CRow>
+
+        <CRow class="g-3 mb-4">
+          <CCol md="6">
+            <div class="md-input-wrapper">
+              <select v-model="editVisitor.service_type" class="md-input border-0" required>
+                <option value="Sunday">Sunday Service</option>
+                <option value="Wednesday">Wednesday Mid-week</option>
+                <option value="Special">Special Program</option>
+              </select>
+              <label class="md-label-floating">Service Type</label>
+            </div>
+          </CCol>
+          <CCol md="6">
+            <div class="md-input-wrapper">
+              <input type="date" v-model="editVisitor.date" class="md-input border-0" required />
+              <label class="md-label-floating">Date</label>
+            </div>
+          </CCol>
+        </CRow>
+
+        <div class="d-flex gap-3 mt-5">
+          <button class="md-btn md-btn-tonal flex-grow-1 py-3" @click="editModalVisible = false">
+            Cancel
+          </button>
+          <button class="md-btn md-btn-filled flex-grow-1 py-3" @click="saveEditVisitor">
+            Save Changes
+          </button>
+        </div>
+      </MaterialCard>
     </CModal>
 
-    <!-- Success Toast -->
-    <transition name="toast-slide">
-      <div v-if="showToast" class="toast-notification" :class="toastType">
-        <div class="toast-icon">
-          <i :class="toastType === 'success' ? 'bi bi-check-circle-fill' : 'bi bi-exclamation-circle-fill'"></i>
-        </div>
-        <div class="toast-content">
-          <div class="toast-title">{{ toastTitle }}</div>
-          <div class="toast-message">{{ toastMessage }}</div>
-        </div>
-        <button class="toast-close" @click="showToast = false">
-          <i class="bi bi-x"></i>
-        </button>
-      </div>
-    </transition>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import {
-  CRow, CCol, CCardBody, CForm, CFormLabel,
-  CFormInput, CFormSelect, CButton, CModal, CModalHeader,
-  CModalTitle, CModalBody, CModalFooter
+  CRow, CCol, CForm, CModal, CSpinner,
+  CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell,
+  CAvatar, CPagination, CPaginationItem
 } from '@coreui/vue'
+import PageHeader from '../components/shared/PageHeader.vue'
+import { MaterialCard, MaterialInput, MaterialButton } from '../components/material'
 import Breadcrumbs from '../components/Breadcrumbs.vue'
+import { useToast } from '../composables/useToast'
 import { exportToExcel, formatDateForExport } from '../utils/export.js'
+import { visitorsApi } from '../api/visitors.js'
 
 // State
 const form = ref({
   name: '',
   phone: '',
   category: 'Visitor',
+  service_type: 'Sunday',
+  occupation: '',
   date: new Date().toISOString().slice(0, 10)
 })
 const phoneError = ref('')
 const isSubmitting = ref(false)
 const isLoading = ref(false)
-const visitors = ref([
-  { id: 1, name: 'Ama Kofi', phone: '0241234567', category: 'Visitor', date: new Date().toISOString().slice(0, 10) },
-  { id: 2, name: 'Yaw Poku', phone: '0202223333', category: 'Partner', date: new Date(Date.now() - 86400000).toISOString().slice(0, 10) }
-])
+const searchQuery = ref('')
+const visitors = ref([])
+const pagination = ref({
+  current_page: 1,
+  last_page: 1,
+  total: 0,
+  per_page: 10
+})
+const counts = ref({ visitor_count: 0, partner_count: 0, member_count: 0 })
 
 // Edit Modal State
 const editModalVisible = ref(false)
-const editVisitor = reactive({ id: '', name: '', phone: '', category: '', date: '' })
+const editVisitor = ref({ id: '', name: '', phone: '', category: '', service_type: '', occupation: '', date: '' })
 
 // Toast State
-const showToast = ref(false)
-const toastType = ref('success')
-const toastTitle = ref('')
-const toastMessage = ref('')
+const toast = useToast()
 
 // Computed
-const total = computed(() => visitors.value.length)
-const visitorCount = computed(() => visitors.value.filter(v => v.category === 'Visitor').length)
-const partnerCount = computed(() => visitors.value.filter(v => v.category === 'Partner').length)
+const total = computed(() => pagination.value.total)
+const visitorCount = computed(() => counts.value.visitor_count)
+const partnerCount = computed(() => counts.value.partner_count)
+const memberCount = computed(() => counts.value.member_count)
+
+onMounted(() => {
+  fetchVisitors()
+})
+
+// Search watcher
+watch(searchQuery, () => {
+  pagination.value.current_page = 1
+  fetchVisitors()
+})
+
+async function fetchVisitors(page = 1) {
+  isLoading.value = true
+  try {
+    const res = await visitorsApi.getAll({
+      page,
+      search: searchQuery.value,
+      per_page: pagination.value.per_page
+    })
+
+    visitors.value = res.data?.data || []
+    pagination.value = {
+      current_page: res.data?.current_page || 1,
+      last_page: res.data?.last_page || 1,
+      total: res.data?.total || 0,
+      per_page: res.data?.per_page || 10
+    }
+    counts.value.visitor_count = res.data?.visitor_count || 0
+    counts.value.partner_count = res.data?.partner_count || 0
+    counts.value.member_count = res.data?.member_count || 0
+  } catch (err) {
+    toast.error('Failed to load visitors')
+  } finally {
+    isLoading.value = false
+  }
+}
+
+function changePage(page) {
+  if (page < 1 || page > pagination.value.last_page) return
+  fetchVisitors(page)
+}
 
 // Helper Functions
 function getInitials(name) {
@@ -334,24 +414,23 @@ function getInitials(name) {
 
 function formatDate(date) {
   if (!date) return '-'
+
+  // Parse date string (treat as local to avoid offset shifts)
   const d = new Date(date)
+  if (isNaN(d.getTime())) return '-'
+
   const today = new Date()
   const yesterday = new Date(today)
   yesterday.setDate(yesterday.getDate() - 1)
 
-  if (d.toDateString() === today.toDateString()) return 'Today'
-  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  // Use local matching for Today/Yesterday
+  const dateStr = d.toLocaleDateString()
+  if (dateStr === today.toLocaleDateString()) return 'Today'
+  if (dateStr === yesterday.toLocaleDateString()) return 'Yesterday'
 
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
-function showNotification(type, title, message) {
-  toastType.value = type
-  toastTitle.value = title
-  toastMessage.value = message
-  showToast.value = true
-  setTimeout(() => { showToast.value = false }, 4000)
-}
 
 // Validation
 function validatePhone(phone) {
@@ -399,51 +478,90 @@ async function addVisitor() {
     return
   }
 
-  if (!form.value.name.trim()) {
-    return
-  }
+  if (!form.value.name.trim()) return
 
   isSubmitting.value = true
+  try {
+    const res = await visitorsApi.create({
+      name: form.value.name,
+      phone: form.value.phone,
+      category: form.value.category,
+      service_type: form.value.service_type,
+      occupation: form.value.occupation,
+      date: form.value.date
+    })
 
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 800))
-
-  const id = visitors.value.length ? Math.max(...visitors.value.map(v => v.id)) + 1 : 1
-  visitors.value = [{
-    id,
-    name: form.value.name,
-    phone: form.value.phone,
-    category: form.value.category,
-    date: form.value.date
-  }, ...visitors.value]
-
-  form.value = { name: '', phone: '', category: 'Visitor', date: new Date().toISOString().slice(0, 10) }
-  isSubmitting.value = false
-
-  showNotification('success', 'Success!', 'Visitor has been registered successfully')
+    if (res.data.success) {
+      toast.success('Visitor registered successfully')
+      form.value = {
+        name: '',
+        phone: '',
+        category: 'Visitor',
+        service_type: 'Sunday',
+        occupation: '',
+        date: new Date().toISOString().slice(0, 10)
+      }
+      fetchVisitors()
+    }
+  } catch (err) {
+    toast.error('Failed to register visitor')
+  } finally {
+    isSubmitting.value = false
+  }
 }
 
 function openEditVisitor(v) {
-  Object.assign(editVisitor, v)
-  if (!editVisitor.date) {
-    editVisitor.date = new Date().toISOString().slice(0, 10)
+  // Ensure we get a clean date string (YYYY-MM-DD)
+  let dateVal = ''
+  if (v.first_visit_date) {
+    dateVal = String(v.first_visit_date).slice(0, 10)
+  } else if (v.created_at) {
+    dateVal = String(v.created_at).slice(0, 10)
+  } else {
+    dateVal = new Date().toISOString().slice(0, 10)
+  }
+
+  editVisitor.value = {
+    ...v,
+    service_type: v.service_type || 'Sunday',
+    occupation: v.occupation || '',
+    date: dateVal
   }
   editModalVisible.value = true
 }
 
-function saveEditVisitor() {
-  const idx = visitors.value.findIndex(vis => vis.id === editVisitor.id)
-  if (idx !== -1) {
-    visitors.value[idx] = { ...editVisitor }
+async function saveEditVisitor() {
+  try {
+    const res = await visitorsApi.update(editVisitor.value.id, {
+      name: editVisitor.value.name,
+      phone: editVisitor.value.phone,
+      category: editVisitor.value.category,
+      service_type: editVisitor.value.service_type,
+      occupation: editVisitor.value.occupation,
+      date: editVisitor.value.date
+    })
+
+    if (res.data.success) {
+      toast.success('Visitor updated successfully')
+      editModalVisible.value = false
+      fetchVisitors(pagination.value.current_page)
+    }
+  } catch (err) {
+    toast.error('Failed to update visitor')
   }
-  editModalVisible.value = false
-  showNotification('success', 'Updated!', 'Visitor information has been updated')
 }
 
-function confirmDelete(v) {
-  if (confirm(`Are you sure you want to delete ${v.name || 'this visitor'}?`)) {
-    visitors.value = visitors.value.filter(vis => vis.id !== v.id)
-    showNotification('success', 'Deleted!', 'Visitor has been removed')
+async function confirmDelete(v) {
+  if (confirm(`Are you sure you want to remove ${v.name}?`)) {
+    try {
+      const res = await visitorsApi.delete(v.id)
+      if (res.data.success) {
+        toast.success('Visitor removed')
+        fetchVisitors()
+      }
+    } catch (err) {
+      toast.error('Failed to remove visitor')
+    }
   }
 }
 
@@ -455,455 +573,227 @@ function exportVisitors() {
     { key: 'date', header: 'Date', transform: (v) => formatDateForExport(v) }
   ]
   exportToExcel(visitors.value, columns, `Visitors_${new Date().toISOString().split('T')[0]}`)
-  showNotification('success', 'Exported!', 'Visitors data has been exported to Excel')
+  toast.success('Visitors data has been exported to Excel')
 }
 </script>
 
 <style scoped>
-/* Header Icon */
-.header-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+.page-wrap {
+  padding: var(--md-space-6);
+  min-height: 100vh;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--primary);
-  font-size: 1.25rem;
-}
-
-/* Badge Count */
-.badge-count {
-  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
-  color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  font-size: 0.875rem;
-  font-weight: 600;
-  display: inline-flex;
-  align-items: center;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  font-size: 1.5rem;
 }
 
 /* Form Styles */
-.form-label-modern {
-  font-weight: 500;
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-  margin-bottom: 0.5rem;
-  display: flex;
-  align-items: center;
-}
-
-.form-input-modern {
-  background: var(--bg-input);
-  border: 1.5px solid var(--border-color);
+.md-input-wrapper {
+  position: relative;
+  background: #f8fafc;
   border-radius: 12px;
-  padding: 0.75rem 1rem;
-  transition: all 0.2s ease;
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
 }
 
-.form-input-modern:hover {
-  border-color: var(--primary-light);
-}
-
-.form-input-modern:focus {
-  background: var(--bg-card);
+.md-input-wrapper:focus-within {
+  background: white;
   border-color: var(--primary);
   box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 
-.form-input-modern.is-invalid {
-  border-color: var(--danger);
+.md-input {
+  width: 100%;
+  background: transparent;
+  outline: none;
+  font-size: 1rem;
+  padding-top: 12px;
+  color: #1e293b;
 }
 
-.form-input-modern.is-invalid:focus {
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+.md-label-floating {
+  position: absolute;
+  left: 16px;
+  top: 14px;
+  font-size: 0.85rem;
+  color: #64748b;
+  pointer-events: none;
+  transition: all 0.2s;
 }
 
-/* Error Message */
-.error-message {
-  color: var(--danger);
-  font-size: 0.8125rem;
-  margin-top: 0.5rem;
-  display: flex;
-  align-items: center;
-}
-
-.error-fade-enter-active,
-.error-fade-leave-active {
-  transition: all 0.3s ease;
-}
-
-.error-fade-enter-from,
-.error-fade-leave-to {
-  opacity: 0;
-  transform: translateY(-10px);
-}
-
-/* Submit Button */
-.btn-submit {
-  padding: 0.875rem 1.5rem;
+.md-input:focus+.md-label-floating,
+.md-input:not(:placeholder-shown)+.md-label-floating,
+select.md-input+.md-label-floating {
+  top: 4px;
+  font-size: 0.7rem;
+  color: var(--primary);
   font-weight: 600;
+}
+
+.md-btn {
   border-radius: 12px;
-  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
+  font-weight: 600;
+  transition: all 0.2s;
   border: none;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
-  transition: all 0.3s ease;
 }
 
-.btn-submit:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.45);
+.md-btn-filled {
+  background: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
 }
 
-.btn-submit:active:not(:disabled) {
-  transform: translateY(0);
+.md-btn-filled:hover {
+  background: #4f46e5;
+  transform: translateY(-1px);
 }
 
-.btn-submit:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+.md-btn-tonal {
+  background: #f1f5f9;
+  color: #475569;
 }
 
-/* Mini Stats */
+/* Stats */
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
-.mini-stat {
-  background: var(--bg-card);
-  border: 1px solid var(--border-light);
-  border-radius: 14px;
-  padding: 1rem;
+.md-mini-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
   display: flex;
   align-items: center;
-  gap: 0.875rem;
-  transition: all 0.3s ease;
+  gap: 16px;
+  border: 1px solid #e2e8f0;
 }
 
-.mini-stat:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-lg);
-}
-
-.mini-stat-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+.icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 1.25rem;
 }
 
-.mini-stat-icon.visitors {
-  background: rgba(59, 130, 246, 0.1);
+.visitors .icon-box {
+  background: #eff6ff;
   color: #3b82f6;
 }
 
-.mini-stat-icon.partners {
-  background: rgba(16, 185, 129, 0.1);
+.partners .icon-box {
+  background: #f0fdf4;
   color: #10b981;
 }
 
-.mini-stat-value {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
+.members .icon-box {
+  background: #ecfeff;
+  color: #0891b2;
+}
+
+.md-mini-card .value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e293b;
   line-height: 1;
 }
 
-.mini-stat-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 2px;
+.md-mini-card .label {
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
 }
 
-/* Table Styles */
-.table-modern {
-  margin: 0;
+/* Table */
+.visitor-row {
+  transition: all 0.2s;
+  border-bottom: 1px solid #f1f5f9;
 }
 
-.table-modern thead th {
-  font-weight: 600;
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  padding: 1rem 1.25rem;
-  background: var(--bg-hover);
-  border-bottom: 1px solid var(--border-color);
+.visitor-row:hover {
+  background: rgba(99, 102, 241, 0.02);
 }
 
-.table-modern tbody td {
-  padding: 1rem 1.25rem;
-  vertical-align: middle;
-  border-bottom: 1px solid var(--border-light);
+.x-small {
+  font-size: 0.7rem;
 }
 
-.table-modern tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.table-row-animated {
-  animation: fadeInUp 0.4s ease-out forwards;
-  opacity: 0;
-}
-
-/* Visitor Info */
-.visitor-info {
+.empty-icon-wrap {
+  width: 80px;
+  height: 80px;
+  background: #f8fafc;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  justify-content: center;
+  margin: 0 auto;
+  font-size: 2.5rem;
+  color: #cbd5e1;
 }
 
-.visitor-avatar {
+.search-box {
+  width: 300px;
+}
+
+.search-box .input-group {
+  background: #f8fafc;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.search-box .form-control {
+  background: transparent;
+  border: none;
+  padding: 8px 12px;
+}
+
+.search-box .form-control:focus {
+  box-shadow: none;
+}
+
+.md-icon-btn {
   width: 36px;
   height: 36px;
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  color: white;
-}
-
-.visitor-avatar.visitor {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-}
-
-.visitor-avatar.partner {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-}
-
-.visitor-name {
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-/* Phone Number */
-.phone-number {
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-}
-
-/* Category Badge */
-.category-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  padding: 0.375rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.category-badge.visitor {
-  background: rgba(59, 130, 246, 0.1);
-  color: #3b82f6;
-}
-
-.category-badge.partner {
-  background: rgba(16, 185, 129, 0.1);
-  color: #10b981;
-}
-
-/* Date Text */
-.date-text {
-  color: var(--text-muted);
-  font-size: 0.875rem;
-}
-
-/* Action Buttons */
-.btn-action {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
   border: none;
-  background: var(--bg-hover);
-  color: var(--text-secondary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.md-icon-btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(0.95);
+}
+
+.pointer {
   cursor: pointer;
-  transition: all 0.2s ease;
-  margin-left: 0.5rem;
-}
-
-.btn-action:hover {
-  background: var(--primary);
-  color: white;
-  transform: scale(1.05);
-}
-
-.btn-action-danger:hover {
-  background: var(--danger);
-}
-
-/* Loading Skeleton */
-.table-loading {
-  padding: 1rem;
-}
-
-.skeleton-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.skeleton-row:last-child {
-  border-bottom: none;
-}
-
-.skeleton-content {
-  flex: 1;
-}
-
-/* Modal Styles */
-.modal-content-modern {
-  border-radius: 20px;
-  overflow: hidden;
-}
-
-.modal-header-modern {
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.modal-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--primary);
-  font-size: 1.25rem;
-}
-
-.modal-body-modern {
-  padding: 1.5rem;
-}
-
-.modal-footer-modern {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid var(--border-light);
-  gap: 0.75rem;
-}
-
-/* Toast Notification */
-.toast-notification {
-  position: fixed;
-  bottom: 2rem;
-  right: 2rem;
-  background: var(--bg-card);
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-  z-index: 9999;
-  max-width: 400px;
-  border-left: 4px solid;
-}
-
-.toast-notification.success {
-  border-left-color: var(--success);
-}
-
-.toast-notification.error {
-  border-left-color: var(--danger);
-}
-
-.toast-icon {
-  font-size: 1.5rem;
-}
-
-.toast-notification.success .toast-icon {
-  color: var(--success);
-}
-
-.toast-notification.error .toast-icon {
-  color: var(--danger);
-}
-
-.toast-title {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.toast-message {
-  font-size: 0.875rem;
-  color: var(--text-secondary);
-}
-
-.toast-close {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0.25rem;
-  margin-left: auto;
-  opacity: 0.5;
-  transition: opacity 0.2s;
-}
-
-.toast-close:hover {
-  opacity: 1;
-}
-
-.toast-slide-enter-active,
-.toast-slide-leave-active {
-  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.toast-slide-enter-from,
-.toast-slide-leave-to {
-  opacity: 0;
-  transform: translateX(100px);
-}
-
-/* Responsive */
-@media (max-width: 576px) {
-  .stats-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-
-  .toast-notification {
-    left: 1rem;
-    right: 1rem;
-    bottom: 5rem;
-    max-width: none;
-  }
-
-  .table-modern thead th,
-  .table-modern tbody td {
-    padding: 0.75rem;
-  }
-
-  .visitor-avatar {
-    width: 32px;
-    height: 32px;
-    font-size: 0.75rem;
-  }
-}
-
-/* Dark Mode Adjustments */
-.theme-dark .mini-stat {
-  background: var(--bg-card);
-  border-color: var(--border-light);
-}
-
-.theme-dark .toast-notification {
-  background: var(--bg-elevated);
 }
 </style>
