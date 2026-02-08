@@ -716,10 +716,6 @@ async function reactivateUser(user) {
   }
 }
 
-function roleLabel(role) {
-  return roleOptions.value.find(r => r.value === role)?.label || role
-}
-
 function exportUsers() {
   const columns = [
     { key: 'name', header: 'Name' },
