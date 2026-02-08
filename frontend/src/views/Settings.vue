@@ -530,11 +530,14 @@ const tabs = [
 ]
 
 // KPI Computed Properties
-const totalRoles = computed(() => roles.value.length)
-const systemRoles = computed(() => roles.value.filter(r => r.is_system).length)
-const totalPermissions = computed(() => allPermissions.value.length)
-const modulesCount = computed(() => new Set(allPermissions.value.map(p => p.module)).size)
-const multiRoleUsers = computed(() => users.value.filter(u => u.roles && u.roles.length > 1).length)
+const totalRoles = computed(() => roles.value?.length || 0)
+const systemRoles = computed(() => roles.value?.filter(r => r.is_system)?.length || 0)
+const totalPermissions = computed(() => allPermissions.value?.length || 0)
+const modulesCount = computed(() => {
+  if (!allPermissions.value || allPermissions.value.length === 0) return 0
+  return new Set(allPermissions.value.map(p => p.module || 'general')).size
+})
+const multiRoleUsers = computed(() => users.value?.filter(u => u.roles && u.roles.length > 1)?.length || 0)
 
 // --- Expense Categories ---
 const categories = ref([])
@@ -681,12 +684,21 @@ function cancelEditServiceType() {
 // --- Roles & Permissions ---
 const roles = ref([])
 const roleCounts = ref({})
-const allPermissions = [
-  'users.manage', 'attendance.approve', 'attendance.view', 'attendance.record',
-  'finance.manage', 'contributions.manage', 'expenses.manage',
-  'visitors.manage', 'followups.manage', 'broadcasts.send',
-  'department.manage', 'audit.view', 'reports.view'
-]
+const allPermissions = ref([
+  { name: 'users.manage', display_name: 'Manage Users', module: 'users' },
+  { name: 'attendance.approve', display_name: 'Approve Attendance', module: 'attendance' },
+  { name: 'attendance.view', display_name: 'View Attendance', module: 'attendance' },
+  { name: 'attendance.record', display_name: 'Record Attendance', module: 'attendance' },
+  { name: 'finance.manage', display_name: 'Manage Finance', module: 'finance' },
+  { name: 'contributions.manage', display_name: 'Manage Contributions', module: 'contributions' },
+  { name: 'expenses.manage', display_name: 'Manage Expenses', module: 'expenses' },
+  { name: 'visitors.manage', display_name: 'Manage Visitors', module: 'visitors' },
+  { name: 'followups.manage', display_name: 'Manage Follow-ups', module: 'followups' },
+  { name: 'broadcasts.send', display_name: 'Send Broadcasts', module: 'broadcasts' },
+  { name: 'department.manage', display_name: 'Manage Departments', module: 'department' },
+  { name: 'audit.view', display_name: 'View Audit Logs', module: 'audit' },
+  { name: 'reports.view', display_name: 'View Reports', module: 'reports' }
+])
 const selectedRole = ref(null)
 const rolePerms = ref([])
 
@@ -714,7 +726,12 @@ async function fetchRolePermissions(role) {
   isLoadingPerms.value = true
   try {
     const { data } = await rolesApi.getPermissions(role.id)
-    rolePerms.value = data.permissions || []
+    // Update rolePerms with permission names
+    rolePerms.value = data.permissions?.map(p => p.name) || []
+    // Update allPermissions from API if available
+    if (data.all_permissions && data.all_permissions.length > 0) {
+      allPermissions.value = data.all_permissions
+    }
     roleCounts.value[role.id] = rolePerms.value.length
   } catch (error) {
     toast.error('Failed to load permissions', { color: 'danger' })
