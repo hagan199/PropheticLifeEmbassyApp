@@ -307,11 +307,13 @@
         <p class="text-muted">This will permanently delete the visitor record from the system.</p>
 
         <div class="d-flex gap-3 mt-4">
-          <button class="md-btn md-btn-tonal flex-grow-1 py-3" @click="deleteModalVisible = false">
+          <button class="md-btn md-btn-tonal flex-grow-1 py-3" @click="deleteModalVisible = false" :disabled="isDeleting">
             Cancel
           </button>
-          <button class="md-btn md-btn-filled bg-danger flex-grow-1 py-3" @click="deleteVisitor">
-            <i class="bi bi-trash3 me-2"></i>Delete
+          <button class="md-btn md-btn-filled bg-danger flex-grow-1 py-3" @click="deleteVisitor" :disabled="isDeleting">
+            <CSpinner v-if="isDeleting" size="sm" class="me-2" />
+            <i v-else class="bi bi-trash3 me-2"></i>
+            {{ isDeleting ? 'Deleting...' : 'Delete' }}
           </button>
         </div>
       </MaterialCard>
@@ -387,11 +389,13 @@
         </CRow>
 
         <div class="d-flex gap-3 mt-5">
-          <button class="md-btn md-btn-tonal flex-grow-1 py-3" @click="editModalVisible = false">
+          <button class="md-btn md-btn-tonal flex-grow-1 py-3" @click="editModalVisible = false" :disabled="isSavingEdit">
             Cancel
           </button>
-          <button class="md-btn md-btn-filled flex-grow-1 py-3" @click="saveEditVisitor">
-            Save Changes
+          <button class="md-btn md-btn-filled flex-grow-1 py-3" @click="saveEditVisitor" :disabled="isSavingEdit">
+            <CSpinner v-if="isSavingEdit" size="sm" class="me-2" />
+            <i v-else class="bi bi-check-lg me-2"></i>
+            {{ isSavingEdit ? 'Saving...' : 'Save Changes' }}
           </button>
         </div>
       </MaterialCard>
@@ -443,6 +447,10 @@ const editVisitor = ref({ id: '', name: '', phone: '', category: '', service_typ
 // Delete Modal State
 const deleteModalVisible = ref(false)
 const visitorToDelete = ref(null)
+const isDeleting = ref(false)
+
+// Edit loading state
+const isSavingEdit = ref(false)
 
 // Toast State
 const toast = useToast()
@@ -647,7 +655,15 @@ function openEditVisitor(v) {
 }
 
 async function saveEditVisitor() {
+  if (!editVisitor.value.id) {
+    toast.error('No visitor selected for editing')
+    return
+  }
+
+  isSavingEdit.value = true
   try {
+    console.log('Updating visitor:', editVisitor.value.id, editVisitor.value)
+
     const res = await visitorsApi.update(editVisitor.value.id, {
       name: editVisitor.value.name,
       phone: editVisitor.value.phone,
@@ -657,13 +673,21 @@ async function saveEditVisitor() {
       date: editVisitor.value.date
     })
 
+    console.log('Update response:', res.data)
+
     if (res.data.success) {
-      toast.success('Visitor updated successfully')
+      toast.success(`${editVisitor.value.name} updated successfully`)
       editModalVisible.value = false
-      fetchVisitors(pagination.value.current_page)
+      await fetchVisitors(pagination.value.current_page)
+    } else {
+      toast.error(res.data.message || 'Failed to update visitor')
     }
   } catch (err) {
-    toast.error('Failed to update visitor')
+    console.error('Update error:', err)
+    const message = err.response?.data?.message || err.message || 'Failed to update visitor'
+    toast.error(message)
+  } finally {
+    isSavingEdit.value = false
   }
 }
 
@@ -673,21 +697,40 @@ function confirmDelete(v) {
 }
 
 async function deleteVisitor() {
-  if (!visitorToDelete.value) return
+  if (!visitorToDelete.value) {
+    toast.error('No visitor selected for deletion')
+    return
+  }
 
+  isDeleting.value = true
   try {
+    console.log('Deleting visitor:', visitorToDelete.value.id, visitorToDelete.value.name)
+
     const res = await visitorsApi.delete(visitorToDelete.value.id)
+
+    console.log('Delete response:', res.data)
+
     if (res.data.success) {
-      toast.success(`${visitorToDelete.value.name} removed successfully`)
+      const name = visitorToDelete.value.name
+      toast.success(`${name} removed successfully`)
+
       deleteModalVisible.value = false
       visitorToDelete.value = null
+
       // Stay on current page if possible
       const maxPage = Math.ceil((pagination.value.total - 1) / pagination.value.per_page)
       const targetPage = Math.min(pagination.value.current_page, Math.max(1, maxPage))
-      fetchVisitors(targetPage)
+
+      await fetchVisitors(targetPage)
+    } else {
+      toast.error(res.data.message || 'Failed to remove visitor')
     }
   } catch (err) {
-    toast.error('Failed to remove visitor')
+    console.error('Delete error:', err)
+    const message = err.response?.data?.message || err.message || 'Failed to remove visitor'
+    toast.error(message)
+  } finally {
+    isDeleting.value = false
   }
 }
 
