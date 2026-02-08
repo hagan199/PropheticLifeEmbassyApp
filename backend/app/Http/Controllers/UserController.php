@@ -30,11 +30,16 @@ class UserController extends Controller
      */
     public function index(Request $request)
     {
-        $query = \App\Models\User::query()->with('department');
+        $query = \App\Models\User::query()->with(['department', 'roles']);
 
-        // Filter by role
+        // Filter by role (supports both old single role field and new many-to-many)
         if ($request->has('role')) {
-            $query->where('role', $request->role);
+            $query->where(function($q) use ($request) {
+                $q->where('role', $request->role)
+                  ->orWhereHas('roles', function($roleQuery) use ($request) {
+                      $roleQuery->where('name', $request->role);
+                  });
+            });
         }
 
         // Filter by active status
@@ -82,6 +87,7 @@ class UserController extends Controller
     {
         $query = \App\Models\User::query()
             ->select('id', 'name', 'email', 'phone', 'role', 'department_id')
+            ->with('roles')
             ->whereNull('deactivated_at');
 
         // Filter by role if provided
@@ -109,6 +115,7 @@ class UserController extends Controller
 
         $query = \App\Models\User::query()
             ->select('id', 'name', 'email', 'phone', 'role')
+            ->with('roles')
             ->whereNull('deactivated_at');
 
         if ($search) {
@@ -137,10 +144,21 @@ class UserController extends Controller
             'email' => $request->email,
             'phone' => $request->phone,
             'password' => bcrypt($request->password ?? 'password123'),
-            'role' => $request->role,
+            'role' => $request->role, // Keep for backward compatibility
             'department_id' => $request->department_id,
             'status' => 'active',
         ]);
+
+        // Attach multiple roles if provided
+        if ($request->has('role_ids') && is_array($request->role_ids)) {
+            $user->roles()->sync($request->role_ids);
+        } elseif ($request->has('role_ids')) {
+            // Single role provided as string
+            $role = \App\Models\Role::where('name', $request->role_ids)->first();
+            if ($role) {
+                $user->roles()->attach($role->id);
+            }
+        }
 
         // Log audit
         \App\Models\AuditLog::create([
@@ -156,7 +174,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'User created successfully',
-            'data' => $user->load('department'),
+            'data' => $user->load(['department', 'roles']),
         ], 201);
     }
 
@@ -165,7 +183,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        $user = \App\Models\User::with('department')->find($id);
+        $user = \App\Models\User::with(['department', 'roles'])->find($id);
 
         if (!$user) {
             return response()->json([
@@ -185,19 +203,51 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, $id)
     {
+        $user = \App\Models\User::find($id);
 
-        // Mock response
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not found',
+            ], 404);
+        }
+
+        $user->update([
+            'name' => $request->name,
+            'phone' => $request->phone,
+            'email' => $request->email,
+            'role' => $request->role, // Keep for backward compatibility
+            'department_id' => $request->department_id,
+        ]);
+
+        // Update multiple roles if provided
+        if ($request->has('role_ids')) {
+            if (is_array($request->role_ids)) {
+                $user->roles()->sync($request->role_ids);
+            } else {
+                // Single role provided as string
+                $role = \App\Models\Role::where('name', $request->role_ids)->first();
+                if ($role) {
+                    $user->roles()->sync([$role->id]);
+                }
+            }
+        }
+
+        // Log audit
+        \App\Models\AuditLog::create([
+            'user_id' => auth()->id(),
+            'action' => 'users.update',
+            'model_type' => 'User',
+            'model_id' => $user->id,
+            'changes' => json_encode($user->getChanges()),
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
         return response()->json([
             'success' => true,
             'message' => 'User updated successfully',
-            'data' => [
-                'id' => $id,
-                'name' => $request->name,
-                'phone' => $request->phone,
-                'email' => $request->email,
-                'role' => $request->role,
-                'updated_at' => now()->toISOString(),
-            ],
+            'data' => $user->load(['department', 'roles']),
         ]);
     }
 
@@ -235,44 +285,185 @@ class UserController extends Controller
     }
 
     /**
-     * Get all roles
+     * Get all roles with permission counts
      */
     public function getRoles()
     {
-        $roles = [
-            ['id' => 'admin', 'name' => 'Administrator'],
-            ['id' => 'pastor', 'name' => 'Pastor'],
-            ['id' => 'usher', 'name' => 'Usher'],
-            ['id' => 'finance', 'name' => 'Finance Officer'],
-            ['id' => 'pr_follow_up', 'name' => 'PR/Follow-up'],
-            ['id' => 'department_leader', 'name' => 'Department Leader'],
-        ];
+        try {
+            $roles = \App\Models\Role::withCount('permissions')
+                ->select('id', 'name', 'display_name', 'description', 'is_system')
+                ->orderBy('is_system', 'desc')
+                ->orderBy('name')
+                ->get()
+                ->map(function ($role) {
+                    return [
+                        'id' => $role->id,
+                        'name' => $role->name,
+                        'display_name' => $role->display_name,
+                        'description' => $role->description,
+                        'is_system' => $role->is_system,
+                        'permissions_count' => $role->permissions_count,
+                    ];
+                });
 
-        return response()->json([
-            'success' => true,
-            'data' => $roles,
-        ]);
+            return response()->json([
+                'success' => true,
+                'data' => $roles,
+                'total' => $roles->count(),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load roles',
+            ], 500);
+        }
     }
 
     /**
-     * Get permissions for a role
+     * Get permissions for a role from database
      */
     public function getPermissions($role)
     {
-        $permissions = [
-            'admin' => ['users.manage', 'attendance.approve', 'finance.manage', 'broadcasts.send', 'audit.view'],
-            'pastor' => ['attendance.view', 'members.view', 'reports.view'],
-            'usher' => ['attendance.record', 'members.view'],
-            'finance' => ['contributions.manage', 'expenses.manage', 'reports.view'],
-            'pr_follow_up' => ['visitors.manage', 'followups.manage', 'broadcasts.send'],
-            'department_leader' => ['department.manage', 'members.view'],
-        ];
+        try {
+            // Find role by ID or name
+            $roleRecord = \App\Models\Role::where('id', $role)
+                ->orWhere('name', $role)
+                ->firstOrFail();
 
-        return response()->json([
-            'success' => true,
-            'role' => $role,
-            'permissions' => $permissions[$role] ?? [],
-        ]);
+            // Get all permissions for this role
+            $permissions = $roleRecord->permissions()
+                ->select('id', 'name', 'display_name', 'module', 'description')
+                ->orderBy('module')
+                ->orderBy('name')
+                ->get()
+                ->map(function ($permission) {
+                    return [
+                        'id' => $permission->id,
+                        'name' => $permission->name,
+                        'display_name' => $permission->display_name,
+                        'module' => $permission->module,
+                        'description' => $permission->description,
+                    ];
+                });
+
+            // Get all available permissions (for toggle display on frontend)
+            $allPermissions = \App\Models\Permission::select('id', 'name', 'display_name', 'module', 'description')
+                ->orderBy('module')
+                ->orderBy('name')
+                ->get()
+                ->map(function ($permission) {
+                    return [
+                        'id' => $permission->id,
+                        'name' => $permission->name,
+                        'display_name' => $permission->display_name,
+                        'module' => $permission->module,
+                        'description' => $permission->description,
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'role' => [
+                    'id' => $roleRecord->id,
+                    'name' => $roleRecord->name,
+                    'display_name' => $roleRecord->display_name,
+                    'description' => $roleRecord->description,
+                    'is_system' => $roleRecord->is_system,
+                ],
+                'permissions' => $permissions,
+                'all_permissions' => $allPermissions,
+                'total' => $permissions->count(),
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load permissions',
+            ], 500);
+        }
+    }
+
+    /**
+     * Update permissions for a role in database
+     */
+    public function updatePermissions(Request $request, $role)
+    {
+        try {
+            // Validate request
+            $request->validate([
+                'permissions' => 'required|array',
+                'permissions.*' => 'string|exists:permissions,name',
+            ], [
+                'permissions.required' => 'Permissions array is required',
+                'permissions.*.exists' => 'One or more invalid permissions provided',
+            ]);
+
+            // Find role by ID or name
+            $roleRecord = \App\Models\Role::where('id', $role)
+                ->orWhere('name', $role)
+                ->firstOrFail();
+
+            // Prevent modification of system roles
+            if ($roleRecord->is_system && $request->input('permissions') !== $roleRecord->permissions()->pluck('name')->toArray()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot modify permissions for system roles',
+                ], 403);
+            }
+
+            // Get permission IDs from names
+            $permissionIds = \App\Models\Permission::whereIn('name', $request->input('permissions'))
+                ->pluck('id')
+                ->toArray();
+
+            // Sync permissions to the role (replaces existing)
+            $roleRecord->permissions()->sync($permissionIds);
+
+            // Log audit
+            \App\Models\AuditLog::create([
+                'user_id' => auth()->id(),
+                'action' => 'update',
+                'entity_type' => 'Role',
+                'entity_id' => $roleRecord->id,
+                'description' => "Updated permissions for role: {$roleRecord->name}",
+                'changes' => json_encode([
+                    'role_id' => $roleRecord->id,
+                    'role_name' => $roleRecord->name,
+                    'permissions_count' => count($permissionIds),
+                ]),
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Permissions for {$roleRecord->display_name} updated successfully",
+                'data' => [
+                    'role_id' => $roleRecord->id,
+                    'permissions_count' => count($permissionIds),
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Role not found',
+            ], 404);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update permissions: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
