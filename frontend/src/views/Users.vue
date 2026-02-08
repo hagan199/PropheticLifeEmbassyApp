@@ -13,6 +13,53 @@
       </template>
     </PageHeader>
 
+    <!-- KPI Summary Cards -->
+    <div class="kpi-grid mb-4">
+      <div class="kpi-card" style="--delay: 0s">
+        <div class="kpi-icon" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Total Users</div>
+          <div class="kpi-value">{{ totalUsersDisplay }}</div>
+          <div class="kpi-sublabel">{{ activeUsersCount }} active</div>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--delay: 0.1s">
+        <div class="kpi-icon" style="background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%)">
+          <i class="bi bi-person-check-fill"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Active Users</div>
+          <div class="kpi-value">{{ activeUsersCount }}</div>
+          <div class="kpi-sublabel">{{ inactiveUsersCount }} inactive</div>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--delay: 0.2s">
+        <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%)">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Roles</div>
+          <div class="kpi-value">{{ roleOptions.length }}</div>
+          <div class="kpi-sublabel">{{ multiRoleUsersCount }} with multiple</div>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--delay: 0.3s">
+        <div class="kpi-icon" style="background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)">
+          <i class="bi bi-diagram-3-fill"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Departments</div>
+          <div class="kpi-value">{{ departments.length }}</div>
+          <div class="kpi-sublabel">{{ usersWithDeptCount }} assigned</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Filters -->
     <MaterialCard class="mb-4">
       <template #header></template>
@@ -48,8 +95,17 @@
         <div class="fw-semibold">All Users</div>
         <CBadge color="primary">{{ users.length }} of {{ totalUsers }} users</CBadge>
       </template>
-      <div v-if="isLoadingUsers" class="text-center py-5">
-        <CSpinner color="primary" size="lg" />
+      <div v-if="isLoadingUsers" class="skeleton-container">
+        <div v-for="i in 5" :key="i" class="skeleton-row">
+          <div class="skeleton skeleton-avatar"></div>
+          <div class="skeleton skeleton-text" style="width: 30%"></div>
+          <div class="skeleton skeleton-text" style="width: 20%"></div>
+          <div class="skeleton skeleton-badge" style="width: 15%"></div>
+          <div class="skeleton skeleton-text" style="width: 15%"></div>
+          <div class="skeleton skeleton-text" style="width: 10%"></div>
+          <div class="skeleton skeleton-text" style="width: 20%"></div>
+          <div class="skeleton skeleton-actions" style="width: 10%"></div>
+        </div>
       </div>
       <template v-else>
         <CTable v-if="users.length" hover responsive align="middle">
@@ -127,9 +183,22 @@
             </CTableRow>
           </CTableBody>
         </CTable>
-        <div v-else class="text-center py-5 text-muted">
-          <i class="bi bi-inbox fs-1 d-block mb-2"></i>
-          No users found for the current filters.
+        <div v-else class="empty-state">
+          <div class="empty-icon">
+            <i class="bi bi-person-x-fill"></i>
+          </div>
+          <h5 class="empty-title">No Users Found</h5>
+          <p class="empty-subtitle">
+            {{ filters.search || filters.role || filters.status
+              ? 'No users match your current filters. Try adjusting your search criteria.'
+              : 'Get started by adding your first user to the system.' }}
+          </p>
+          <CButton v-if="!filters.search && !filters.role && !filters.status" color="primary" @click="openAddModal">
+            <i class="bi bi-plus-lg me-2"></i>Add Your First User
+          </CButton>
+          <CButton v-else color="secondary" variant="outline" @click="resetFilters">
+            <i class="bi bi-arrow-counterclockwise me-2"></i>Clear Filters
+          </CButton>
         </div>
 
         <!-- Pagination -->
@@ -310,6 +379,12 @@ const totalPages = computed(() => Math.max(1, Math.ceil(totalUsers.value / perPa
 
 const paginatedUsers = computed(() => users.value)
 
+// KPI Computed Properties
+const activeUsersCount = computed(() => users.value.filter(u => u.status === 'active').length)
+const inactiveUsersCount = computed(() => users.value.filter(u => u.status === 'inactive').length)
+const multiRoleUsersCount = computed(() => users.value.filter(u => u.roles && u.roles.length > 1).length)
+const usersWithDeptCount = computed(() => users.value.filter(u => u.departmentName).length)
+
 // Handle search with debounce
 let searchTimeout
 watch(() => filters.search, () => {
@@ -436,7 +511,7 @@ async function fetchRoles() {
 
 function openAddModal() {
   isEditing.value = false
-  Object.assign(form, { id: null, phone: '', name: '', email: '', role: '', departmentId: '', password: '' })
+  Object.assign(form, { id: null, phone: '', name: '', email: '', role: '', role_ids: [], departmentId: '', password: '' })
   clearErrors()
   showModal.value = true
 }
@@ -483,7 +558,7 @@ function closeModal() {
 }
 
 function clearErrors() {
-  Object.assign(errors, { phone: '', name: '', role: '', departmentId: '', password: '' })
+  Object.assign(errors, { phone: '', name: '', role_ids: '', departmentId: '', password: '' })
 }
 
 /**
@@ -1316,4 +1391,223 @@ function exportUsers() {
 }
 
 /* Scrollbar and rest persist below... */
+
+/* ======== KPI SUMMARY CARDS ======== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideUp 0.5s ease-out forwards;
+  opacity: 0;
+  animation-delay: var(--delay, 0s);
+}
+
+.kpi-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+}
+
+.kpi-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-content {
+  flex: 1;
+}
+
+.kpi-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kpi-value {
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+  line-height: 1;
+}
+
+.kpi-sublabel {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ======== EMPTY STATE ======== */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
+  border-radius: 20px;
+  border: 2px dashed rgba(102, 126, 234, 0.2);
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+}
+
+.empty-icon i {
+  font-size: 2.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.empty-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 0.75rem;
+}
+
+.empty-subtitle {
+  font-size: 1rem;
+  color: #64748b;
+  margin-bottom: 1.5rem;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+/* ======== SKELETON LOADERS ======== */
+.skeleton-container {
+  padding: 1.5rem 0;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.skeleton-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.skeleton-text {
+  height: 16px;
+  flex: 1;
+}
+
+.skeleton-badge {
+  height: 24px;
+  border-radius: 12px;
+}
+
+.skeleton-actions {
+  height: 32px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ======== RESPONSIVE IMPROVEMENTS ======== */
+@media (max-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-card {
+    padding: 1.25rem;
+  }
+
+  .kpi-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 1.25rem;
+  }
+
+  .kpi-value {
+    font-size: 1.5rem;
+  }
+
+  .empty-state {
+    padding: 3rem 1.5rem;
+  }
+
+  .empty-icon {
+    width: 60px;
+    height: 60px;
+  }
+
+  .empty-icon i {
+    font-size: 2rem;
+  }
+
+  .empty-title {
+    font-size: 1.25rem;
+  }
+
+  .empty-subtitle {
+    font-size: 0.9rem;
+  }
+}
 </style>
