@@ -1,19 +1,61 @@
 <template>
   <div class="page-wrap">
     <!-- Page Header -->
-    <div class="page-header d-flex justify-content-between align-items-center">
-      <div>
-        <h2 class="title">
-          <span class="gradient-text">Visitors</span>
-        </h2>
-        <Breadcrumbs />
-        <p class="subtitle mt-1">Register first-time visitors and partners</p>
-      </div>
-      <div class="d-flex gap-2">
-        <CButton color="light" class="hover-lift" @click="exportVisitors">
+    <PageHeader
+      title="Visitors"
+      subtitle="Register first-time visitors and partners">
+      <template #actions>
+        <button class="action-btn" @click="exportVisitors">
           <i class="bi bi-download me-2"></i>
-          <span class="desktop-only">Export</span>
-        </CButton>
+          <span>Export</span>
+        </button>
+      </template>
+    </PageHeader>
+
+    <!-- KPI Summary Cards -->
+    <div class="kpi-grid mb-4">
+      <div class="kpi-card" style="--delay: 0s">
+        <div class="kpi-icon" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)">
+          <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Total Visitors</div>
+          <div class="kpi-value">{{ total }}</div>
+          <div class="kpi-sublabel">{{ visitorCount }} visitors</div>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--delay: 0.1s">
+        <div class="kpi-icon" style="background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%)">
+          <i class="bi bi-star-fill"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Partners</div>
+          <div class="kpi-value">{{ partnerCount }}</div>
+          <div class="kpi-sublabel">Active partners</div>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--delay: 0.2s">
+        <div class="kpi-icon" style="background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)">
+          <i class="bi bi-person-heart"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">Want to be Members</div>
+          <div class="kpi-value">{{ memberCount }}</div>
+          <div class="kpi-sublabel">Membership interest</div>
+        </div>
+      </div>
+
+      <div class="kpi-card" style="--delay: 0.3s">
+        <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%)">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <div class="kpi-content">
+          <div class="kpi-label">This Week</div>
+          <div class="kpi-value">{{ weeklyCount }}</div>
+          <div class="kpi-sublabel">New this week</div>
+        </div>
       </div>
     </div>
 
@@ -129,9 +171,15 @@
           </template>
 
           <div class="visitors-table-container">
-            <div v-if="isLoading" class="p-5 text-center">
-              <CSpinner color="primary" variant="grow" />
-              <p class="text-muted mt-2">Loading activity...</p>
+            <div v-if="isLoading" class="skeleton-container">
+              <div v-for="i in 5" :key="i" class="skeleton-row">
+                <div class="skeleton skeleton-avatar"></div>
+                <div class="skeleton skeleton-text" style="width: 35%"></div>
+                <div class="skeleton skeleton-text" style="width: 20%"></div>
+                <div class="skeleton skeleton-badge" style="width: 15%"></div>
+                <div class="skeleton skeleton-text" style="width: 15%"></div>
+                <div class="skeleton skeleton-actions" style="width: 10%"></div>
+              </div>
             </div>
 
             <div v-else-if="visitors.length === 0" class="empty-state p-5 text-center">
@@ -205,24 +253,27 @@
                 </CTableBody>
               </CTable>
 
-              <!-- Pagination -->
-              <div class="d-flex justify-content-between align-items-center p-4 border-top">
-                <div class="text-muted small">
-                  Showing {{ (pagination.current_page - 1) * pagination.per_page + 1 }} -
-                  {{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }}
-                  of {{ pagination.total }} records
+              <!-- Improved Pagination -->
+              <div class="pagination-container">
+                <div class="pagination-info">
+                  Showing <span class="fw-bold text-dark">{{ (pagination.current_page - 1) * pagination.per_page + 1 }}</span> to
+                  <span class="fw-bold text-dark">{{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }}</span>
+                  of <span class="fw-bold text-dark">{{ pagination.total }}</span> records
                 </div>
-                <CPagination align="end" class="mb-0">
+                <CPagination class="mb-0">
                   <CPaginationItem :disabled="pagination.current_page === 1"
-                    @click="changePage(pagination.current_page - 1)" pointer>
+                    @click="changePage(pagination.current_page - 1)">
                     <i class="bi bi-chevron-left"></i>
                   </CPaginationItem>
-                  <CPaginationItem v-for="p in pagination.last_page" :key="p" :active="p === pagination.current_page"
-                    @click="changePage(p)" pointer>
-                    {{ p }}
+                  <CPaginationItem
+                    v-for="page in displayPages"
+                    :key="page"
+                    :active="page === pagination.current_page"
+                    @click="page !== '...' && changePage(page)">
+                    {{ page }}
                   </CPaginationItem>
                   <CPaginationItem :disabled="pagination.current_page === pagination.last_page"
-                    @click="changePage(pagination.current_page + 1)" pointer>
+                    @click="changePage(pagination.current_page + 1)">
                     <i class="bi bi-chevron-right"></i>
                   </CPaginationItem>
                 </CPagination>
@@ -232,6 +283,39 @@
         </MaterialCard>
       </CCol>
     </CRow>
+
+    <!-- Delete Confirmation Modal -->
+    <CModal :visible="deleteModalVisible" @close="deleteModalVisible = false" alignment="center" class="modal-bottom-sheet">
+      <MaterialCard class="mb-0 border-0">
+        <template #header>
+          <div class="d-flex align-items-center gap-3">
+            <div class="header-icon-box bg-danger-subtle text-danger">
+              <i class="bi bi-exclamation-triangle-fill"></i>
+            </div>
+            <div>
+              <h3 class="md-title-large mb-1">Confirm Deletion</h3>
+              <p class="text-muted small mb-0">This action cannot be undone</p>
+            </div>
+          </div>
+        </template>
+
+        <div class="alert alert-danger mb-4">
+          <i class="bi bi-exclamation-circle me-2"></i>
+          Are you sure you want to remove <strong>{{ visitorToDelete?.name }}</strong>?
+        </div>
+
+        <p class="text-muted">This will permanently delete the visitor record from the system.</p>
+
+        <div class="d-flex gap-3 mt-4">
+          <button class="md-btn md-btn-tonal flex-grow-1 py-3" @click="deleteModalVisible = false">
+            Cancel
+          </button>
+          <button class="md-btn md-btn-filled bg-danger flex-grow-1 py-3" @click="deleteVisitor">
+            <i class="bi bi-trash3 me-2"></i>Delete
+          </button>
+        </div>
+      </MaterialCard>
+    </CModal>
 
     <!-- Edit Modal -->
     <CModal :visible="editModalVisible" @close="editModalVisible = false" alignment="center" backdrop="static"
@@ -356,6 +440,10 @@ const counts = ref({ visitor_count: 0, partner_count: 0, member_count: 0 })
 const editModalVisible = ref(false)
 const editVisitor = ref({ id: '', name: '', phone: '', category: '', service_type: '', occupation: '', date: '' })
 
+// Delete Modal State
+const deleteModalVisible = ref(false)
+const visitorToDelete = ref(null)
+
 // Toast State
 const toast = useToast()
 
@@ -364,6 +452,34 @@ const total = computed(() => pagination.value.total)
 const visitorCount = computed(() => counts.value.visitor_count)
 const partnerCount = computed(() => counts.value.partner_count)
 const memberCount = computed(() => counts.value.member_count)
+const weeklyCount = computed(() => {
+  const oneWeekAgo = new Date()
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+  return visitors.value.filter(v => {
+    const visitDate = new Date(v.first_visit_date || v.date || v.created_at)
+    return visitDate >= oneWeekAgo
+  }).length
+})
+
+// Smart pagination display (show max 7 pages with ellipsis)
+const displayPages = computed(() => {
+  const current = pagination.value.current_page
+  const last = pagination.value.last_page
+
+  if (last <= 7) {
+    return Array.from({ length: last }, (_, i) => i + 1)
+  }
+
+  if (current <= 3) {
+    return [1, 2, 3, 4, 5, '...', last]
+  }
+
+  if (current >= last - 2) {
+    return [1, '...', last - 4, last - 3, last - 2, last - 1, last]
+  }
+
+  return [1, '...', current - 1, current, current + 1, '...', last]
+})
 
 onMounted(() => {
   fetchVisitors()
@@ -551,17 +667,27 @@ async function saveEditVisitor() {
   }
 }
 
-async function confirmDelete(v) {
-  if (confirm(`Are you sure you want to remove ${v.name}?`)) {
-    try {
-      const res = await visitorsApi.delete(v.id)
-      if (res.data.success) {
-        toast.success('Visitor removed')
-        fetchVisitors()
-      }
-    } catch (err) {
-      toast.error('Failed to remove visitor')
+function confirmDelete(v) {
+  visitorToDelete.value = v
+  deleteModalVisible.value = true
+}
+
+async function deleteVisitor() {
+  if (!visitorToDelete.value) return
+
+  try {
+    const res = await visitorsApi.delete(visitorToDelete.value.id)
+    if (res.data.success) {
+      toast.success(`${visitorToDelete.value.name} removed successfully`)
+      deleteModalVisible.value = false
+      visitorToDelete.value = null
+      // Stay on current page if possible
+      const maxPage = Math.ceil((pagination.value.total - 1) / pagination.value.per_page)
+      const targetPage = Math.min(pagination.value.current_page, Math.max(1, maxPage))
+      fetchVisitors(targetPage)
     }
+  } catch (err) {
+    toast.error('Failed to remove visitor')
   }
 }
 
@@ -795,5 +921,247 @@ select.md-input+.md-label-floating {
 
 .pointer {
   cursor: pointer;
+}
+
+/* ======== KPI SUMMARY CARDS ======== */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideUp 0.5s ease-out forwards;
+  opacity: 0;
+  animation-delay: var(--delay, 0s);
+}
+
+.kpi-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+}
+
+.kpi-icon {
+  width: 54px;
+  height: 54px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.kpi-content {
+  flex: 1;
+}
+
+.kpi-label {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.kpi-value {
+  font-size: 1.875rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+  line-height: 1;
+}
+
+.kpi-sublabel {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ======== SKELETON LOADERS ======== */
+.skeleton-container {
+  padding: 1.5rem 0;
+}
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 0.75rem;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+.skeleton-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.skeleton-text {
+  height: 16px;
+  flex: 1;
+}
+
+.skeleton-badge {
+  height: 28px;
+  border-radius: 14px;
+}
+
+.skeleton-actions {
+  height: 36px;
+  border-radius: 10px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ======== IMPROVED PAGINATION ======== */
+.pagination-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.25rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  background: #fafbfc;
+}
+
+.pagination-info {
+  font-size: 0.875rem;
+  color: #64748b;
+  font-weight: 500;
+}
+
+:deep(.pagination) {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 6px;
+}
+
+:deep(.pagination .page-item) {
+  margin: 0;
+}
+
+:deep(.page-link) {
+  border-radius: 10px !important;
+  border: none !important;
+  background: white !important;
+  color: #64748b !important;
+  min-width: 38px !important;
+  height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-weight: 600 !important;
+  font-size: 0.875rem !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+  padding: 0 12px !important;
+}
+
+:deep(.page-link:hover) {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
+  color: #6366f1 !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.15) !important;
+}
+
+:deep(.page-item.active .page-link) {
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3) !important;
+  transform: translateY(-2px) !important;
+}
+
+:deep(.page-item.disabled .page-link) {
+  opacity: 0.4 !important;
+  cursor: not-allowed !important;
+  background: #f1f5f9 !important;
+}
+
+/* ======== ACTION BUTTON ======== */
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1.25rem;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: white;
+  color: #64748b;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+  border-color: #6366f1;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.04);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(99, 102, 241, 0.15);
+}
+
+/* ======== RESPONSIVE ======== */
+@media (max-width: 768px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-card {
+    padding: 1.25rem;
+  }
+
+  .pagination-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .pagination-info {
+    font-size: 0.8rem;
+  }
 }
 </style>
