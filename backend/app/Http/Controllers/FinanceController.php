@@ -8,6 +8,8 @@ use App\Http\Requests\Finance\StoreExpenseRequest;
 use App\Http\Requests\Finance\RejectExpenseRequest;
 use App\Http\Requests\Finance\StoreExpenseTypeRequest;
 use App\Models\ExpenseType;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 
 class FinanceController extends Controller
 {
@@ -32,6 +34,15 @@ class FinanceController extends Controller
      */
     public function storeContribution(StoreContributionRequest $request)
     {
+        // Authorization: only users with 'admin' role may create contributions
+        /** @var User|null $user */
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to create contributions',
+            ], 403);
+        }
 
         $newContribution = [
             'id' => 'cont-' . rand(1000, 9999),
@@ -78,6 +89,15 @@ class FinanceController extends Controller
      */
     public function updateContribution(Request $request, $id)
     {
+        /** @var User|null $user */
+        $user = $request->user() ?? Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Contribution updated successfully',
@@ -89,6 +109,15 @@ class FinanceController extends Controller
      */
     public function destroyContribution($id)
     {
+        /** @var User|null $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Contribution deleted successfully',
@@ -135,6 +164,15 @@ class FinanceController extends Controller
      */
     public function storeExpense(StoreExpenseRequest $request)
     {
+        // Authorization: only users with 'admin' role may create expenses
+        /** @var User|null $user */
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to submit expenses',
+            ], 403);
+        }
 
         $newExpense = [
             'id' => 'exp-' . rand(1000, 9999),
@@ -182,6 +220,15 @@ class FinanceController extends Controller
      */
     public function updateExpense(Request $request, $id)
     {
+        /** @var User|null $user */
+        $user = $request->user() ?? Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Expense updated successfully',
@@ -193,6 +240,15 @@ class FinanceController extends Controller
      */
     public function destroyExpense($id)
     {
+        /** @var User|null $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Expense deleted successfully',
@@ -204,6 +260,15 @@ class FinanceController extends Controller
      */
     public function approveExpense($id)
     {
+        /** @var User|null $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Expense approved',
@@ -215,6 +280,14 @@ class FinanceController extends Controller
      */
     public function rejectExpense(RejectExpenseRequest $request, $id)
     {
+        /** @var User|null $user */
+        $user = $request->user() ?? Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+            ], 403);
+        }
 
         return response()->json([
             'success' => true,
@@ -234,9 +307,9 @@ class FinanceController extends Controller
         // Search functionality
         if ($request->has('search') && $request->search) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
@@ -281,6 +354,15 @@ class FinanceController extends Controller
      */
     public function storeExpenseType(StoreExpenseTypeRequest $request)
     {
+        // Authorization: only users with 'admin' role may create expense types
+        /** @var User|null $user */
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to create expense types',
+            ], 403);
+        }
         // Check for duplicates
         $exists = ExpenseType::where('name', $request->name)
             ->where('is_active', true)
@@ -311,6 +393,15 @@ class FinanceController extends Controller
      */
     public function updateExpenseType(Request $request, $id)
     {
+        /** @var User|null $user */
+        $user = $request->user() ?? Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
         $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'nullable|string|max:500',
@@ -355,6 +446,15 @@ class FinanceController extends Controller
      */
     public function deleteExpenseType($id)
     {
+        /** @var User|null $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden',
+            ], 403);
+        }
+
         $expenseType = ExpenseType::find($id);
 
         if (!$expenseType) {

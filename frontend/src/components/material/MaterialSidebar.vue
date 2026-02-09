@@ -59,7 +59,7 @@
               <span class="md-nav-text">Approvals</span>
               <span v-if="pendingApprovals > 0" class="md-nav-badge warning">{{
                 pendingApprovals
-                }}</span>
+              }}</span>
             </RouterLink>
             <RouterLink to="/broadcasts" class="md-nav-link" :class="{ active: isActive('/broadcasts') }">
               <span class="md-nav-icon sm"><i class="bi bi-broadcast-pin"></i></span>
@@ -161,8 +161,9 @@
           </div>
         </div>
 
-        <!-- Settings -->
-        <RouterLink to="/settings" class="md-nav-link" :class="{ active: isActive('/settings') }">
+        <!-- Settings (Admin only) -->
+        <RouterLink v-if="auth.hasRole(['admin'])" to="/settings" class="md-nav-link"
+          :class="{ active: isActive('/settings') }">
           <span class="md-nav-icon"><i class="bi bi-gear-fill"></i></span>
           <span class="md-nav-text">Settings</span>
         </RouterLink>

@@ -100,7 +100,7 @@
             <i class="bi bi-person"></i>
             <span>My Profile</span>
           </RouterLink>
-          <RouterLink to="/settings" class="md-dropdown-item">
+          <RouterLink v-if="auth.hasRole(['admin'])" to="/settings" class="md-dropdown-item">
             <i class="bi bi-gear"></i>
             <span>Settings</span>
           </RouterLink>

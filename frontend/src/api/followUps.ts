@@ -10,6 +10,9 @@ export const followUpsApi = {
   getDue(params: any = {}) {
     return api.get('/follow-ups/due', { params });
   },
+  convert(id: number | string, data: any = {}) {
+    return api.post(`/follow-ups/${id}/convert`, data);
+  },
 };
 
 export default followUpsApi;

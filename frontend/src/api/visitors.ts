@@ -34,6 +34,10 @@ export const visitorsApi = {
   getFollowUps(id: number | string, params: any = {}) {
     return api.get(`/visitors/${id}/follow-ups`, { params })
   }
+  ,
+  convert(id: number | string, data: any = {}) {
+    return api.post(`/visitors/${id}/convert`, data)
+  }
 }
 
 export default visitorsApi

@@ -28,10 +28,10 @@ export const reportsApi = {
     },
     conversionFunnel(filters: any = {}) {
       return tryGet([
-        '/reports/visitors/funnel',
-        '/reports/visitors/funnels',
         '/reports/visitors/conversion-funnel',
         '/reports/visitors/conversion',
+        '/reports/visitors/funnel',
+        '/reports/visitors/funnels',
       ], filters);
     },
     // Summary/overview for visitors

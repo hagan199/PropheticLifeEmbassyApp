@@ -1,5 +1,5 @@
 <template>
-  <div class="row">
+  <div v-if="isAuthorized" class="row">
     <!-- Main Visitor Source Chart (Donut) -->
     <div class="col-md-6 mb-4">
       <div class="card shadow-sm border-0 h-100">
@@ -7,18 +7,9 @@
           <h5 class="mb-0 fw-bold text-primary">How They Found Us</h5>
           <div class="small text-muted">Last 30 Days</div>
         </div>
-        <div
-          class="card-body d-flex justify-content-center align-items-center"
-          style="min-height: 250px"
-        >
+        <div class="card-body d-flex justify-content-center align-items-center" style="min-height: 250px">
           <CSpinner v-if="isLoading" color="primary" />
-          <CChart
-            v-else
-            type="doughnut"
-            :data="sourceData"
-            :options="sourceOptions"
-            style="max-height: 250px"
-          />
+          <CChart v-else type="doughnut" :data="sourceData" :options="sourceOptions" style="max-height: 250px" />
         </div>
       </div>
     </div>
@@ -30,12 +21,19 @@
           <h5 class="mb-0 fw-bold text-success">Visitor Retention Funnel</h5>
           <div class="small text-muted">All Time</div>
         </div>
-        <div
-          class="card-body d-flex justify-content-center align-items-center"
-          style="min-height: 250px"
-        >
+        <div class="card-body d-flex justify-content-center align-items-center" style="min-height: 250px">
           <CSpinner v-if="isLoading" color="success" />
           <CChart v-else type="bar" :data="funnelData" :options="funnelOptions" :height="250" />
+        </div>
+      </div>
+    </div>
+  </div>
+  <div v-else class="row">
+    <div class="col-12">
+      <div class="card shadow-sm border-0">
+        <div class="card-body text-center py-5">
+          <div class="h5 text-muted">You do not have permission to view visitor reports.</div>
+          <div class="small text-muted">Contact an administrator if you need access.</div>
         </div>
       </div>
     </div>
@@ -47,6 +45,7 @@ import { computed, ref, onMounted, watch } from 'vue';
 import { reportsApi } from '@/api/reports';
 import { CChart } from '@coreui/vue-chartjs';
 import { CSpinner } from '@coreui/vue';
+import { useAuthStore } from '@/store/auth';
 
 const props = defineProps({
   filters: { type: Object, default: () => ({}) },
@@ -153,6 +152,13 @@ const funnelOptions = {
   maintainAspectRatio: false,
 };
 
-onMounted(fetchVisitorData);
-watch(() => props.filters, fetchVisitorData, { deep: true });
+onMounted(() => {
+  if (isAuthorized.value) fetchVisitorData();
+});
+watch(() => props.filters, () => {
+  if (isAuthorized.value) fetchVisitorData();
+}, { deep: true });
+
+const auth = useAuthStore();
+const isAuthorized = computed(() => auth.hasRole(['pr_follow_up', 'admin']));
 </script>

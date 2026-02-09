@@ -112,7 +112,7 @@
             <span class="nav-text">Attendance Approvals</span>
             <span v-if="pendingApprovals > 0" class="nav-badge warning">{{
               pendingApprovals
-              }}</span>
+            }}</span>
           </RouterLink>
         </CNavItem>
         <CNavItem>
@@ -256,8 +256,8 @@
         </CNavItem>
       </CNavGroup>
 
-      <!-- Settings -->
-      <CNavItem>
+      <!-- Settings (Admin only) -->
+      <CNavItem v-if="hasRole(['admin'])">
         <RouterLink to="/settings" class="nav-link" :class="{ active: isActive('/settings') }">
           <span class="nav-icon-wrapper">
             <i class="bi bi-gear-fill"></i>

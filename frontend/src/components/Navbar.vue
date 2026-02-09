@@ -31,8 +31,7 @@
             <div class="search-modal">
               <div class="search-header">
                 <i class="bi bi-search"></i>
-                <input
-ref="searchInputRef" v-model="searchQuery" type="text" placeholder="Search pages, actions..."
+                <input ref="searchInputRef" v-model="searchQuery" type="text" placeholder="Search pages, actions..."
                   @keydown.esc="closeSearch" @keydown.down.prevent="navigateResults(1)"
                   @keydown.up.prevent="navigateResults(-1)" @keydown.enter.prevent="selectResult" />
                 <kbd @click="closeSearch">ESC</kbd>
@@ -40,8 +39,7 @@ ref="searchInputRef" v-model="searchQuery" type="text" placeholder="Search pages
               <div v-if="filteredResults.length > 0" class="search-results">
                 <div v-for="group in groupedResults" :key="group.category" class="results-group">
                   <div class="group-label">{{ group.category }}</div>
-                  <div
-v-for="(item, idx) in group.items" :key="item.path" class="result-item"
+                  <div v-for="(item, idx) in group.items" :key="item.path" class="result-item"
                     :class="{ active: selectedIndex === getGlobalIndex(group.category, idx) }" @click="goToPage(item)"
                     @mouseenter="selectedIndex = getGlobalIndex(group.category, idx)">
                     <div class="result-icon" :style="{ background: item.color }">
@@ -72,8 +70,7 @@ v-for="(item, idx) in group.items" :key="item.path" class="result-item"
       <!-- Nav Actions -->
       <CHeaderNav class="ms-auto d-flex align-items-center gap-2">
         <!-- Theme Toggle -->
-        <button
-class="nav-action-btn" :title="theme.mode === 'dark' ? 'Light mode' : 'Dark mode'"
+        <button class="nav-action-btn" :title="theme.mode === 'dark' ? 'Light mode' : 'Dark mode'"
           @click="theme.toggle()">
           <transition name="theme-icon" mode="out-in">
             <i v-if="theme.mode === 'dark'" key="sun" class="bi bi-sun-fill"></i>
@@ -100,8 +97,7 @@ class="nav-action-btn" :title="theme.mode === 'dark' ? 'Light mode' : 'Dark mode
               </button>
             </div>
             <div class="notifications-list">
-              <div
-v-for="n in notifications" :key="n.id" class="notification-item" :class="{ unread: !n.read }"
+              <div v-for="n in notifications" :key="n.id" class="notification-item" :class="{ unread: !n.read }"
                 @click="handleNotification(n)">
                 <div class="notification-icon" :class="n.type">
                   <i :class="getNotificationIcon(n.type)"></i>
@@ -354,7 +350,7 @@ const allPages = [
     icon: 'bi bi-gear-fill',
     category: 'Pages',
     color: 'rgba(100, 116, 139, 0.15)',
-    roles: ['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader'],
+    roles: ['admin'],
   },
   {
     name: 'Profile',

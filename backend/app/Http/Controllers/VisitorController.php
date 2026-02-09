@@ -7,7 +7,10 @@ use App\Http\Requests\Visitor\StoreVisitorRequest;
 use App\Http\Requests\Visitor\UpdateVisitorRequest;
 use App\Models\Visitor;
 use App\Models\User;
+use App\Models\Role;
+use App\Models\AuditLog;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class VisitorController extends Controller
 {
@@ -16,6 +19,14 @@ class VisitorController extends Controller
      */
     public function index(Request $request)
     {
+        // Require authenticated user to view visitors
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
+
         $query = Visitor::query()->with('creator:id,name');
 
         // Filter by category
@@ -31,10 +42,10 @@ class VisitorController extends Controller
         // Search
         if ($request->has('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('phone', 'LIKE', "%{$search}%")
-                  ->orWhere('occupation', 'LIKE', "%{$search}%");
+                    ->orWhere('phone', 'LIKE', "%{$search}%")
+                    ->orWhere('occupation', 'LIKE', "%{$search}%");
             });
         }
 
@@ -60,6 +71,15 @@ class VisitorController extends Controller
     public function store(Request $request)
     {
         try {
+            /** @var User|null $user */
+            $user = $request->user();
+            if (!$user || !$user->hasAnyRole(['admin'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Forbidden'
+                ], 403);
+            }
+
             $request->validate([
                 'name' => 'required|string|max:255',
                 'phone' => 'required|string|max:20',
@@ -120,6 +140,15 @@ class VisitorController extends Controller
     public function update(Request $request, $id)
     {
         try {
+            /** @var User|null $user */
+            $user = $request->user();
+            if (!$user || !$user->hasAnyRole(['admin'])) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Forbidden'
+                ], 403);
+            }
+
             $visitor = Visitor::find($id);
 
             if (!$visitor) {
@@ -136,7 +165,7 @@ class VisitorController extends Controller
             ]);
 
             $data = $request->only(['name', 'phone', 'category', 'service_type', 'occupation']);
-            
+
             if ($request->has('date')) {
                 $data['first_visit_date'] = $request->date;
             }
@@ -161,6 +190,15 @@ class VisitorController extends Controller
      */
     public function destroy($id)
     {
+        /** @var User|null $user */
+        $user = Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
+
         $visitor = Visitor::find($id);
         if (!$visitor) {
             return response()->json(['success' => false, 'message' => 'Visitor not found'], 404);
@@ -174,6 +212,100 @@ class VisitorController extends Controller
         ]);
     }
 
+
+    public function convertToMember(Request $request, $id)
+    {
+        /** @var User|null $authUser */
+        $authUser = Auth::user();
+        if (!$authUser || !$authUser->hasAnyRole(['admin'])) {
+            return response()->json(['success' => false, 'message' => 'Forbidden'], 403);
+        }
+
+        $visitor = Visitor::find($id);
+        if (!$visitor) {
+            return response()->json(['success' => false, 'message' => 'Visitor not found'], 404);
+        }
+
+        // Check for existing user by phone or email
+        $existingUser = null;
+        if ($visitor->phone) {
+            $existingUser = User::where('phone', $visitor->phone)->first();
+        }
+        if (!$existingUser && $visitor->email) {
+            $existingUser = User::where('email', $visitor->email)->first();
+        }
+        // Determine roles to attach (array or comma-separated string). Default to ['member']
+        $rolesInput = $request->input('roles', ['member']);
+        if (is_string($rolesInput)) {
+            $rolesInput = array_filter(array_map('trim', explode(',', $rolesInput)));
+        }
+        if (!is_array($rolesInput) || empty($rolesInput)) {
+            $rolesInput = ['member'];
+        }
+
+        // Resolve or create Role records and collect IDs
+        $roleIds = [];
+        foreach ($rolesInput as $rName) {
+            $rName = trim((string) $rName);
+            if ($rName === '') continue;
+            $role = Role::firstOrCreate([
+                'name' => $rName
+            ], [
+                'display_name' => ucfirst($rName),
+                'description' => ucfirst($rName) . ' role',
+                'is_system' => false,
+            ]);
+            $roleIds[] = $role->id;
+        }
+
+        if ($existingUser) {
+            // Attach requested roles to existing user
+            if (!empty($roleIds)) {
+                $existingUser->roles()->syncWithoutDetaching($roleIds);
+            }
+
+            $visitor->category = 'Member';
+            $visitor->converted_user_id = $existingUser->id;
+            $visitor->converted_at = now();
+            $visitor->save();
+
+            AuditLog::logAction(Auth::id(), 'visitor.convert', 'Visitor', $visitor->id, ['converted_to' => $existingUser->id, 'roles' => $rolesInput], 'Marked visitor as member (existing user)');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Visitor marked as member; existing user found',
+                'user' => $existingUser,
+                'visitor' => $visitor,
+            ]);
+        }
+
+        // Create new user
+        $newUser = User::create([
+            'name' => $visitor->name,
+            'email' => $visitor->email,
+            'phone' => $visitor->phone,
+            'password' => bcrypt(Str::random(12)),
+            'status' => 'active',
+        ]);
+
+        if (!empty($roleIds)) {
+            $newUser->roles()->syncWithoutDetaching($roleIds);
+        }
+
+        $visitor->category = 'Member';
+        $visitor->converted_user_id = $newUser->id;
+        $visitor->converted_at = now();
+        $visitor->save();
+
+        AuditLog::logAction(Auth::id(), 'visitor.convert', 'Visitor', $visitor->id, ['converted_to' => $newUser->id, 'roles' => $rolesInput], 'Converted visitor to new user');
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Visitor converted to member successfully',
+            'user' => $newUser,
+            'visitor' => $visitor,
+        ]);
+    }
     /**
      * Get follow-ups for a visitor
      */

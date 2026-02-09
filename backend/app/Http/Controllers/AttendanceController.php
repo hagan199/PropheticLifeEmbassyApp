@@ -18,6 +18,14 @@ class AttendanceController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        // Require authenticated user to view attendance index
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
+
         $query = Attendance::with('submittedBy:id,name,avatar', 'approvedBy:id,name');
 
         // Apply filters
@@ -67,6 +75,14 @@ class AttendanceController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
+
         $validated = $request->validate([
             'service_type' => 'required|string',
             'service_date' => 'required|date',
@@ -97,6 +113,14 @@ class AttendanceController extends Controller
     public function update(Request $request, $id): JsonResponse
     {
         $attendance = Attendance::findOrFail($id);
+
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
 
         // Only allow updates if status is pending
         if ($attendance->status !== 'pending') {
@@ -129,6 +153,14 @@ class AttendanceController extends Controller
     {
         $attendance = Attendance::findOrFail($id);
 
+        $user = Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
+
         // Only allow deletion if status is pending
         if ($attendance->status !== 'pending') {
             return response()->json([
@@ -151,6 +183,14 @@ class AttendanceController extends Controller
     public function approve($id): JsonResponse
     {
         $attendance = Attendance::findOrFail($id);
+
+        $user = Auth::user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
 
         if ($attendance->status !== 'pending') {
             return response()->json([
@@ -182,6 +222,14 @@ class AttendanceController extends Controller
         ]);
 
         $attendance = Attendance::findOrFail($id);
+
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
 
         if ($attendance->status !== 'pending') {
             return response()->json([
@@ -215,6 +263,14 @@ class AttendanceController extends Controller
             'reason' => 'required|string|max:255',
         ]);
 
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
+
         $count = Attendance::whereIn('id', $validated['ids'])
             ->where('status', 'pending')
             ->update([
@@ -235,6 +291,14 @@ class AttendanceController extends Controller
      */
     public function storeUnitAttendance(Request $request): JsonResponse
     {
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
+
         $request->validate([
             'unit' => 'required|string', // Department ID
             'service' => 'required|string',
@@ -307,6 +371,14 @@ class AttendanceController extends Controller
      */
     public function bulkApprove(BulkApproveRequest $request): JsonResponse
     {
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden'
+            ], 403);
+        }
+
         $count = Attendance::whereIn('id', $request->ids)
             ->where('status', 'pending') // Integrity check
             ->update([

@@ -189,7 +189,7 @@
                     <td>
                       <span class="badge" :class="getStatusClass(member.status ?? '')">{{
                         member.status
-                      }}</span>
+                        }}</span>
                     </td>
                     <td class="text-end text-muted small">{{ member.date || member.joined }}</td>
                     <td class="text-end">
@@ -757,8 +757,6 @@ async function saveEditMember(): Promise<void> {
     await usersApi.update(editMember.value.id, {
       name: editMember.value.name,
       phone: editMember.value.phone,
-      // Mapping dashboard status to role if needed, or just sending it back
-      role: editMember.value.role || 'member',
     });
     editModalVisible.value = false;
     fetchDashboardData();

@@ -54,7 +54,7 @@ const routes = [
   {
     path: '/settings',
     component: Settings,
-    meta: { requiresAuth: true, breadcrumb: 'Settings' },
+    meta: { requiresAuth: true, breadcrumb: 'Settings', roles: ['admin'] },
   },
   {
     path: '/profile',

@@ -164,8 +164,8 @@ class UserController extends Controller
         \App\Models\AuditLog::create([
             'user_id' => auth()->id(),
             'action' => 'users.create',
-            'model_type' => 'User',
-            'model_id' => $user->id,
+            'entity_type' => 'User',
+            'entity_id' => $user->id,
             'changes' => json_encode($user->toArray()),
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),
@@ -212,13 +212,29 @@ class UserController extends Controller
             ], 404);
         }
 
-        $user->update([
-            'name' => $request->name,
-            'phone' => $request->phone,
-            'email' => $request->email,
-            'role' => $request->role, // Keep for backward compatibility
-            'department_id' => $request->department_id,
-        ]);
+        // Only update fields that are actually provided in the request
+        $updateData = [];
+
+        if ($request->has('name')) {
+            $updateData['name'] = $request->name;
+        }
+        if ($request->has('email')) {
+            $updateData['email'] = $request->email;
+        }
+        if ($request->has('phone')) {
+            $updateData['phone'] = $request->phone;
+        }
+        if ($request->has('role')) {
+            $updateData['role'] = $request->role;
+        }
+        if ($request->has('department_id')) {
+            $updateData['department_id'] = $request->department_id;
+        }
+
+        // Only update if there's data to update
+        if (!empty($updateData)) {
+            $user->update($updateData);
+        }
 
         // Update multiple roles if provided
         if ($request->has('role_ids')) {
@@ -237,8 +253,8 @@ class UserController extends Controller
         \App\Models\AuditLog::create([
             'user_id' => auth()->id(),
             'action' => 'users.update',
-            'model_type' => 'User',
-            'model_id' => $user->id,
+            'entity_type' => 'User',
+            'entity_id' => $user->id,
             'changes' => json_encode($user->getChanges()),
             'ip_address' => request()->ip(),
             'user_agent' => request()->userAgent(),

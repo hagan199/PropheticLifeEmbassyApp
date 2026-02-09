@@ -85,7 +85,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // My Submissions (Usher)
         Route::get('/my-submissions', [AttendanceController::class, 'mySubmissions']);
-        
+
         // Ministry Unit Attendance
         Route::post('/unit', [AttendanceController::class, 'storeUnitAttendance']);
 
@@ -101,6 +101,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/{id}', [VisitorController::class, 'update']);
         Route::delete('/{id}', [VisitorController::class, 'destroy']);
         Route::get('/{id}/follow-ups', [VisitorController::class, 'followUps']);
+        Route::post('/{id}/convert', [VisitorController::class, 'convertToMember']);
     });
 
     // Follow-ups
@@ -111,6 +112,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [FollowUpController::class, 'show']);
         Route::put('/{id}', [FollowUpController::class, 'update']);
         Route::delete('/{id}', [FollowUpController::class, 'destroy']);
+        Route::post('/{id}/convert', [FollowUpController::class, 'convertToMember']);
     });
 
     // Finance - Contributions
@@ -168,6 +170,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}', [BroadcastController::class, 'show']);
         Route::delete('/{id}', [BroadcastController::class, 'destroy']);
         Route::get('/{id}/deliveries', [BroadcastController::class, 'deliveries']);
+    });
+
+    // Service Types (Attendance helper)
+    Route::prefix('service-types')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ServiceTypeController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\ServiceTypeController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\ServiceTypeController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\ServiceTypeController::class, 'destroy']);
+    });
+
+    // Visitor Types (used for visitor categories)
+    Route::prefix('visitor-types')->group(function () {
+        Route::get('/', [\App\Http\Controllers\VisitorTypeController::class, 'index']);
+        Route::post('/', [\App\Http\Controllers\VisitorTypeController::class, 'store']);
+        Route::put('/{id}', [\App\Http\Controllers\VisitorTypeController::class, 'update']);
+        Route::delete('/{id}', [\App\Http\Controllers\VisitorTypeController::class, 'destroy']);
     });
 
 
@@ -238,6 +256,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('reports/visitors')->group(function () {
         Route::get('/summary', [VisitorReportController::class, 'summary']);
         Route::get('/conversion-funnel', [VisitorReportController::class, 'conversionFunnel']);
+        // Backwards compatibility: accept '/funnels' and '/funnel'
+        Route::get('/funnels', [VisitorReportController::class, 'conversionFunnel']);
+        Route::get('/funnel', [VisitorReportController::class, 'conversionFunnel']);
         Route::get('/by-source', [VisitorReportController::class, 'bySource']);
         Route::get('/trends', [VisitorReportController::class, 'trends']);
         Route::get('/follow-up-effectiveness', [VisitorReportController::class, 'followUpEffectiveness']);

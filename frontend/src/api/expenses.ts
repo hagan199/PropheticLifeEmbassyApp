@@ -14,6 +14,12 @@ export const expensesApi = {
   getTypes() {
     return api.get('/expenses/types/all');
   },
+  createType(data: { name: string; description?: string }) {
+    return api.post('/expenses/types', data);
+  },
+  updateType(id: number | string, data: { name: string; description?: string }) {
+    return api.put(`/expenses/types/${id}`, data);
+  },
   create(data: ExpensePayload) {
     return api.post('/expenses', data);
   },

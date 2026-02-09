@@ -29,6 +29,7 @@ defineProps({
   background: var(--md-surface);
   border-radius: var(--md-shape-xl);
   box-shadow: var(--md-elevation-2);
+  width: 100%;
 }
 
 .md-page-header-content {
@@ -58,6 +59,14 @@ defineProps({
   flex-wrap: wrap;
   align-items: center;
   gap: var(--md-space-3);
+  flex-shrink: 0;
+}
+
+.md-page-actions :deep(button),
+.md-page-actions :deep(.btn) {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }
 
 /* Responsive */

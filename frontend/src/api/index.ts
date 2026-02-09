@@ -63,6 +63,7 @@ export { usersApi } from './users';
 export { dashboardApi } from './dashboard';
 export { attendanceApi } from './attendance';
 export { visitorsApi } from './visitors';
+export { serviceTypesApi } from './serviceTypes';
 export { followUpsApi } from './followUps';
 export { contributionsApi } from './contributions';
 export { expensesApi } from './expenses';

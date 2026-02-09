@@ -25,12 +25,16 @@ class Visitor extends Model
         'status',
         'next_follow_up_date',
         'created_by',
+        'converted_user_id',
+        'converted_at',
     ];
 
     protected $casts = [
         'ministry_interest' => 'array',
         'first_visit_date' => 'date',
         'next_follow_up_date' => 'date',
+        'converted_at' => 'datetime',
+        'visited_at' => 'datetime',
     ];
 
     /**
@@ -50,13 +54,21 @@ class Visitor extends Model
     }
 
     /**
+     * The user this visitor was converted to (if any)
+     */
+    public function convertedUser()
+    {
+        return $this->belongsTo(User::class, 'converted_user_id');
+    }
+
+    /**
      * Scope: Get visitors due for follow-up
      */
     public function scopeDueForFollowUp($query)
     {
         return $query->whereNotNull('next_follow_up_date')
-                     ->where('next_follow_up_date', '<=', now())
-                     ->whereIn('status', ['not_contacted', 'contacted', 'engaged']);
+            ->where('next_follow_up_date', '<=', now())
+            ->whereIn('status', ['not_contacted', 'contacted', 'engaged']);
     }
 
     /**
@@ -65,7 +77,7 @@ class Visitor extends Model
     public function scopeOverdue($query)
     {
         return $query->whereNotNull('next_follow_up_date')
-                     ->where('next_follow_up_date', '<', now()->toDateString())
-                     ->whereIn('status', ['not_contacted', 'contacted', 'engaged']);
+            ->where('next_follow_up_date', '<', now()->toDateString())
+            ->whereIn('status', ['not_contacted', 'contacted', 'engaged']);
     }
 }

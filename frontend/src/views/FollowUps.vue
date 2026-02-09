@@ -111,13 +111,9 @@
           </CCardHeader>
           <CCardBody class="p-0">
             <CListGroup flush>
-              <CListGroupItem
-                v-for="v in filteredVisitors"
-                :key="v.id"
+              <CListGroupItem v-for="v in filteredVisitors" :key="v.id"
                 class="visitor-item d-flex justify-content-between align-items-start py-3"
-                :class="{ active: selectedVisitor?.id === v.id }"
-                @click="selectVisitor(v)"
-              >
+                :class="{ active: selectedVisitor?.id === v.id }" @click="selectVisitor(v)">
                 <div class="d-flex">
                   <CAvatar :color="statusAvatarColor(v.status)" text-color="white" class="me-3">
                     {{ v.name.charAt(0) }}
@@ -128,20 +124,17 @@
                     <div class="mt-1">
                       <CBadge :color="statusColor(v.status)" size="sm">{{
                         statusLabel(v.status)
-                      }}</CBadge>
+                        }}</CBadge>
                       <CBadge color="light" text-color="dark" size="sm" class="ms-1">{{
                         v.source
-                      }}</CBadge>
+                        }}</CBadge>
                     </div>
                   </div>
                 </div>
                 <div class="text-end">
                   <div class="text-muted small">{{ formatDate(v.firstVisitDate) }}</div>
-                  <div
-                    v-if="v.nextFollowUp"
-                    class="small"
-                    :class="isOverdue(v.nextFollowUp) ? 'text-danger' : 'text-muted'"
-                  >
+                  <div v-if="v.nextFollowUp" class="small"
+                    :class="isOverdue(v.nextFollowUp) ? 'text-danger' : 'text-muted'">
                     <i class="bi bi-clock me-1"></i>{{ formatDate(v.nextFollowUp) }}
                   </div>
                 </div>
@@ -167,11 +160,7 @@
           <CCardBody>
             <!-- Visitor Info -->
             <div class="text-center mb-4">
-              <CAvatar
-                :color="statusAvatarColor(selectedVisitor.status)"
-                text-color="white"
-                size="xl"
-              >
+              <CAvatar :color="statusAvatarColor(selectedVisitor.status)" text-color="white" size="xl">
                 {{ selectedVisitor.name.charAt(0) }}
               </CAvatar>
               <h5 class="mt-2 mb-1">{{ selectedVisitor.name }}</h5>
@@ -193,13 +182,7 @@
               <CCol v-if="selectedVisitor.interests?.length" xs="12">
                 <div class="text-muted small">Interests</div>
                 <div>
-                  <CBadge
-                    v-for="i in selectedVisitor.interests"
-                    :key="i"
-                    color="info"
-                    class="me-1"
-                    >{{ i }}</CBadge
-                  >
+                  <CBadge v-for="i in selectedVisitor.interests" :key="i" color="info" class="me-1">{{ i }}</CBadge>
                 </div>
               </CCol>
               <CCol v-if="selectedVisitor.notes" xs="12">
@@ -224,12 +207,8 @@
                   <i class="bi bi-chat-dots"></i>
                 </CButton>
               </div>
-              <CButton
-                v-if="selectedVisitor.status === 'engaged'"
-                color="success"
-                variant="outline"
-                @click="convertToMember"
-              >
+              <CButton v-if="selectedVisitor.status === 'engaged'" color="success" variant="outline"
+                @click="convertToMember">
                 <i class="bi bi-person-check me-1"></i> Convert to Member
               </CButton>
             </div>
@@ -275,53 +254,53 @@
           <CModalTitle>Add New Visitor</CModalTitle>
         </CModalHeader>
         <CModalBody>
-        <CForm>
-          <CRow class="g-3">
-            <CCol md="6">
-              <CFormLabel>Name <span class="text-danger">*</span></CFormLabel>
-              <CFormInput v-model="visitorForm.name" />
-            </CCol>
-            <CCol md="6">
-              <CFormLabel>Phone <span class="text-danger">*</span></CFormLabel>
-              <CInputGroup>
-                <CInputGroupText>+233</CInputGroupText>
-                <CFormInput v-model="visitorForm.phone" />
-              </CInputGroup>
-            </CCol>
-            <CCol md="6">
-              <CFormLabel>Email</CFormLabel>
-              <CFormInput v-model="visitorForm.email" type="email" />
-            </CCol>
-            <CCol md="6">
-              <CFormLabel>Source <span class="text-danger">*</span></CFormLabel>
-              <CFormSelect v-model="visitorForm.source">
-                <option value="">Select...</option>
-                <option value="Friend">Friend</option>
-                <option value="Social Media">Social Media</option>
-                <option value="Walk-in">Walk-in</option>
-                <option value="Other">Other</option>
-              </CFormSelect>
-            </CCol>
-            <CCol md="6">
-              <CFormLabel>First Visit Date</CFormLabel>
-              <CFormInput v-model="visitorForm.firstVisitDate" type="date" />
-            </CCol>
-            <CCol md="6">
-              <CFormLabel>Ministry Interests</CFormLabel>
-              <CFormSelect v-model="visitorForm.interests" multiple>
-                <option value="Youth">Youth</option>
-                <option value="Choir">Choir</option>
-                <option value="Media">Media</option>
-                <option value="Prayer">Prayer</option>
-                <option value="Ushering">Ushering</option>
-              </CFormSelect>
-            </CCol>
-            <CCol md="12">
-              <CFormLabel>Notes</CFormLabel>
-              <CFormTextarea v-model="visitorForm.notes" rows="3" />
-            </CCol>
-          </CRow>
-        </CForm>
+          <CForm>
+            <CRow class="g-3">
+              <CCol md="6">
+                <CFormLabel>Name <span class="text-danger">*</span></CFormLabel>
+                <CFormInput v-model="visitorForm.name" />
+              </CCol>
+              <CCol md="6">
+                <CFormLabel>Phone <span class="text-danger">*</span></CFormLabel>
+                <CInputGroup>
+                  <CInputGroupText>+233</CInputGroupText>
+                  <CFormInput v-model="visitorForm.phone" />
+                </CInputGroup>
+              </CCol>
+              <CCol md="6">
+                <CFormLabel>Email</CFormLabel>
+                <CFormInput v-model="visitorForm.email" type="email" />
+              </CCol>
+              <CCol md="6">
+                <CFormLabel>Source <span class="text-danger">*</span></CFormLabel>
+                <CFormSelect v-model="visitorForm.source">
+                  <option value="">Select...</option>
+                  <option value="Friend">Friend</option>
+                  <option value="Social Media">Social Media</option>
+                  <option value="Walk-in">Walk-in</option>
+                  <option value="Other">Other</option>
+                </CFormSelect>
+              </CCol>
+              <CCol md="6">
+                <CFormLabel>First Visit Date</CFormLabel>
+                <CFormInput v-model="visitorForm.firstVisitDate" type="date" />
+              </CCol>
+              <CCol md="6">
+                <CFormLabel>Ministry Interests</CFormLabel>
+                <CFormSelect v-model="visitorForm.interests" multiple>
+                  <option value="Youth">Youth</option>
+                  <option value="Choir">Choir</option>
+                  <option value="Media">Media</option>
+                  <option value="Prayer">Prayer</option>
+                  <option value="Ushering">Ushering</option>
+                </CFormSelect>
+              </CCol>
+              <CCol md="12">
+                <CFormLabel>Notes</CFormLabel>
+                <CFormTextarea v-model="visitorForm.notes" rows="3" />
+              </CCol>
+            </CRow>
+          </CForm>
         </CModalBody>
         <CModalFooter>
           <CButton color="secondary" @click="showAddVisitor = false">Cancel</CButton>
@@ -337,69 +316,37 @@
           <CModalTitle>Log Follow-up</CModalTitle>
         </CModalHeader>
         <CModalBody>
-        <CForm>
-          <div class="mb-3">
-            <CFormLabel>Contact Method <span class="text-danger">*</span></CFormLabel>
-            <div class="d-flex gap-2 flex-wrap">
-              <CFormCheck
-                id="m-whatsapp"
-                v-model="followUpForm.method"
-                type="radio"
-                name="method"
-                value="WhatsApp"
-                label="WhatsApp"
-                inline
-              />
-              <CFormCheck
-                id="m-sms"
-                v-model="followUpForm.method"
-                type="radio"
-                name="method"
-                value="SMS"
-                label="SMS"
-                inline
-              />
-              <CFormCheck
-                id="m-call"
-                v-model="followUpForm.method"
-                type="radio"
-                name="method"
-                value="Call"
-                label="Call"
-                inline
-              />
-              <CFormCheck
-                id="m-person"
-                v-model="followUpForm.method"
-                type="radio"
-                name="method"
-                value="In-Person"
-                label="In-Person"
-                inline
-              />
+          <CForm>
+            <div class="mb-3">
+              <CFormLabel>Contact Method <span class="text-danger">*</span></CFormLabel>
+              <div class="d-flex gap-2 flex-wrap">
+                <CFormCheck id="m-whatsapp" v-model="followUpForm.method" type="radio" name="method" value="WhatsApp"
+                  label="WhatsApp" inline />
+                <CFormCheck id="m-sms" v-model="followUpForm.method" type="radio" name="method" value="SMS" label="SMS"
+                  inline />
+                <CFormCheck id="m-call" v-model="followUpForm.method" type="radio" name="method" value="Call"
+                  label="Call" inline />
+                <CFormCheck id="m-person" v-model="followUpForm.method" type="radio" name="method" value="In-Person"
+                  label="In-Person" inline />
+              </div>
             </div>
-          </div>
-          <div class="mb-3">
-            <CFormLabel>Notes <span class="text-danger">*</span></CFormLabel>
-            <CFormTextarea
-              v-model="followUpForm.notes"
-              rows="3"
-              placeholder="What was discussed?"
-            />
-          </div>
-          <div class="mb-3">
-            <CFormLabel>Update Status</CFormLabel>
-            <CFormSelect v-model="followUpForm.statusAfter">
-              <option value="">No change</option>
-              <option value="contacted">Contacted</option>
-              <option value="engaged">Engaged</option>
-              <option value="converted">Converted</option>
-            </CFormSelect>
-          </div>
-          <div class="mb-3">
-            <CFormLabel>Next Follow-up Date</CFormLabel>
-            <CFormInput v-model="followUpForm.nextDate" type="date" />
-          </div>
+            <div class="mb-3">
+              <CFormLabel>Notes <span class="text-danger">*</span></CFormLabel>
+              <CFormTextarea v-model="followUpForm.notes" rows="3" placeholder="What was discussed?" />
+            </div>
+            <div class="mb-3">
+              <CFormLabel>Update Status</CFormLabel>
+              <CFormSelect v-model="followUpForm.statusAfter">
+                <option value="">No change</option>
+                <option value="contacted">Contacted</option>
+                <option value="engaged">Engaged</option>
+                <option value="converted">Converted</option>
+              </CFormSelect>
+            </div>
+            <div class="mb-3">
+              <CFormLabel>Next Follow-up Date</CFormLabel>
+              <CFormInput v-model="followUpForm.nextDate" type="date" />
+            </div>
           </CForm>
         </CModalBody>
         <CModalFooter>
@@ -416,46 +363,42 @@
           <CModalTitle>Follow-ups Due This Week</CModalTitle>
         </CModalHeader>
         <CModalBody>
-        <CTable hover responsive>
-          <CTableHead>
-            <CTableRow>
-              <CTableHeaderCell>Visitor</CTableHeaderCell>
-              <CTableHeaderCell>Due Date</CTableHeaderCell>
-              <CTableHeaderCell>Last Contact</CTableHeaderCell>
-              <CTableHeaderCell>Status</CTableHeaderCell>
-              <CTableHeaderCell class="text-end">Actions</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            <CTableRow
-              v-for="v in dueThisWeek"
-              :key="v.id"
-              :class="{ 'table-danger': isOverdue(v.nextFollowUp) }"
-            >
-              <CTableDataCell>
-                <div class="fw-semibold">{{ v.name }}</div>
-                <div class="text-muted small">{{ v.phone }}</div>
-              </CTableDataCell>
-              <CTableDataCell>
-                <span :class="isOverdue(v.nextFollowUp) ? 'text-danger fw-bold' : ''">
-                  {{ formatDate(v.nextFollowUp) }}
-                </span>
-              </CTableDataCell>
-              <CTableDataCell>{{ v.lastContactMethod || '—' }}</CTableDataCell>
-              <CTableDataCell>
-                <CBadge :color="statusColor(v.status)">{{ statusLabel(v.status) }}</CBadge>
-              </CTableDataCell>
-              <CTableDataCell class="text-end">
-                <CButton color="success" size="sm" class="me-1" @click="selectAndCall(v)">
-                  <i class="bi bi-telephone"></i>
-                </CButton>
-                <CButton color="primary" size="sm" @click="selectAndLog(v)">
-                  <i class="bi bi-pencil"></i> Log
-                </CButton>
-              </CTableDataCell>
-            </CTableRow>
-          </CTableBody>
-        </CTable>
+          <CTable hover responsive>
+            <CTableHead>
+              <CTableRow>
+                <CTableHeaderCell>Visitor</CTableHeaderCell>
+                <CTableHeaderCell>Due Date</CTableHeaderCell>
+                <CTableHeaderCell>Last Contact</CTableHeaderCell>
+                <CTableHeaderCell>Status</CTableHeaderCell>
+                <CTableHeaderCell class="text-end">Actions</CTableHeaderCell>
+              </CTableRow>
+            </CTableHead>
+            <CTableBody>
+              <CTableRow v-for="v in dueThisWeek" :key="v.id" :class="{ 'table-danger': isOverdue(v.nextFollowUp) }">
+                <CTableDataCell>
+                  <div class="fw-semibold">{{ v.name }}</div>
+                  <div class="text-muted small">{{ v.phone }}</div>
+                </CTableDataCell>
+                <CTableDataCell>
+                  <span :class="isOverdue(v.nextFollowUp) ? 'text-danger fw-bold' : ''">
+                    {{ formatDate(v.nextFollowUp) }}
+                  </span>
+                </CTableDataCell>
+                <CTableDataCell>{{ v.lastContactMethod || '—' }}</CTableDataCell>
+                <CTableDataCell>
+                  <CBadge :color="statusColor(v.status)">{{ statusLabel(v.status) }}</CBadge>
+                </CTableDataCell>
+                <CTableDataCell class="text-end">
+                  <CButton color="success" size="sm" class="me-1" @click="selectAndCall(v)">
+                    <i class="bi bi-telephone"></i>
+                  </CButton>
+                  <CButton color="primary" size="sm" @click="selectAndLog(v)">
+                    <i class="bi bi-pencil"></i> Log
+                  </CButton>
+                </CTableDataCell>
+              </CTableRow>
+            </CTableBody>
+          </CTable>
         </CModalBody>
       </CModal>
     </Teleport>
@@ -498,6 +441,7 @@ import {
 } from '@coreui/vue';
 import Breadcrumbs from '../components/Breadcrumbs.vue';
 import { useToast } from '../composables/useToast';
+import { visitorsApi } from '../api/visitors';
 import { exportToExcel, formatDateForExport } from '../utils/export.js';
 
 // Data
@@ -736,9 +680,22 @@ function smsVisitor() {
   window.open(`sms:${selectedVisitor.value.phone}`);
 }
 
-function convertToMember() {
-  selectedVisitor.value.status = 'converted';
-  toast.success(`${selectedVisitor.value.name} converted to member!`);
+async function convertToMember() {
+  if (!selectedVisitor.value) return;
+  try {
+    const res = await visitorsApi.convert(selectedVisitor.value.id, { roles: ['member'] });
+    if (res && res.data && res.data.success) {
+      // update local representation
+      selectedVisitor.value.status = 'converted';
+      selectedVisitor.value.convertedUser = res.data.user || null;
+      toast.success(res.data.message || `${selectedVisitor.value.name} converted to member!`);
+    } else {
+      toast.error('Conversion failed');
+    }
+  } catch (err) {
+    console.error('convert error', err);
+    toast.error(err?.response?.data?.message || 'Conversion failed');
+  }
 }
 
 function selectAndCall(v) {

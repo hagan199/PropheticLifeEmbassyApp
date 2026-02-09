@@ -16,6 +16,15 @@ class VisitorReportController extends Controller
      */
     public function summary(Request $request)
     {
+        // Authorization: allow PR/Follow-up and admin users to view visitor reports
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['pr_follow_up', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to view visitor reports',
+            ], 403);
+        }
+
         $dateRange = $this->getDateRange($request);
 
         $totalVisitors = Visitor::count();
@@ -53,6 +62,15 @@ class VisitorReportController extends Controller
      */
     public function conversionFunnel(Request $request)
     {
+        // Authorization: allow PR/Follow-up and admin users to view visitor reports
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['pr_follow_up', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to view visitor reports',
+            ], 403);
+        }
+
         $dateRange = $this->getDateRange($request);
 
         $visitors = Visitor::whereBetween('first_visit_date', [$dateRange['start'], $dateRange['end']])->count();
@@ -108,6 +126,15 @@ class VisitorReportController extends Controller
      */
     public function bySource(Request $request)
     {
+        // Authorization: allow PR/Follow-up and admin users to view visitor reports
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['pr_follow_up', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to view visitor reports',
+            ], 403);
+        }
+
         $dateRange = $this->getDateRange($request);
 
         $data = Visitor::whereBetween('first_visit_date', [$dateRange['start'], $dateRange['end']])
@@ -134,6 +161,15 @@ class VisitorReportController extends Controller
      */
     public function trends(Request $request)
     {
+        // Authorization: allow PR/Follow-up and admin users to view visitor reports
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['pr_follow_up', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to view visitor reports',
+            ], 403);
+        }
+
         $dateRange = $this->getDateRange($request);
         $groupBy = $request->get('group_by', 'monthly');
 
@@ -199,6 +235,15 @@ class VisitorReportController extends Controller
      */
     public function followUpEffectiveness(Request $request)
     {
+        // Authorization: allow PR/Follow-up and admin users to view visitor reports
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['pr_follow_up', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to view visitor reports',
+            ], 403);
+        }
+
         $dateRange = $this->getDateRange($request);
 
         $totalFollowUps = FollowUp::whereBetween('created_at', [$dateRange['start'], $dateRange['end']])->count();
@@ -247,6 +292,15 @@ class VisitorReportController extends Controller
      */
     public function pendingFollowUps(Request $request)
     {
+        // Authorization: allow PR/Follow-up and admin users to view visitor reports
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['pr_follow_up', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to view visitor reports',
+            ], 403);
+        }
+
         $limit = $request->get('limit', 50);
 
         $followUps = FollowUp::with('visitor')
@@ -282,6 +336,15 @@ class VisitorReportController extends Controller
      */
     public function retentionBySource(Request $request)
     {
+        // Authorization: allow PR/Follow-up and admin users to view visitor reports
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['pr_follow_up', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to view visitor reports',
+            ], 403);
+        }
+
         $data = Visitor::select('source')
             ->selectRaw('COUNT(*) as total_visitors')
             ->selectRaw('SUM(CASE WHEN status = "converted" THEN 1 ELSE 0 END) as converted_count')
@@ -310,6 +373,15 @@ class VisitorReportController extends Controller
      */
     public function export(Request $request)
     {
+        // Authorization: allow PR/Follow-up and admin users to view visitor reports
+        $user = $request->user();
+        if (!$user || !$user->hasAnyRole(['pr_follow_up', 'admin'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden: you do not have permission to view visitor reports',
+            ], 403);
+        }
+
         $dateRange = $this->getDateRange($request);
         $status = $request->get('status', 'all');
 

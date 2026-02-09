@@ -2,91 +2,20 @@
   <div class="page-wrap">
     <PageHeader title="Users" subtitle="Manage users, roles, and access control">
       <template #actions>
-        <div class="d-flex gap-2">
-          <CButton color="light" @click="exportUsers">
-            <i class="bi bi-file-earmark-excel me-1"></i> Export
-          </CButton>
-          <CButton color="primary" @click="openAddModal">
-            <i class="bi bi-plus-lg me-1"></i> Add User
-          </CButton>
-        </div>
+        <UsersActions @export="exportUsers" @add-user="openAddModal" />
       </template>
     </PageHeader>
 
-    <!-- KPI Summary Cards -->
-    <div class="kpi-grid mb-4">
-      <div class="kpi-card" style="--delay: 0s">
-        <div class="kpi-icon" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)">
-          <i class="bi bi-people-fill"></i>
-        </div>
-        <div class="kpi-content">
-          <div class="kpi-label">Total Users</div>
-          <div class="kpi-value">{{ totalUsersDisplay }}</div>
-          <div class="kpi-sublabel">{{ activeUsersCount }} active</div>
-        </div>
-      </div>
-
-      <div class="kpi-card" style="--delay: 0.1s">
-        <div class="kpi-icon" style="background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%)">
-          <i class="bi bi-person-check-fill"></i>
-        </div>
-        <div class="kpi-content">
-          <div class="kpi-label">Active Users</div>
-          <div class="kpi-value">{{ activeUsersCount }}</div>
-          <div class="kpi-sublabel">{{ inactiveUsersCount }} inactive</div>
-        </div>
-      </div>
-
-      <div class="kpi-card" style="--delay: 0.2s">
-        <div class="kpi-icon" style="background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%)">
-          <i class="bi bi-shield-check"></i>
-        </div>
-        <div class="kpi-content">
-          <div class="kpi-label">Roles</div>
-          <div class="kpi-value">{{ roleOptions.length }}</div>
-          <div class="kpi-sublabel">{{ multiRoleUsersCount }} with multiple</div>
-        </div>
-      </div>
-
-      <div class="kpi-card" style="--delay: 0.3s">
-        <div class="kpi-icon" style="background: linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)">
-          <i class="bi bi-diagram-3-fill"></i>
-        </div>
-        <div class="kpi-content">
-          <div class="kpi-label">Departments</div>
-          <div class="kpi-value">{{ departments.length }}</div>
-          <div class="kpi-sublabel">{{ usersWithDeptCount }} assigned</div>
-        </div>
-      </div>
-    </div>
+    <UsersKPI :totalUsersDisplay="totalUsersDisplay" :activeUsersCount="activeUsersCount"
+      :inactiveUsersCount="inactiveUsersCount" :rolesCount="roleOptions.length"
+      :multiRoleUsersCount="multiRoleUsersCount" :departmentsCount="departments.length"
+      :usersWithDeptCount="usersWithDeptCount" />
 
     <!-- Filters -->
     <MaterialCard class="mb-4">
       <template #header></template>
-      <CRow class="g-3 align-items-end">
-        <CCol md="4">
-          <CFormLabel>Search</CFormLabel>
-          <CFormInput v-model="filters.search" placeholder="Name or phone..." @input="applyFilters" />
-        </CCol>
-        <CCol md="3">
-          <CFormLabel>Role</CFormLabel>
-          <CFormSelect v-model="filters.role" @change="applyFilters">
-            <option value="">All Roles</option>
-            <option v-for="r in roleOptions" :key="r.value" :value="r.value">{{ r.label }}</option>
-          </CFormSelect>
-        </CCol>
-        <CCol md="3">
-          <CFormLabel>Status</CFormLabel>
-          <CFormSelect v-model="filters.status" @change="applyFilters">
-            <option value="">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-          </CFormSelect>
-        </CCol>
-        <CCol md="2">
-          <CButton color="light" class="w-100" @click="resetFilters">Reset</CButton>
-        </CCol>
-      </CRow>
+      <UsersFilters :filters="filters" :role-options="roleOptions" @update:filters="updateFilters"
+        @search="handleSearch" @filter-change="handleFilterChange" @reset="resetFilters" />
     </MaterialCard>
 
     <!-- Users Table -->
@@ -95,133 +24,17 @@
         <div class="fw-semibold">All Users</div>
         <CBadge color="primary">{{ users.length }} of {{ totalUsers }} users</CBadge>
       </template>
-      <div v-if="isLoadingUsers" class="skeleton-container">
-        <div v-for="i in 5" :key="i" class="skeleton-row">
-          <div class="skeleton skeleton-avatar"></div>
-          <div class="skeleton skeleton-text" style="width: 30%"></div>
-          <div class="skeleton skeleton-text" style="width: 20%"></div>
-          <div class="skeleton skeleton-badge" style="width: 15%"></div>
-          <div class="skeleton skeleton-text" style="width: 15%"></div>
-          <div class="skeleton skeleton-text" style="width: 10%"></div>
-          <div class="skeleton skeleton-text" style="width: 20%"></div>
-          <div class="skeleton skeleton-actions" style="width: 10%"></div>
-        </div>
-      </div>
+      <LoadingSkeleton v-if="isLoadingUsers" :rows="5" />
       <template v-else>
-        <CTable v-if="users.length" hover responsive align="middle">
-          <CTableHead>
-            <CTableRow>
-              <CTableHeaderCell>Name</CTableHeaderCell>
-              <CTableHeaderCell>Phone</CTableHeaderCell>
-              <CTableHeaderCell>Role</CTableHeaderCell>
-              <CTableHeaderCell>Department</CTableHeaderCell>
-              <CTableHeaderCell>Status</CTableHeaderCell>
-              <CTableHeaderCell>Last Login</CTableHeaderCell>
-              <CTableHeaderCell class="text-end">Actions</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            <CTableRow v-for="user in paginatedUsers" :key="user.id" class="user-row">
-              <CTableDataCell>
-                <div class="user-profile-cell">
-                  <CAvatar :src="user.avatar" size="md" class="user-avatar-modern" :class="getRandomColor(user.name)">
-                    <span v-if="!user.avatar">{{ user.name.charAt(0).toUpperCase() }}</span>
-                  </CAvatar>
-                  <div class="user-identity">
-                    <div class="user-name">{{ user.name }}</div>
-                    <div class="user-email text-muted">{{ user.email }}</div>
-                  </div>
-                </div>
-              </CTableDataCell>
-              <CTableDataCell class="user-phone">
-                <i class="bi bi-telephone-fill me-2 text-primary opacity-50"></i>{{ user.phone || '—' }}
-              </CTableDataCell>
-              <CTableDataCell>
-                <div class="d-flex flex-wrap gap-1">
-                  <!-- Multiple Roles Support -->
-                  <template v-if="user.roles && user.roles.length > 0">
-                    <CBadge v-for="r in user.roles" :key="r.id" :color="roleColor(r.name)" class="role-badge-modern">
-                      <i :class="roleIcon(r.name)" class="me-1"></i>
-                      {{ r.display_name || r.name }}
-                    </CBadge>
-                  </template>
-                  <!-- Backward compatibility for single role field -->
-                  <CBadge v-else :color="roleColor(user.role)" class="role-badge-modern">
-                    <i :class="roleIcon(user.role)" class="me-1"></i>
-                    {{ roleLabel(user.role) }}
-                  </CBadge>
-                </div>
-              </CTableDataCell>
-              <CTableDataCell class="text-secondary fw-medium">
-                {{ user.department?.name || '—' }}
-              </CTableDataCell>
-              <CTableDataCell>
-                <div class="status-indicator" :class="user.status">
-                  <span class="status-dot"></span>
-                  <span class="status-text">{{ user.status.toUpperCase() }}</span>
-                </div>
-              </CTableDataCell>
-              <CTableDataCell class="text-muted small">
-                <div v-if="user.lastLogin" class="d-flex align-items-center">
-                  <i class="bi bi-clock-history me-1"></i>
-                  {{ user.lastLogin }}
-                </div>
-                <span v-else>Never</span>
-              </CTableDataCell>
-              <CTableDataCell class="text-end">
-                <CButton color="light" size="sm" class="me-1" @click="editUser(user)">
-                  <i class="bi bi-pencil"></i>
-                </CButton>
-                <CButton v-if="user.status === 'active'" color="danger" size="sm" variant="ghost"
-                  @click="confirmDeactivate(user)">
-                  <i class="bi bi-person-slash"></i>
-                </CButton>
-                <CButton v-else color="success" size="sm" variant="ghost" @click="reactivateUser(user)">
-                  <i class="bi bi-person-check"></i>
-                </CButton>
-              </CTableDataCell>
-            </CTableRow>
-          </CTableBody>
-        </CTable>
-        <div v-else class="empty-state">
-          <div class="empty-icon">
-            <i class="bi bi-person-x-fill"></i>
-          </div>
-          <h5 class="empty-title">No Users Found</h5>
-          <p class="empty-subtitle">
-            {{
-              filters.search || filters.role || filters.status
-                ? 'No users match your current filters. Try adjusting your search criteria.'
-                : 'Get started by adding your first user to the system.'
-            }}
-          </p>
-          <CButton v-if="!filters.search && !filters.role && !filters.status" color="primary" @click="openAddModal">
-            <i class="bi bi-plus-lg me-2"></i>Add Your First User
-          </CButton>
-          <CButton v-else color="secondary" variant="outline" @click="resetFilters">
-            <i class="bi bi-arrow-counterclockwise me-2"></i>Clear Filters
-          </CButton>
-        </div>
+        <UserTable v-if="users.length" :users="paginatedUsers" :roleColor="roleColor" :roleIcon="roleIcon"
+          :roleLabel="roleLabel" @edit="editUser" @deactivate="confirmDeactivate" @reactivate="reactivateUser" />
+        <EmptyState v-else :title="emptyStateTitle" :subtitle="emptyStateSubtitle"
+          :primary-action="emptyStatePrimaryAction" :secondary-action="emptyStateSecondaryAction"
+          @primary-action="openAddModal" @secondary-action="resetFilters" />
 
         <!-- Pagination -->
-        <div v-if="users.length" class="pagination-container">
-          <div class="pagination-info">
-            Showing <span class="fw-bold text-dark">{{ (currentPage - 1) * perPage + 1 }}</span> to
-            <span class="fw-bold text-dark">{{ Math.min(currentPage * perPage, totalUsers) }}</span>
-            of <span class="fw-bold text-dark">{{ totalUsers }}</span> users
-          </div>
-          <CPagination class="mb-0">
-            <CPaginationItem :disabled="currentPage === 1" aria-label="Previous" @click="currentPage--">
-              <i class="bi bi-chevron-left"></i>
-            </CPaginationItem>
-            <CPaginationItem v-for="p in totalPages" :key="p" :active="p === currentPage" @click="currentPage = p">
-              {{ p }}
-            </CPaginationItem>
-            <CPaginationItem :disabled="currentPage === totalPages" aria-label="Next" @click="currentPage++">
-              <i class="bi bi-chevron-right"></i>
-            </CPaginationItem>
-          </CPagination>
-        </div>
+        <UsersPagination v-if="users.length" :current-page="currentPage" :per-page="perPage" :total-items="totalUsers"
+          item-label="users" @page-change="currentPage = $event" />
       </template>
 
       <CAlert v-if="tableError" color="danger" class="mt-3">
@@ -229,125 +42,13 @@
       </CAlert>
     </MaterialCard>
 
-    <!-- Add/Edit Modal -->
-    <Teleport to="body">
-      <CModal :visible="showModal" class="modal-bottom-sheet" size="lg" @close="closeModal">
-        <CModalHeader>
-          <CModalTitle>{{ isEditing ? 'Edit User' : 'Add New User' }}</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          <CForm @submit.prevent="saveUser">
-            <CRow class="g-3">
-              <CCol md="6">
-                <CFormLabel>Phone <span class="text-danger">*</span></CFormLabel>
-                <CInputGroup>
-                  <CInputGroupText>+233</CInputGroupText>
-                  <CFormInput
-                    v-model="form.phone"
-                    :disabled="isEditing"
-                    placeholder="XXXXXXXXX"
-                    :invalid="!!errors.phone"
-                  />
-                </CInputGroup>
-                <div v-if="errors.phone" class="text-danger small mt-1">{{ errors.phone }}</div>
-              </CCol>
-              <CCol md="6">
-                <CFormLabel>Name <span class="text-danger">*</span></CFormLabel>
-                <CFormInput v-model="form.name" :invalid="!!errors.name" />
-                <div v-if="errors.name" class="text-danger small mt-1">{{ errors.name }}</div>
-              </CCol>
-              <CCol md="6">
-                <CFormLabel>Email</CFormLabel>
-                <CFormInput v-model="form.email" type="email" />
-              </CCol>
-              <CCol md="12">
-                <CFormLabel>Roles <span class="text-danger">*</span></CFormLabel>
-                <div class="role-multi-select">
-                  <div
-                    v-for="r in roleOptions"
-                    :key="r.value"
-                    class="role-chip"
-                    :class="{ active: form.role_ids.includes(r.value) }"
-                    @click="toggleFormRole(r.value)"
-                  >
-                    <i :class="roleIcon(roleLabelByValue(r.value))"></i>
-                    {{ r.label }}
-                    <i v-if="form.role_ids.includes(r.value)" class="bi bi-check-lg ms-1"></i>
-                  </div>
-                </div>
-                <div v-if="errors.role_ids" class="text-danger small mt-1">{{ errors.role_ids }}</div>
-              </CCol>
-              <CCol md="6">
-                <CFormLabel>Department <span v-if="requiresDepartment" class="text-danger">*</span></CFormLabel>
-                <CFormSelect
-                  v-model="form.departmentId"
-                  :invalid="!!errors.departmentId"
-                  :disabled="isLoadingDepartments"
-                >
-                  <option value="">Select department...</option>
-                  <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
-                </CFormSelect>
-                <div v-if="errors.departmentId" class="text-danger small mt-1">
-                  {{ errors.departmentId }}
-                </div>
-                <div v-if="departmentError" class="text-danger small mt-1">{{ departmentError }}</div>
-              </CCol>
-              <CCol v-if="!isEditing" md="6">
-                <CFormLabel>Password <span class="text-danger">*</span></CFormLabel>
-                <CFormInput
-                  v-model="form.password"
-                  type="password"
-                  autocomplete="new-password"
-                  :invalid="!!errors.password"
-                />
-                <div v-if="errors.password" class="text-danger small mt-1">{{ errors.password }}</div>
-              </CCol>
-            </CRow>
-          </CForm>
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" @click="closeModal">Cancel</CButton>
-          <CButton color="primary" :disabled="saving" @click="saveUser">
-            <CSpinner v-if="saving" size="sm" class="me-1" />
-            {{ isEditing ? 'Update' : 'Create' }}
-          </CButton>
-        </CModalFooter>
-      </CModal>
-    </Teleport>
+    <UserFormModal :visible="showModal" :isEditing="isEditing" :form="form" :errors="errors" :roleOptions="roleOptions"
+      :departments="departments" :isLoadingDepartments="isLoadingDepartments" :saving="saving" @close="closeModal"
+      @save="saveUser" @update-field="updateFormField" @update-role-ids="updateRoleIds"
+      @update-department="updateDepartment" />
 
-    <!-- Deactivate Confirmation Modal -->
-    <Teleport to="body">
-      <CModal
-        :visible="showDeactivateModal"
-        class="modal-bottom-sheet"
-        @close="showDeactivateModal = false"
-      >
-        <CModalHeader>
-          <CModalTitle>Deactivate User</CModalTitle>
-        </CModalHeader>
-        <CModalBody>
-          <p>
-            Are you sure you want to deactivate <strong>{{ userToDeactivate?.name }}</strong>?
-          </p>
-          <CAlert color="warning" class="mb-3">
-            <i class="bi bi-exclamation-triangle me-2"></i>
-            This user will no longer be able to log in.
-          </CAlert>
-          <CFormLabel>Reason <span class="text-danger">*</span></CFormLabel>
-          <CFormTextarea
-            v-model="deactivateReason"
-            rows="3"
-            placeholder="Provide a reason for deactivation..."
-          />
-        </CModalBody>
-        <CModalFooter>
-          <CButton color="secondary" @click="showDeactivateModal = false">Cancel</CButton>
-          <CButton color="danger" :disabled="!deactivateReason.trim()" @click="deactivateUser">
-            Deactivate
-          </CButton>
-        </CModalFooter>
-      </CModal>
-    </Teleport>
+    <DeactivateModal :visible="showDeactivateModal" :user="userToDeactivate" @close="closeDeactivateModal"
+      @deactivate="handleDeactivate" />
   </div>
 </template>
 
@@ -385,6 +86,15 @@ import {
 import PageHeader from '../components/shared/PageHeader.vue';
 import MaterialCard from '../components/material/MaterialCard.vue';
 import _Breadcrumbs from '../components/Breadcrumbs.vue';
+import UserFormModal from '../components/users/UserFormModal.vue';
+import UsersKPI from '../components/users/UsersKPI.vue';
+import UserTable from '../components/users/UserTable.vue';
+import UsersFilters from '../components/users/UsersFilters.vue';
+import UsersPagination from '../components/users/UsersPagination.vue';
+import UsersActions from '../components/users/UsersActions.vue';
+import DeactivateModal from '../components/users/DeactivateModal.vue';
+import EmptyState from '../components/users/EmptyState.vue';
+import LoadingSkeleton from '../components/users/LoadingSkeleton.vue';
 import { exportToExcel } from '../utils/export.js';
 import { usersApi, departmentsApi, rolesApi } from '../api';
 import { useToast } from '../composables/useToast';
@@ -443,6 +153,27 @@ const multiRoleUsersCount = computed(
 );
 const usersWithDeptCount = computed(() => users.value.filter(u => u.departmentName).length);
 
+// Empty State Computed Properties
+const emptyStateTitle = computed(() => 'No Users Found');
+
+const emptyStateSubtitle = computed(() => {
+  return filters.search || filters.role || filters.status
+    ? 'No users match your current filters. Try adjusting your search criteria.'
+    : 'Get started by adding your first user to the system.';
+});
+
+const emptyStatePrimaryAction = computed(() => {
+  return filters.search || filters.role || filters.status
+    ? null
+    : { label: 'Add Your First User', icon: 'bi-plus-lg' };
+});
+
+const emptyStateSecondaryAction = computed(() => {
+  return filters.search || filters.role || filters.status
+    ? { label: 'Clear Filters', icon: 'bi-arrow-counterclockwise' }
+    : null;
+});
+
 // Handle search with debounce
 let searchTimeout;
 watch(
@@ -480,13 +211,25 @@ function resetFilters() {
   fetchUsers();
 }
 
-watch(
-  () => [filters.role, filters.status],
-  () => {
-    currentPage.value = 1;
-    fetchUsers();
-  }
-);
+function updateFilters(newFilters) {
+  Object.assign(filters, newFilters);
+}
+
+function updateFormField({ field, value }) {
+  form[field] = value;
+}
+
+function updateRoleIds(value) {
+  form.role_ids = value;
+}
+
+function updateDepartment(value) {
+  form.departmentId = value;
+}
+
+function closeDeactivateModal() {
+  showDeactivateModal.value = false;
+}
 
 const showModal = ref(false);
 const isEditing = ref(false);
@@ -513,7 +256,6 @@ const requiresDepartment = computed(() => {
 
 const showDeactivateModal = ref(false);
 const userToDeactivate = ref(null);
-const deactivateReason = ref('');
 
 const toast = useToast();
 
@@ -575,6 +317,16 @@ async function fetchRoles() {
   }
 }
 
+function clearErrors() {
+  Object.assign(errors, {
+    phone: '',
+    name: '',
+    role_ids: '',
+    departmentId: '',
+    password: '',
+  });
+}
+
 function openAddModal() {
   isEditing.value = false;
   Object.assign(form, {
@@ -626,149 +378,10 @@ function toggleFormRole(roleId) {
   }
 }
 
-function roleLabelByValue(val) {
-  return roleOptions.value.find(o => o.value === val)?.label || val;
-}
-
+// Close the user form modal and reset transient state
 function closeModal() {
   showModal.value = false;
-}
-
-function clearErrors() {
-  Object.assign(errors, { phone: '', name: '', role_ids: '', departmentId: '', password: '' });
-}
-
-/**
- * Validate phone number
- * - Must be at least 9 digits
- * - No repeating patterns (e.g., 0504040404, 0555555555)
- * - Allows Ghana numbers (0XX) and international (+XXX)
- */
-function validatePhone(phone) {
-  const digits = (phone || '').replace(/\D/g, '');
-
-  // Must have at least 9 digits
-  if (digits.length < 9) {
-    return 'Phone number must be at least 9 digits';
-  }
-
-  // Check for excessive repeating digits (more than 5 same digits in a row)
-  if (/(.)\1{5,}/.test(digits)) {
-    return 'Invalid phone number - too many repeating digits';
-  }
-
-  // Check for repeating patterns like 040404 or 123123
-  const lastEight = digits.slice(-8);
-  // Check for 2-digit repeating pattern (e.g., 04040404)
-  if (/^(\d{2})\1{3}$/.test(lastEight)) {
-    return 'Invalid phone number - repeating pattern detected';
-  }
-  // Check for 4-digit repeating pattern (e.g., 12341234)
-  if (/^(\d{4})\1$/.test(lastEight)) {
-    return 'Invalid phone number - repeating pattern detected';
-  }
-
-  // Valid Ghana mobile prefixes
-  const ghanaPrefixes = [
-    '20',
-    '23',
-    '24',
-    '25',
-    '26',
-    '27',
-    '28',
-    '29',
-    '50',
-    '54',
-    '55',
-    '56',
-    '57',
-    '59',
-  ];
-
-  // Check if it's a Ghana number
-  let localNumber = digits;
-  if (digits.startsWith('233')) {
-    localNumber = digits.slice(3);
-  } else if (digits.startsWith('0')) {
-    localNumber = digits.slice(1);
-  }
-
-  // If it looks like a Ghana number, validate the prefix
-  if (localNumber.length === 9) {
-    const prefix = localNumber.slice(0, 2);
-    if (!ghanaPrefixes.includes(prefix)) {
-      // Allow it as international number if not matching Ghana prefix
-      if (!phone.startsWith('+') && !digits.startsWith('00')) {
-        return 'Invalid Ghana mobile number prefix';
-      }
-    }
-  }
-
-  return null; // Valid
-}
-
-function validateForm() {
-  let valid = true;
   clearErrors();
-
-  // Phone validation
-  const phoneError = validatePhone(form.phone);
-  if (phoneError) {
-    errors.phone = phoneError;
-    valid = false;
-  }
-
-  if (!form.name.trim()) {
-    errors.name = 'Name is required';
-    valid = false;
-  }
-  if (form.role_ids.length === 0) {
-    errors.role_ids = 'At least one role is required';
-    valid = false;
-  }
-  if (requiresDepartment.value && !form.departmentId) {
-    errors.departmentId = 'Department required for this role';
-    valid = false;
-  }
-  if (!isEditing.value && !form.password.trim()) {
-    errors.password = 'Password is required';
-    valid = false;
-  }
-  return valid;
-}
-
-function normalizePhone(input) {
-  if (!input) return '';
-
-  // Remove all non-digit characters except +
-  const cleaned = input.replace(/[^\d+]/g, '');
-
-  // If already starts with +, it's international - keep as is
-  if (cleaned.startsWith('+')) {
-    return cleaned;
-  }
-
-  const digits = cleaned.replace(/\D/g, '');
-  if (!digits) return '';
-
-  // If starts with 00, convert to + (international format)
-  if (digits.startsWith('00')) {
-    return `+${digits.slice(2)}`;
-  }
-
-  // If starts with 233 (Ghana), add +
-  if (digits.startsWith('233')) {
-    return `+${digits}`;
-  }
-
-  // If starts with 0, it's a local Ghana number - convert to +233
-  if (digits.startsWith('0')) {
-    return `+233${digits.slice(1)}`;
-  }
-
-  // Otherwise assume it's Ghana without leading 0
-  return `+233${digits}`;
 }
 
 function stripCountryCode(phone) {
@@ -807,11 +420,15 @@ async function saveUser() {
   if (!validateForm()) return;
   saving.value = true;
 
+  // Get the primary role name for backward compatibility
+  const primaryRole = roleOptions.value.find(o => o.value === form.role_ids[0]);
+  const roleName = primaryRole?.label || form.role_ids[0];
+
   const basePayload = {
     phone: normalizePhone(form.phone),
     name: form.name.trim(),
     email: form.email || null,
-    role: form.role_ids[0], // Backwards compatibility: primary role
+    role: roleName,
     role_ids: form.role_ids,
     department_id: form.departmentId || null,
   };
@@ -822,7 +439,7 @@ async function saveUser() {
       updateUserInList(form.id, {
         name: basePayload.name,
         email: basePayload.email,
-        role: basePayload.role,
+        role: roleName,
         roles: response.data?.data?.roles || users.value.find(u => u.id === form.id)?.roles || [],
         departmentName:
           departmentNameById(form.departmentId) ||
@@ -841,8 +458,17 @@ async function saveUser() {
     }
     closeModal();
   } catch (error) {
-    const message = error.response?.data?.message || 'Failed to save user';
-    toast.error(message);
+    // Show backend validation errors per-field
+    const resp = error.response?.data;
+    if (resp?.errors) {
+      if (resp.errors.phone) errors.phone = resp.errors.phone[0];
+      if (resp.errors.name) errors.name = resp.errors.name[0];
+      if (resp.errors.email) errors.name = resp.errors.email[0];
+      if (resp.errors.role) errors.role_ids = resp.errors.role[0];
+      if (resp.errors.password) errors.password = resp.errors.password[0];
+      if (resp.errors.department_id) errors.departmentId = resp.errors.department_id[0];
+    }
+    toast.error(resp?.message || 'Failed to save user');
   } finally {
     saving.value = false;
   }
@@ -857,7 +483,6 @@ function updateUserInList(id, payload) {
 
 function confirmDeactivate(user) {
   userToDeactivate.value = user;
-  deactivateReason.value = '';
   showDeactivateModal.value = true;
 }
 
@@ -901,22 +526,22 @@ function getRandomColor(name) {
   return colors[hash % colors.length];
 }
 
-function exportUsers() {
-  const columns = [
-    { key: 'name', header: 'Name' },
-    { key: 'phone', header: 'Phone' },
-    { key: 'email', header: 'Email' },
-    { key: 'role', header: 'Role', transform: v => roleLabel(v) },
-    { key: 'departmentName', header: 'Department' },
-    {
-      key: 'status',
-      header: 'Status',
-      transform: v => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v),
-    },
-    { key: 'lastLogin', header: 'Last Login' },
-  ];
-  exportToExcel(users.value, columns, `Users_Report_${new Date().toISOString().split('T')[0]}`);
-  toast.success('Users exported successfully');
+function handleSearch(searchTerm) {
+  filters.search = searchTerm;
+  currentPage.value = 1;
+  fetchUsers();
+}
+
+function handleFilterChange(newFilters) {
+  Object.assign(filters, newFilters);
+  currentPage.value = 1;
+  fetchUsers();
+}
+
+function handleDeactivate(reason) {
+  if (!userToDeactivate.value) return;
+  deactivateReason.value = reason;
+  deactivateUser();
 }
 </script>
 
@@ -1586,105 +1211,6 @@ function exportUsers() {
   }
 }
 
-/* ======== EMPTY STATE ======== */
-.empty-state {
-  text-align: center;
-  padding: 4rem 2rem;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.03) 0%, rgba(118, 75, 162, 0.03) 100%);
-  border-radius: 20px;
-  border: 2px dashed rgba(102, 126, 234, 0.2);
-}
-
-.empty-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-}
-
-.empty-icon i {
-  font-size: 2.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.empty-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 0.75rem;
-}
-
-.empty-subtitle {
-  font-size: 1rem;
-  color: #64748b;
-  margin-bottom: 1.5rem;
-  max-width: 500px;
-  margin-left: auto;
-  margin-right: auto;
-  line-height: 1.6;
-}
-
-/* ======== SKELETON LOADERS ======== */
-.skeleton-container {
-  padding: 1.5rem 0;
-}
-
-.skeleton-row {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.25rem;
-  margin-bottom: 0.75rem;
-  background: white;
-  border-radius: 12px;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-}
-
-.skeleton {
-  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
-  border-radius: 8px;
-}
-
-.skeleton-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: 12px;
-  flex-shrink: 0;
-}
-
-.skeleton-text {
-  height: 16px;
-  flex: 1;
-}
-
-.skeleton-badge {
-  height: 24px;
-  border-radius: 12px;
-}
-
-.skeleton-actions {
-  height: 32px;
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-
-  100% {
-    background-position: -200% 0;
-  }
-}
-
 /* ======== RESPONSIVE IMPROVEMENTS ======== */
 @media (max-width: 768px) {
   .kpi-grid {
@@ -1703,27 +1229,6 @@ function exportUsers() {
 
   .kpi-value {
     font-size: 1.5rem;
-  }
-
-  .empty-state {
-    padding: 3rem 1.5rem;
-  }
-
-  .empty-icon {
-    width: 60px;
-    height: 60px;
-  }
-
-  .empty-icon i {
-    font-size: 2rem;
-  }
-
-  .empty-title {
-    font-size: 1.25rem;
-  }
-
-  .empty-subtitle {
-    font-size: 0.9rem;
   }
 }
 
@@ -1756,5 +1261,368 @@ function exportUsers() {
 :deep(.avatar-red) {
   background: linear-gradient(135deg, #ff6a00 0%, #ee0979 100%) !important;
   color: white !important;
+}
+</style>
+
+<!-- GLOBAL styles for Teleported modals (scoped CSS cannot reach Teleported elements) -->
+<style>
+.modal-bottom-sheet.modal {
+  z-index: 9999 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.modal-bottom-sheet.modal.show {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+.modal-bottom-sheet .modal-dialog {
+  position: relative;
+  margin: 4vh auto !important;
+  pointer-events: none;
+}
+
+.modal-bottom-sheet .modal-dialog.modal-lg {
+  max-width: 680px;
+}
+
+.modal-bottom-sheet.modal.show .modal-dialog {
+  transform: none !important;
+  pointer-events: auto;
+}
+
+.modal-bottom-sheet .modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  pointer-events: auto;
+  background-color: #fff !important;
+  border: none !important;
+  border-radius: 20px !important;
+  outline: 0;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.2) !important;
+  overflow: hidden;
+}
+
+/* Hide default CModal header since we use custom */
+.modal-bottom-sheet .modal-header {
+  display: none !important;
+}
+
+.modal-bottom-sheet .modal-body {
+  padding: 1rem 1.5rem !important;
+}
+
+.modal-bottom-sheet .modal-footer {
+  display: none !important;
+}
+
+.modal-backdrop {
+  z-index: 9998 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.45) !important;
+  backdrop-filter: blur(4px);
+}
+
+.modal-backdrop.show {
+  opacity: 1 !important;
+}
+
+/* ---- Custom Modal Header ---- */
+.modal-header-custom {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.modal-header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.modal-header-icon.add {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.modal-header-icon.edit {
+  background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  color: white;
+}
+
+.modal-header-icon.deactivate {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+}
+
+.modal-header-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+}
+
+.modal-header-sub {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin: 2px 0 0;
+}
+
+.modal-close-btn {
+  margin-left: auto;
+  background: #f1f5f9;
+  border: none;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-close-btn:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+/* ---- Form Sections ---- */
+.form-section {
+  padding: 0.25rem 0 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.form-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0.5rem;
+}
+
+.form-section-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.75rem;
+}
+
+.form-field-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.35rem;
+}
+
+.form-field-label .req {
+  color: #ef4444;
+}
+
+.field-error {
+  font-size: 0.75rem;
+  color: #ef4444;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.phone-prefix {
+  font-weight: 600;
+  color: #64748b;
+  background: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* ---- Role Grid ---- */
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+}
+
+.role-select-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.8rem;
+  color: #64748b;
+  font-weight: 500;
+  position: relative;
+}
+
+.role-select-btn:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.role-select-btn.selected {
+  background: rgba(102, 126, 234, 0.08);
+  border-color: #667eea;
+  color: #4f46e5;
+}
+
+.role-select-icon {
+  font-size: 1rem;
+  opacity: 0.7;
+}
+
+.role-select-btn.selected .role-select-icon {
+  opacity: 1;
+}
+
+.role-select-name {
+  flex: 1;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.role-check {
+  color: #667eea;
+  font-size: 0.9rem;
+}
+
+/* ---- Custom Modal Footer ---- */
+.modal-footer-custom {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f1f5f9;
+  background: #fafbfc;
+}
+
+.modal-btn-cancel {
+  padding: 0.6rem 1.25rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  color: #64748b;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-btn-cancel:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.modal-btn-save {
+  padding: 0.6rem 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.modal-btn-save:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.modal-btn-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.modal-btn-danger {
+  padding: 0.6rem 1.5rem;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.modal-btn-danger:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.4);
+}
+
+.modal-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---- Deactivate Warning ---- */
+.deactivate-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: #fef3c7;
+  border-radius: 12px;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.deactivate-warning i {
+  font-size: 1.2rem;
+  color: #f59e0b;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 768px) {
+  .modal-bottom-sheet .modal-dialog {
+    max-width: 95% !important;
+    margin: 2vh auto !important;
+  }
+
+  .role-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .role-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
