@@ -8,12 +8,11 @@
 </template>
 
 <script setup>
-import { useRoute } from 'vue-router'
-import { computed } from 'vue'
-import { CBreadcrumb, CBreadcrumbItem } from '@coreui/vue'
-const route = useRoute()
-const items = computed(() => route.matched.filter(r => r.path))
+import { useRoute } from 'vue-router';
+import { computed } from 'vue';
+import { CBreadcrumb, CBreadcrumbItem } from '@coreui/vue';
+const route = useRoute();
+const items = computed(() => route.matched.filter(r => r.path));
 </script>
 
-<style scoped>
-</style>
+<style scoped></style>

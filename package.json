@@ -1,9 +1,16 @@
 {
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "preview": "cd frontend && npm run preview"
+  },
   "dependencies": {
     "@coreui/vue": "^5.7.0",
     "pinia": "^3.0.4"
   },
   "devDependencies": {
-    "vite": "^7.2.7"
+    "@vue/tsconfig": "^0.8.1",
+    "vite": "^7.2.7",
+    "vue-tsc": "^1.8.27"
   }
 }

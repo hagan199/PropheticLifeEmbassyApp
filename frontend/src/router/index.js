@@ -1,216 +1,181 @@
-import { createRouter, createWebHistory } from "vue-router";
+import { createRouter, createWebHistory } from 'vue-router';
+import { useAuthStore } from '../store/auth';
 
-// Auth
-import SignIn from "../views/SignIn.vue";
+// 1. Critical routes
+const Dashboard = () => import('../views/Dashboard.vue');
+const Home = () => import('../views/Home.vue');
+const SignIn = () => import('../views/SignIn.vue');
 
-// Core
-import Home from "../views/Home.vue";
-import Dashboard from "../views/Dashboard.vue";
-import Settings from "../views/Settings.vue";
-import Profile from "../views/Profile.vue";
+// 2. Admin Chunks
+const Users = () => import('../views/Users.vue');
+const RolePermission = () => import('../views/RolePermission.vue');
+const AttendanceApprovals = () => import('../views/AttendanceApprovals.vue');
+const Broadcasts = () => import('../views/Broadcasts.vue');
+const AuditLogs = () => import('../views/AuditLogs.vue');
 
-// Admin
-import Users from "../views/Users.vue";
-import RolePermission from "../views/RolePermission.vue";
-import AttendanceApprovals from "../views/AttendanceApprovals.vue";
-import Broadcasts from "../views/Broadcasts.vue";
-import AuditLogs from "../views/AuditLogs.vue";
-import Notifications from "../views/Notifications.vue";
+// 3. Finance Chunks
+const Expense = () => import('../views/Expense.vue');
+const ExpenseType = () => import('../views/Expense_type.vue');
+const Contributions = () => import('../views/Contributions.vue');
 
-// Attendance & Visitors
-import Attendance from "../views/Attendance.vue";
-import Visitors from "../views/Visitors.vue";
-import FollowUps from "../views/FollowUps.vue";
-import MySubmissions from "../views/MySubmissions.vue";
+// 4. Attendance/Visitors Chunks
+const Attendance = () => import('../views/Attendance.vue');
+const Visitors = () => import('../views/Visitors.vue');
+const FollowUps = () => import('../views/FollowUps.vue');
+const MySubmissions = () => import('../views/MySubmissions.vue');
 
-// Finance
-import Expense from "../views/Expense.vue";
-import ExpenseType from "../views/Expense_type.vue";
-import Contributions from "../views/Contributions.vue";
+// 5. Departments Chunks
+const Departments = () => import('../views/Departments.vue');
+const MyDepartment = () => import('../views/MyDepartment.vue');
 
-// Departments
-import Departments from "../views/Departments.vue";
-import MyDepartment from "../views/MyDepartment.vue";
+// 6. Other
+const Settings = () => import('../views/Settings.vue');
+const Profile = () => import('../views/Profile.vue');
+const Notifications = () => import('../views/Notifications.vue');
 
 const routes = [
-  // Redirects
-  { path: "/", redirect: "/dashboard" },
-  { path: "/login", redirect: "/signin" },
-
-  // Auth
+  { path: '/', redirect: '/dashboard' },
+  { path: '/login', redirect: '/signin' },
   {
-    path: "/signin",
+    path: '/signin',
     component: SignIn,
-    meta: { layout: "auth", breadcrumb: "Sign In" },
+    meta: { layout: 'auth', breadcrumb: 'Sign In', guestOnly: true },
   },
-
-  // Core
   {
-    path: "/home",
+    path: '/home',
     component: Home,
-    meta: { requiresAuth: true, breadcrumb: "Home" },
+    meta: { requiresAuth: true, breadcrumb: 'Home' },
   },
   {
-    path: "/dashboard",
+    path: '/dashboard',
     component: Dashboard,
-    meta: { requiresAuth: true, breadcrumb: "Dashboard" },
+    meta: { requiresAuth: true, breadcrumb: 'Dashboard' },
   },
   {
-    path: "/settings",
+    path: '/settings',
     component: Settings,
-    meta: { requiresAuth: true, breadcrumb: "Settings" },
+    meta: { requiresAuth: true, breadcrumb: 'Settings' },
   },
   {
-    path: "/profile",
+    path: '/profile',
     component: Profile,
-    meta: { breadcrumb: "Profile", requiresAuth: true },
+    meta: { breadcrumb: 'Profile', requiresAuth: true },
   },
   {
-    path: "/notifications",
+    path: '/notifications',
     component: Notifications,
-    meta: { requiresAuth: true, breadcrumb: "Notifications" },
+    meta: { requiresAuth: true, breadcrumb: 'Notifications' },
   },
-
-  // Admin routes
   {
-    path: "/users",
+    path: '/users',
     component: Users,
-    meta: { requiresAuth: true, breadcrumb: "Users", roles: ["admin"] },
+    meta: { requiresAuth: true, breadcrumb: 'Users', roles: ['admin'] },
   },
   {
-    path: "/roles-permissions",
+    path: '/roles-permissions',
     component: RolePermission,
-    meta: {
-      requiresAuth: true,
-      breadcrumb: "Roles & Permissions",
-      roles: ["admin"],
-    },
+    meta: { requiresAuth: true, breadcrumb: 'Roles & Permissions', roles: ['admin'] },
   },
   {
-    path: "/attendance-approvals",
+    path: '/attendance-approvals',
     component: AttendanceApprovals,
-    meta: {
-      requiresAuth: true,
-      breadcrumb: "Attendance Approvals",
-      roles: ["admin"],
-    },
+    meta: { requiresAuth: true, breadcrumb: 'Attendance Approvals', roles: ['admin'] },
   },
   {
-    path: "/broadcasts",
+    path: '/broadcasts',
     component: Broadcasts,
-    meta: { requiresAuth: true, breadcrumb: "Broadcasts", roles: ["admin"] },
+    meta: { requiresAuth: true, breadcrumb: 'Broadcasts', roles: ['admin'] },
   },
   {
-    path: "/audit-logs",
+    path: '/audit-logs',
     component: AuditLogs,
-    meta: { requiresAuth: true, breadcrumb: "Audit Logs", roles: ["admin"] },
+    meta: { requiresAuth: true, breadcrumb: 'Audit Logs', roles: ['admin'] },
   },
-
-  // Attendance & Visitors
   {
-    path: "/attendance",
+    path: '/attendance',
     component: Attendance,
-    meta: { requiresAuth: true, breadcrumb: "Attendance" },
+    meta: { requiresAuth: true, breadcrumb: 'Attendance' },
   },
   {
-    path: "/visitors",
+    path: '/visitors',
     component: Visitors,
-    meta: { requiresAuth: true, breadcrumb: "Visitors" },
+    meta: { requiresAuth: true, breadcrumb: 'Visitors' },
   },
   {
-    path: "/follow-ups",
+    path: '/follow-ups',
     component: FollowUps,
     meta: {
       requiresAuth: true,
-      breadcrumb: "Follow-ups",
-      roles: ["admin", "pastor", "pr_follow_up"],
+      breadcrumb: 'Follow-ups',
+      roles: ['admin', 'pastor', 'pr_follow_up'],
     },
   },
   {
-    path: "/my-submissions",
+    path: '/my-submissions',
     component: MySubmissions,
-    meta: {
-      requiresAuth: true,
-      breadcrumb: "My Submissions",
-      roles: ["usher"],
-    },
+    meta: { requiresAuth: true, breadcrumb: 'My Submissions', roles: ['usher'] },
   },
-
-  // Finance
   {
-    path: "/contributions",
+    path: '/contributions',
     component: Contributions,
-    meta: {
-      requiresAuth: true,
-      breadcrumb: "Contributions",
-      roles: ["admin", "finance"],
-    },
+    meta: { requiresAuth: true, breadcrumb: 'Contributions', roles: ['admin', 'finance'] },
   },
   {
-    path: "/expense",
+    path: '/expense',
     component: Expense,
-    meta: { requiresAuth: true, breadcrumb: "Expenses" },
+    meta: { requiresAuth: true, breadcrumb: 'Expenses' },
   },
   {
-    path: "/expense-types",
+    path: '/expense-types',
     component: ExpenseType,
-    meta: { requiresAuth: true, breadcrumb: "Expense Types" },
+    meta: { requiresAuth: true, breadcrumb: 'Expense Types' },
   },
-
-  // Departments
   {
-    path: "/departments",
+    path: '/departments',
     component: Departments,
-    meta: { requiresAuth: true, breadcrumb: "Departments" },
+    meta: { requiresAuth: true, breadcrumb: 'Departments' },
   },
   {
-    path: "/my-department",
+    path: '/my-department',
     component: MyDepartment,
-    meta: {
-      requiresAuth: true,
-      breadcrumb: "My Department",
-      roles: ["department_leader"],
-    },
+    meta: { requiresAuth: true, breadcrumb: 'My Department', roles: ['department_leader'] },
+  },
+  {
+    path: '/reports',
+    component: () => import('../views/Reports.vue'),
+    meta: { requiresAuth: true, breadcrumb: 'Reports' },
   },
 ];
 
 const router = createRouter({
   history: createWebHistory(),
   routes,
+  scrollBehavior: (to, from, savedPosition) => savedPosition || { top: 0 },
 });
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem("auth_token");
-  const user = JSON.parse(localStorage.getItem("auth_user") || "null");
+  const auth = useAuthStore();
+  const token = auth.token;
+  const user = auth.user;
 
-  // If navigating to signin from a protected route (likely due to session expiry),
-  // clear any stale tokens to prevent redirect loop
-  if (to.path === "/signin" && from.meta.requiresAuth) {
-    localStorage.removeItem("auth_token");
-    localStorage.removeItem("auth_user");
+  // 1. Guest-only check
+  if (to.meta.guestOnly && token) {
+    return next('/dashboard');
+  }
+
+  // 2. Public routes
+  if (!to.meta.requiresAuth && to.path !== '/signin') {
     return next();
   }
 
-  // Check if route requires auth
+  // 3. Auth required check
   if (to.meta.requiresAuth && !token) {
-    return next("/signin");
+    return next('/signin');
   }
 
-  // Redirect to dashboard if already logged in and trying to access signin
-  // Only redirect if both token and user exist (to avoid issues with stale tokens)
-  if (to.path === "/signin" && token && user) {
-    return next("/dashboard");
-  }
-
-  // Check role-based access
-  if (to.meta.roles && to.meta.roles.length > 0) {
-    if (!token || !user) {
-      return next("/signin");
-    }
-    if (!to.meta.roles.includes(user.role)) {
-      // User doesn't have required role - redirect to dashboard
-      return next("/dashboard");
-    }
+  // 4. Role authorization check
+  if (to.meta.roles && (!user || !to.meta.roles.includes(user.role))) {
+    return next('/dashboard');
   }
 
   next();

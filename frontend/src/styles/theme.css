@@ -101,8 +101,12 @@
 
 /* Fade In Animation */
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Scale In Animation */
@@ -131,45 +135,79 @@
 
 /* Pulse Animation */
 @keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /* Shimmer Effect */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* Glow Pulse */
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
-  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.5); }
+  0%,
+  100% {
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 40px rgba(99, 102, 241, 0.5);
+  }
 }
 
 /* Spin Animation */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Bounce Animation */
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 
 /* Float Animation */
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 /* Gradient Flow */
 @keyframes gradientFlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 /* ============================================
@@ -496,7 +534,7 @@ body {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(rgba(255, 255, 255, 0.2), transparent);
   opacity: 0;
   transition: opacity var(--transition-fast);
 }
@@ -892,7 +930,12 @@ body {
 
 /* Skeleton Loader */
 .skeleton {
-  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--bg-active) 50%, var(--bg-hover) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--bg-hover) 25%,
+    var(--bg-active) 50%,
+    var(--bg-hover) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-md);
@@ -988,21 +1031,52 @@ body {
    ============================================ */
 
 /* Animations */
-.animate-fadeIn { animation: fadeIn 0.3s ease-out; }
-.animate-fadeInUp { animation: fadeInUp 0.4s ease-out; }
-.animate-scaleIn { animation: scaleIn 0.3s ease-out; }
-.animate-slideInRight { animation: slideInRight 0.3s ease-out; }
-.animate-pulse { animation: pulse 2s infinite; }
-.animate-bounce { animation: bounce 1s infinite; }
-.animate-float { animation: float 3s ease-in-out infinite; }
-.animate-spin { animation: spin 1s linear infinite; }
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+.animate-fadeInUp {
+  animation: fadeInUp 0.4s ease-out;
+}
+.animate-scaleIn {
+  animation: scaleIn 0.3s ease-out;
+}
+.animate-slideInRight {
+  animation: slideInRight 0.3s ease-out;
+}
+.animate-pulse {
+  animation: pulse 2s infinite;
+}
+.animate-bounce {
+  animation: bounce 1s infinite;
+}
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
 
 /* Staggered Animations */
-.stagger-1 { animation-delay: 0.1s; animation-fill-mode: backwards; }
-.stagger-2 { animation-delay: 0.2s; animation-fill-mode: backwards; }
-.stagger-3 { animation-delay: 0.3s; animation-fill-mode: backwards; }
-.stagger-4 { animation-delay: 0.4s; animation-fill-mode: backwards; }
-.stagger-5 { animation-delay: 0.5s; animation-fill-mode: backwards; }
+.stagger-1 {
+  animation-delay: 0.1s;
+  animation-fill-mode: backwards;
+}
+.stagger-2 {
+  animation-delay: 0.2s;
+  animation-fill-mode: backwards;
+}
+.stagger-3 {
+  animation-delay: 0.3s;
+  animation-fill-mode: backwards;
+}
+.stagger-4 {
+  animation-delay: 0.4s;
+  animation-fill-mode: backwards;
+}
+.stagger-5 {
+  animation-delay: 0.5s;
+  animation-fill-mode: backwards;
+}
 
 /* Hover Effects */
 .hover-lift {
@@ -1027,12 +1101,20 @@ body {
 }
 
 /* Responsive Utilities */
-.mobile-only { display: none; }
-.desktop-only { display: block; }
+.mobile-only {
+  display: none;
+}
+.desktop-only {
+  display: block;
+}
 
 @media (max-width: 576px) {
-  .desktop-only { display: none; }
-  .mobile-only { display: block; }
+  .desktop-only {
+    display: none;
+  }
+  .mobile-only {
+    display: block;
+  }
 }
 
 /* Glass Effect */
@@ -1182,7 +1264,12 @@ body {
 }
 
 .theme-dark .skeleton {
-  background: linear-gradient(90deg, var(--bg-hover) 25%, var(--bg-active) 50%, var(--bg-hover) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--bg-hover) 25%,
+    var(--bg-active) 50%,
+    var(--bg-hover) 75%
+  );
   background-size: 200% 100%;
 }
 

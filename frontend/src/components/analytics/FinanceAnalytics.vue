@@ -11,12 +11,7 @@
           </div>
         </div>
         <div class="card-body">
-           <CChart 
-            type="bar" 
-            :data="cashflowData" 
-            :options="cashflowOptions"
-            height="300"
-          />
+          <CChart type="bar" :data="cashflowData" :options="cashflowOptions" height="300" />
         </div>
       </div>
     </div>
@@ -28,12 +23,8 @@
           <h6 class="mb-0 fw-bold">Income Sources</h6>
         </div>
         <div class="card-body d-flex justify-content-center align-items-center">
-           <CChart 
-            type="doughnut" 
-            :data="incomeSourceData" 
-            :options="{ plugins: { legend: { position: 'right' } } }"
-            style="max-height: 250px"
-          />
+          <CChart type="doughnut" :data="incomeSourceData" :options="{ plugins: { legend: { position: 'right' } } }"
+            style="max-height: 250px" />
         </div>
       </div>
     </div>
@@ -45,12 +36,8 @@
           <h6 class="mb-0 fw-bold">Expense Distribution</h6>
         </div>
         <div class="card-body d-flex justify-content-center align-items-center">
-           <CChart 
-            type="pie" 
-            :data="expenseCategoryData" 
-            :options="{ plugins: { legend: { position: 'right' } } }"
-            style="max-height: 250px"
-          />
+          <CChart type="pie" :data="expenseCategoryData" :options="{ plugins: { legend: { position: 'right' } } }"
+            style="max-height: 250px" />
         </div>
       </div>
     </div>
@@ -58,58 +45,89 @@
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import { CChart } from '@coreui/vue-chartjs';
-import { useAnalyticsStore } from '@/store/analytics'; // Requires update to store
-import { storeToRefs } from 'pinia';
+import { reportsApi } from '@/api/reports';
+// CSpinner not used in this component
 
-const analyticsStore = useAnalyticsStore();
-const { financeData } = storeToRefs(analyticsStore);
+const props = defineProps({
+  filters: { type: Object, default: () => ({}) },
+});
+
+const isLoading = ref(false);
+const financeTrends = ref({ labels: [], income: [], expenses: [] });
+const incomeCategories = ref({ labels: [], data: [] });
+const expenseCategories = ref({ labels: [], data: [] });
+
+async function fetchFinanceData() {
+  isLoading.value = true;
+  try {
+    const [trendRes, incomeRes, expenseRes] = await Promise.all([
+      reportsApi.finance.trends(props.filters),
+      reportsApi.finance.contributionsByType(props.filters),
+      reportsApi.finance.expensesByCategory(props.filters),
+    ]);
+
+    financeTrends.value = trendRes.data.data;
+    incomeCategories.value = incomeRes.data.data;
+    expenseCategories.value = expenseRes.data.data;
+  } catch (error) {
+    console.error('Failed to fetch finance data:', error);
+  } finally {
+    isLoading.value = false;
+  }
+}
 
 // Compute chart data structures
 const cashflowData = computed(() => ({
-  labels: financeData.value?.trend?.labels || ['Jan', 'Feb', 'Mar'],
+  labels: financeTrends.value.labels || ['Jan', 'Feb', 'Mar'],
   datasets: [
     {
       label: 'Tithes & Offering',
-      backgroundColor: '#198754',
-      data: financeData.value?.trend?.income || [5000, 6000, 5500]
+      backgroundColor: '#10b981',
+      data: financeTrends.value.income || [0, 0, 0],
     },
     {
       label: 'Expenses',
-      backgroundColor: '#dc3545',
-      data: financeData.value?.trend?.expenses || [3000, 2500, 4000]
-    }
-  ]
+      backgroundColor: '#ef4444',
+      data: financeTrends.value.expenses || [0, 0, 0],
+    },
+  ],
 }));
 
 const cashflowOptions = {
-  plugins: { legend: { position: 'top' } },
+  plugins: {
+    legend: {
+      position: 'top',
+      labels: { usePointStyle: true, padding: 20 },
+    },
+  },
   maintainAspectRatio: false,
   scales: {
-    y: { beginAtZero: true, grid: { color: '#f0f2f5' } },
-    x: { grid: { display: false } }
-  }
+    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
+    x: { grid: { display: false } },
+  },
 };
 
 const incomeSourceData = computed(() => ({
-  labels: financeData.value?.categories?.labels || ['Tithes', 'Offering', 'Building'],
-  datasets: [{
-    backgroundColor: ['#0d6efd', '#0dcaf0', '#ffc107'],
-    data: financeData.value?.categories?.data || [60, 30, 10]
-  }]
+  labels: incomeCategories.value.labels || ['Tithes', 'Offering', 'Building'],
+  datasets: [
+    {
+      backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#f97316', '#f59e0b'],
+      data: incomeCategories.value.data || [0, 0, 0],
+    },
+  ],
 }));
 
 const expenseCategoryData = computed(() => ({
-  labels: financeData.value?.expenses?.labels || ['Salaries', 'Utilities', 'Outreach'],
-  datasets: [{
-    backgroundColor: ['#fd7e14', '#20c997', '#6610f2'],
-    data: financeData.value?.expenses?.data || [50, 20, 30]
-  }]
+  labels: expenseCategories.value.labels || ['Salaries', 'Utilities', 'Outreach'],
+  datasets: [
+    {
+      backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#10b981', '#3b82f6'],
+      data: expenseCategories.value.data || [0, 0, 0],
+    },
+  ],
 }));
 
-onMounted(() => {
-  // Trigger a store action to fetch finance specific data
-  // analyticsStore.fetchFinanceMetrics() 
-});
+onMounted(fetchFinanceData);
 </script>

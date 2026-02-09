@@ -8,13 +8,7 @@
         </div>
         <div class="card-body">
           <CSpinner v-if="isLoading" color="dark" />
-          <CChart 
-            v-else
-            type="line" 
-            :data="growthData" 
-            :options="growthOptions"
-            height="300"
-          />
+          <CChart v-else type="line" :data="growthData" :options="growthOptions" height="300" />
         </div>
       </div>
     </div>
@@ -27,13 +21,9 @@
         </div>
         <div class="card-body d-flex justify-content-center align-items-center">
           <CSpinner v-if="isLoading" color="dark" />
-          <CChart 
-            v-else
-            type="polarArea" 
-            :data="roleData" 
-            :options="{ plugins: { legend: { position: 'bottom' } } }"
-            style="max-height: 280px"
-          />
+          <CChart
+v-else type="polarArea" :data="roleData" :options="{ plugins: { legend: { position: 'bottom' } } }"
+            style="max-height: 280px" />
         </div>
       </div>
     </div>
@@ -49,8 +39,8 @@ import { CSpinner } from '@coreui/vue';
 
 const { data, isLoading } = useQuery({
   queryKey: ['analytics', 'members'],
-  queryFn: () => dashboardApi.getAnalytics({ range: 'month' }),
-  staleTime: 10 * 60 * 1000 // 10 mins cache
+  queryFn: () => dashboardApi.analytics({ range: 'month' }),
+  staleTime: 10 * 60 * 1000, // 10 mins cache
 });
 
 const growthData = computed(() => {
@@ -59,15 +49,17 @@ const growthData = computed(() => {
 
   return {
     labels: growth.labels || ['Jan', 'Feb', 'Mar'],
-    datasets: [{
-      label: 'New Members',
-      backgroundColor: 'rgba(50, 31, 219, 0.2)',
-      borderColor: '#321fdb',
-      pointBackgroundColor: '#321fdb',
-      pointBorderColor: '#fff',
-      data: growth.data || [5, 10, 8],
-      fill: true
-    }]
+    datasets: [
+      {
+        label: 'New Members',
+        backgroundColor: 'rgba(50, 31, 219, 0.2)',
+        borderColor: '#321fdb',
+        pointBackgroundColor: '#321fdb',
+        pointBorderColor: '#fff',
+        data: growth.data || [5, 10, 8],
+        fill: true,
+      },
+    ],
   };
 });
 
@@ -76,8 +68,8 @@ const growthOptions = {
   maintainAspectRatio: false,
   scales: {
     y: { beginAtZero: true, grid: { color: '#f8f9fa' } },
-    x: { grid: { display: false } }
-  }
+    x: { grid: { display: false } },
+  },
 };
 
 const roleData = computed(() => {
@@ -85,14 +77,18 @@ const roleData = computed(() => {
   const roles = analytics.user_roles || { labels: [], data: [] };
 
   // Capitalize labels
-  const labels = (roles.labels || []).map(r => r.charAt(0).toUpperCase() + r.slice(1).replace('_', ' '));
+  const labels = (roles.labels || []).map(
+    r => r.charAt(0).toUpperCase() + r.slice(1).replace('_', ' ')
+  );
 
   return {
     labels: labels.length ? labels : ['Admin', 'Usher', 'Pastor'],
-    datasets: [{
-      backgroundColor: ['#e55353', '#f9b115', '#2eb85c', '#321fdb', '#3399ff', '#636f83'],
-      data: roles.data || [2, 5, 1]
-    }]
+    datasets: [
+      {
+        backgroundColor: ['#e55353', '#f9b115', '#2eb85c', '#321fdb', '#3399ff', '#636f83'],
+        data: roles.data || [2, 5, 1],
+      },
+    ],
   };
 });
 </script>

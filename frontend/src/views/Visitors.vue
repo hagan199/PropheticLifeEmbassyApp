@@ -1,9 +1,7 @@
 <template>
   <div class="page-wrap">
     <!-- Page Header -->
-    <PageHeader
-      title="Visitors"
-      subtitle="Register first-time visitors and partners">
+    <PageHeader title="Visitors" subtitle="Register first-time visitors and partners">
       <template #actions>
         <button class="action-btn" @click="exportVisitors">
           <i class="bi bi-download me-2"></i>
@@ -75,19 +73,26 @@
             </div>
           </template>
 
-          <CForm @submit.prevent="addVisitor" class="visitor-form">
-            <MaterialInput v-model="form.name" label="Full Name" required />
+          <CForm class="visitor-form" @submit.prevent="addVisitor">
+            <div class="mb-3">
+              <MaterialInput v-model="form.name" label="Full Name" required />
+            </div>
 
-            <CRow class="g-3">
+            <CRow class="g-3 mb-3">
               <CCol sm="6">
-                <MaterialInput v-model="form.phone" label="Phone Number" required :error="phoneError" />
+                <MaterialInput
+                  v-model="form.phone"
+                  label="Phone Number"
+                  required
+                  :error="phoneError"
+                />
               </CCol>
               <CCol sm="6">
                 <MaterialInput v-model="form.occupation" label="Occupation/Job" />
               </CCol>
             </CRow>
 
-            <CRow class="g-3">
+            <CRow class="g-3 mb-3">
               <CCol sm="6">
                 <MaterialInput v-model="form.category" label="Category" type="select" required>
                   <option value="Visitor">Visitor</option>
@@ -96,7 +101,12 @@
                 </MaterialInput>
               </CCol>
               <CCol sm="6">
-                <MaterialInput v-model="form.service_type" label="Service Type" type="select" required>
+                <MaterialInput
+                  v-model="form.service_type"
+                  label="Service Type"
+                  type="select"
+                  required
+                >
                   <option value="Sunday">Sunday Service</option>
                   <option value="Wednesday">Wednesday Mid-week</option>
                   <option value="Special">Special Program</option>
@@ -104,9 +114,16 @@
               </CCol>
             </CRow>
 
-            <MaterialInput type="date" v-model="form.date" label="First Visit Date" required />
+            <div class="mb-4">
+              <MaterialInput v-model="form.date" type="date" label="First Visit Date" required />
+            </div>
 
-            <MaterialButton type="submit" class="w-100" :loading="isSubmitting" icon="bi bi-person-plus-fill">
+            <MaterialButton
+              type="submit"
+              class="w-100"
+              :loading="isSubmitting"
+              icon="bi bi-person-plus-fill"
+            >
               Register Visitor
             </MaterialButton>
           </CForm>
@@ -163,8 +180,12 @@
                   <span class="input-group-text bg-transparent border-end-0">
                     <i class="bi bi-search text-muted opacity-50"></i>
                   </span>
-                  <input type="text" v-model="searchQuery" class="form-control border-start-0 ps-0"
-                    placeholder="Search name/phone...">
+                  <input
+                    v-model="searchQuery"
+                    type="text"
+                    class="form-control border-start-0 ps-0"
+                    placeholder="Search name/phone..."
+                  />
                 </div>
               </div>
             </div>
@@ -194,11 +215,21 @@
               <CTable hover borderless align="middle" class="mb-0">
                 <CTableHead>
                   <CTableRow>
-                    <CTableHeaderCell class="bg-transparent text-muted small pb-3">VISITOR</CTableHeaderCell>
-                    <CTableHeaderCell class="bg-transparent text-muted small pb-3">OCCUPATION</CTableHeaderCell>
-                    <CTableHeaderCell class="bg-transparent text-muted small pb-3">CATEGORY</CTableHeaderCell>
-                    <CTableHeaderCell class="bg-transparent text-muted small pb-3">DATE</CTableHeaderCell>
-                    <CTableHeaderCell class="bg-transparent text-muted small pb-3 text-end">ACTIONS</CTableHeaderCell>
+                    <CTableHeaderCell class="bg-transparent text-muted small pb-3"
+                      >VISITOR</CTableHeaderCell
+                    >
+                    <CTableHeaderCell class="bg-transparent text-muted small pb-3"
+                      >OCCUPATION</CTableHeaderCell
+                    >
+                    <CTableHeaderCell class="bg-transparent text-muted small pb-3"
+                      >CATEGORY</CTableHeaderCell
+                    >
+                    <CTableHeaderCell class="bg-transparent text-muted small pb-3"
+                      >DATE</CTableHeaderCell
+                    >
+                    <CTableHeaderCell class="bg-transparent text-muted small pb-3 text-end"
+                      >ACTIONS</CTableHeaderCell
+                    >
                   </CTableRow>
                 </CTableHead>
                 <CTableBody>
@@ -206,8 +237,16 @@
                     <CTableDataCell>
                       <div class="d-flex align-items-center gap-3">
                         <CAvatar
-                          :color="v.category === 'Partner' ? 'success' : (v.category === 'Wants to be a Member' ? 'info' : 'primary')"
-                          size="md" class="visitor-avatar">
+                          :color="
+                            v.category === 'Partner'
+                              ? 'success'
+                              : v.category === 'Wants to be a Member'
+                              ? 'info'
+                              : 'primary'
+                          "
+                          size="md"
+                          class="visitor-avatar"
+                        >
                           {{ getInitials(v.name) }}
                         </CAvatar>
                         <div>
@@ -220,31 +259,59 @@
                     </CTableDataCell>
                     <CTableDataCell>
                       <div class="text-dark small">{{ v.occupation || 'Not specified' }}</div>
-                      <div class="text-muted x-small opacity-50">{{ v.service_type || 'Sunday' }} Service</div>
+                      <div class="text-muted x-small opacity-50">
+                        {{ v.service_type || 'Sunday' }} Service
+                      </div>
                     </CTableDataCell>
                     <CTableDataCell>
-                      <span v-if="v.category === 'Wants to be a Member'"
-                        class="badge rounded-pill px-3 py-2 border-0 bg-info-subtle text-info">
+                      <span
+                        v-if="v.category === 'Wants to be a Member'"
+                        class="badge rounded-pill px-3 py-2 border-0 bg-info-subtle text-info"
+                      >
                         <i class="bi bi-person-heart me-1"></i>Member Int.
                       </span>
-                      <span v-else class="badge rounded-pill px-3 py-2 border-0"
-                        :class="v.category === 'Partner' ? 'bg-success-subtle text-success' : 'bg-primary-subtle text-primary'">
-                        <i :class="['bi me-1', v.category === 'Partner' ? 'bi-star-fill' : 'bi-person']"></i>
+                      <span
+                        v-else
+                        class="badge rounded-pill px-3 py-2 border-0"
+                        :class="
+                          v.category === 'Partner'
+                            ? 'bg-success-subtle text-success'
+                            : 'bg-primary-subtle text-primary'
+                        "
+                      >
+                        <i
+                          :class="[
+                            'bi me-1',
+                            v.category === 'Partner' ? 'bi-star-fill' : 'bi-person',
+                          ]"
+                        ></i>
                         {{ v.category }}
                       </span>
                     </CTableDataCell>
                     <CTableDataCell>
-                      <div class="text-dark fw-medium small">{{ formatDate(v.first_visit_date || v.date) }}</div>
+                      <div class="text-dark fw-medium small">
+                        {{ formatDate(v.first_visit_date || v.date) }}
+                      </div>
                       <div class="text-muted x-small opacity-50">Registered</div>
                     </CTableDataCell>
                     <CTableDataCell class="text-end">
-                      <div class="d-flex justify-content-end gap-2">
-                        <button class="md-icon-btn shadow-none bg-light text-primary" @click="openEditVisitor(v)"
-                          title="Edit">
+                      <div class="d-flex justify-content-end gap-2 action-buttons-wrapper">
+                        <button
+                          type="button"
+                          class="md-icon-btn shadow-none bg-light text-primary"
+                          :disabled="isLoading"
+                          title="Edit"
+                          @click.stop="openEditVisitor(v)"
+                        >
                           <i class="bi bi-pencil-fill"></i>
                         </button>
-                        <button class="md-icon-btn shadow-none bg-light text-danger" @click="confirmDelete(v)"
-                          title="Delete">
+                        <button
+                          type="button"
+                          class="md-icon-btn shadow-none bg-light text-danger"
+                          :disabled="isLoading"
+                          title="Delete"
+                          @click.stop="confirmDelete(v)"
+                        >
                           <i class="bi bi-trash3-fill"></i>
                         </button>
                       </div>
@@ -256,24 +323,35 @@
               <!-- Improved Pagination -->
               <div class="pagination-container">
                 <div class="pagination-info">
-                  Showing <span class="fw-bold text-dark">{{ (pagination.current_page - 1) * pagination.per_page + 1 }}</span> to
-                  <span class="fw-bold text-dark">{{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }}</span>
+                  Showing
+                  <span class="fw-bold text-dark">{{
+                    (pagination.current_page - 1) * pagination.per_page + 1
+                  }}</span>
+                  to
+                  <span class="fw-bold text-dark">{{
+                    Math.min(pagination.current_page * pagination.per_page, pagination.total)
+                  }}</span>
                   of <span class="fw-bold text-dark">{{ pagination.total }}</span> records
                 </div>
                 <CPagination class="mb-0">
-                  <CPaginationItem :disabled="pagination.current_page === 1"
-                    @click="changePage(pagination.current_page - 1)">
+                  <CPaginationItem
+                    :disabled="pagination.current_page === 1"
+                    @click="changePage(pagination.current_page - 1)"
+                  >
                     <i class="bi bi-chevron-left"></i>
                   </CPaginationItem>
                   <CPaginationItem
                     v-for="page in displayPages"
                     :key="page"
                     :active="page === pagination.current_page"
-                    @click="page !== '...' && changePage(page)">
+                    @click="page !== '...' && changePage(page)"
+                  >
                     {{ page }}
                   </CPaginationItem>
-                  <CPaginationItem :disabled="pagination.current_page === pagination.last_page"
-                    @click="changePage(pagination.current_page + 1)">
+                  <CPaginationItem
+                    :disabled="pagination.current_page === pagination.last_page"
+                    @click="changePage(pagination.current_page + 1)"
+                  >
                     <i class="bi bi-chevron-right"></i>
                   </CPaginationItem>
                 </CPagination>
@@ -285,138 +363,195 @@
     </CRow>
 
     <!-- Delete Confirmation Modal -->
-    <CModal :visible="deleteModalVisible" @close="deleteModalVisible = false" alignment="center" class="modal-bottom-sheet">
-      <MaterialCard class="mb-0 border-0">
-        <template #header>
-          <div class="d-flex align-items-center gap-3">
-            <div class="header-icon-box bg-danger-subtle text-danger">
-              <i class="bi bi-exclamation-triangle-fill"></i>
+    <Teleport to="body">
+      <CModal
+        :visible="deleteModalVisible"
+        alignment="center"
+        backdrop="static"
+        class="modal-bottom-sheet"
+        @close="closeDeleteModal"
+      >
+        <MaterialCard class="mb-0 border-0">
+          <template #header>
+            <div class="d-flex align-items-center justify-content-between">
+              <div class="d-flex align-items-center gap-3">
+                <div class="header-icon-box bg-danger-subtle text-danger">
+                  <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+                <div>
+                  <h3 class="md-title-large mb-1">Confirm Deletion</h3>
+                  <p class="text-muted small mb-0">This action cannot be undone</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn-close"
+                :disabled="isDeleting"
+                @click="closeDeleteModal"
+              ></button>
             </div>
-            <div>
-              <h3 class="md-title-large mb-1">Confirm Deletion</h3>
-              <p class="text-muted small mb-0">This action cannot be undone</p>
-            </div>
+          </template>
+
+          <div class="alert alert-danger mb-4">
+            <i class="bi bi-exclamation-circle me-2"></i>
+            Are you sure you want to remove <strong>{{ visitorToDelete?.name }}</strong
+            >?
           </div>
-        </template>
 
-        <div class="alert alert-danger mb-4">
-          <i class="bi bi-exclamation-circle me-2"></i>
-          Are you sure you want to remove <strong>{{ visitorToDelete?.name }}</strong>?
-        </div>
+          <p class="text-muted">This will permanently delete the visitor record from the system.</p>
 
-        <p class="text-muted">This will permanently delete the visitor record from the system.</p>
-
-        <div class="d-flex gap-3 mt-4">
-          <button class="md-btn md-btn-tonal flex-grow-1 py-3" @click="deleteModalVisible = false" :disabled="isDeleting">
-            Cancel
-          </button>
-          <button class="md-btn md-btn-filled bg-danger flex-grow-1 py-3" @click="deleteVisitor" :disabled="isDeleting">
-            <CSpinner v-if="isDeleting" size="sm" class="me-2" />
-            <i v-else class="bi bi-trash3 me-2"></i>
-            {{ isDeleting ? 'Deleting...' : 'Delete' }}
-          </button>
-        </div>
-      </MaterialCard>
-    </CModal>
+          <div class="d-flex gap-3 mt-4">
+            <button
+              class="md-btn md-btn-tonal flex-grow-1 py-3"
+              :disabled="isDeleting"
+              @click="closeDeleteModal"
+            >
+              <i class="bi bi-x-lg me-2"></i>
+              Cancel
+            </button>
+            <button
+              class="md-btn md-btn-filled bg-danger flex-grow-1 py-3"
+              :disabled="isDeleting"
+              @click="deleteVisitor"
+            >
+              <CSpinner v-if="isDeleting" size="sm" class="me-2" />
+              <i v-else class="bi bi-trash3 me-2"></i>
+              {{ isDeleting ? 'Deleting...' : 'Delete' }}
+            </button>
+          </div>
+        </MaterialCard>
+      </CModal>
+    </Teleport>
 
     <!-- Edit Modal -->
-    <CModal :visible="editModalVisible" @close="editModalVisible = false" alignment="center" backdrop="static"
-      class="modal-bottom-sheet">
-      <MaterialCard class="mb-0 border-0">
-        <template #header>
-          <div class="d-flex align-items-center gap-3">
-            <div class="header-icon-box bg-primary-subtle text-primary">
-              <i class="bi bi-pencil-square"></i>
+    <Teleport to="body">
+      <CModal
+        :visible="editModalVisible"
+        alignment="center"
+        backdrop="static"
+        class="modal-bottom-sheet edit-modal"
+        @close="closeEditModal"
+      >
+        <MaterialCard class="mb-0 border-0">
+          <template #header>
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <div class="d-flex align-items-center gap-3">
+                <div class="header-icon-box bg-primary-subtle text-primary">
+                  <i class="bi bi-pencil-square"></i>
+                </div>
+                <div>
+                  <h3 class="md-title-large mb-1">Edit Visitor</h3>
+                  <p class="text-muted small mb-0">Update visitor information</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn-close"
+                :disabled="isSavingEdit"
+                @click="closeEditModal"
+              ></button>
             </div>
-            <div>
-              <h3 class="md-title-large mb-1">Edit Visitor</h3>
-              <p class="text-muted small mb-0">Update visitor information</p>
+          </template>
+
+          <div class="modal-form-content">
+            <div class="mb-3">
+              <MaterialInput v-model="editVisitor.name" label="Full Name" required />
+            </div>
+
+            <CRow class="g-3 mb-3">
+              <CCol sm="6">
+                <MaterialInput v-model="editVisitor.phone" label="Phone Number" required />
+              </CCol>
+              <CCol sm="6">
+                <MaterialInput v-model="editVisitor.occupation" label="Occupation/Job" />
+              </CCol>
+            </CRow>
+
+            <CRow class="g-3 mb-3">
+              <CCol sm="6">
+                <MaterialInput
+                  v-model="editVisitor.category"
+                  label="Category"
+                  type="select"
+                  required
+                >
+                  <option value="Visitor">Visitor</option>
+                  <option value="Partner">Partner</option>
+                  <option value="Wants to be a Member">Wants to be a Member</option>
+                </MaterialInput>
+              </CCol>
+              <CCol sm="6">
+                <MaterialInput
+                  v-model="editVisitor.service_type"
+                  label="Service Type"
+                  type="select"
+                  required
+                >
+                  <option value="Sunday">Sunday Service</option>
+                  <option value="Wednesday">Wednesday Mid-week</option>
+                  <option value="Special">Special Program</option>
+                </MaterialInput>
+              </CCol>
+            </CRow>
+
+            <div class="mb-4">
+              <MaterialInput
+                v-model="editVisitor.date"
+                type="date"
+                label="First Visit Date"
+                required
+              />
+            </div>
+
+            <div class="d-flex gap-3 mt-4">
+              <button
+                class="md-btn md-btn-tonal flex-grow-1 py-3"
+                :disabled="isSavingEdit"
+                @click="closeEditModal"
+              >
+                <i class="bi bi-x-lg me-2"></i>
+                Cancel
+              </button>
+              <button
+                class="md-btn md-btn-filled flex-grow-1 py-3"
+                :disabled="isSavingEdit"
+                @click="saveEditVisitor"
+              >
+                <CSpinner v-if="isSavingEdit" size="sm" class="me-2" />
+                <i v-else class="bi bi-check-lg me-2"></i>
+                {{ isSavingEdit ? 'Saving...' : 'Save Changes' }}
+              </button>
             </div>
           </div>
-        </template>
-
-        <CRow class="g-3 mb-4">
-          <CCol md="6">
-            <div class="md-input-wrapper">
-              <input v-model="editVisitor.name" type="text" class="md-input border-0" required placeholder=" " />
-              <label class="md-label-floating">Name</label>
-            </div>
-          </CCol>
-          <CCol md="6">
-            <div class="md-input-wrapper">
-              <input v-model="editVisitor.phone" type="text" class="md-input border-0" required placeholder=" " />
-              <label class="md-label-floating">Phone</label>
-            </div>
-          </CCol>
-        </CRow>
-
-        <CRow class="g-3 mb-4">
-          <CCol md="6">
-            <div class="md-input-wrapper">
-              <input v-model="editVisitor.occupation" type="text" class="md-input border-0" placeholder=" " />
-              <label class="md-label-floating">Occupation/Job</label>
-            </div>
-          </CCol>
-          <CCol md="6">
-            <div class="md-input-wrapper">
-              <select v-model="editVisitor.category" class="md-input border-0" required>
-                <option value="Visitor">Visitor</option>
-                <option value="Partner">Partner</option>
-                <option value="Wants to be a Member">Wants to be a Member</option>
-              </select>
-              <label class="md-label-floating">Category</label>
-            </div>
-          </CCol>
-        </CRow>
-
-        <CRow class="g-3 mb-4">
-          <CCol md="6">
-            <div class="md-input-wrapper">
-              <select v-model="editVisitor.service_type" class="md-input border-0" required>
-                <option value="Sunday">Sunday Service</option>
-                <option value="Wednesday">Wednesday Mid-week</option>
-                <option value="Special">Special Program</option>
-              </select>
-              <label class="md-label-floating">Service Type</label>
-            </div>
-          </CCol>
-          <CCol md="6">
-            <div class="md-input-wrapper">
-              <input type="date" v-model="editVisitor.date" class="md-input border-0" required />
-              <label class="md-label-floating">Date</label>
-            </div>
-          </CCol>
-        </CRow>
-
-        <div class="d-flex gap-3 mt-5">
-          <button class="md-btn md-btn-tonal flex-grow-1 py-3" @click="editModalVisible = false" :disabled="isSavingEdit">
-            Cancel
-          </button>
-          <button class="md-btn md-btn-filled flex-grow-1 py-3" @click="saveEditVisitor" :disabled="isSavingEdit">
-            <CSpinner v-if="isSavingEdit" size="sm" class="me-2" />
-            <i v-else class="bi bi-check-lg me-2"></i>
-            {{ isSavingEdit ? 'Saving...' : 'Save Changes' }}
-          </button>
-        </div>
-      </MaterialCard>
-    </CModal>
-
+        </MaterialCard>
+      </CModal>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue';
 import {
-  CRow, CCol, CForm, CModal, CSpinner,
-  CTable, CTableHead, CTableRow, CTableHeaderCell, CTableBody, CTableDataCell,
-  CAvatar, CPagination, CPaginationItem
-} from '@coreui/vue'
-import PageHeader from '../components/shared/PageHeader.vue'
-import { MaterialCard, MaterialInput, MaterialButton } from '../components/material'
-import Breadcrumbs from '../components/Breadcrumbs.vue'
-import { useToast } from '../composables/useToast'
-import { exportToExcel, formatDateForExport } from '../utils/export.js'
-import { visitorsApi } from '../api/visitors.js'
+  CRow,
+  CCol,
+  CForm,
+  CModal,
+  CSpinner,
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableHeaderCell,
+  CTableBody,
+  CTableDataCell,
+  CAvatar,
+  CPagination,
+  CPaginationItem,
+} from '@coreui/vue';
+import PageHeader from '../components/shared/PageHeader.vue';
+import { MaterialCard, MaterialInput, MaterialButton } from '../components/material';
+import { useToast } from '../composables/useToast';
+import { exportToExcel, formatDateForExport } from '../utils/export.js';
+import { visitorsApi } from '../api/visitors.js';
 
 // State
 const form = ref({
@@ -425,186 +560,213 @@ const form = ref({
   category: 'Visitor',
   service_type: 'Sunday',
   occupation: '',
-  date: new Date().toISOString().slice(0, 10)
-})
-const phoneError = ref('')
-const isSubmitting = ref(false)
-const isLoading = ref(false)
-const searchQuery = ref('')
-const visitors = ref([])
+  date: new Date().toISOString().slice(0, 10),
+});
+const phoneError = ref('');
+const isSubmitting = ref(false);
+const isLoading = ref(false);
+const searchQuery = ref('');
+const visitors = ref([]);
 const pagination = ref({
   current_page: 1,
   last_page: 1,
   total: 0,
-  per_page: 10
-})
-const counts = ref({ visitor_count: 0, partner_count: 0, member_count: 0 })
+  per_page: 10,
+});
+const counts = ref({ visitor_count: 0, partner_count: 0, member_count: 0 });
 
 // Edit Modal State
-const editModalVisible = ref(false)
-const editVisitor = ref({ id: '', name: '', phone: '', category: '', service_type: '', occupation: '', date: '' })
+const editModalVisible = ref(false);
+const editVisitor = ref({
+  id: '',
+  name: '',
+  phone: '',
+  category: '',
+  service_type: '',
+  occupation: '',
+  date: '',
+});
 
 // Delete Modal State
-const deleteModalVisible = ref(false)
-const visitorToDelete = ref(null)
-const isDeleting = ref(false)
+const deleteModalVisible = ref(false);
+const visitorToDelete = ref(null);
+const isDeleting = ref(false);
 
 // Edit loading state
-const isSavingEdit = ref(false)
+const isSavingEdit = ref(false);
 
 // Toast State
-const toast = useToast()
+const toast = useToast();
 
 // Computed
-const total = computed(() => pagination.value.total)
-const visitorCount = computed(() => counts.value.visitor_count)
-const partnerCount = computed(() => counts.value.partner_count)
-const memberCount = computed(() => counts.value.member_count)
+const total = computed(() => pagination.value.total);
+const visitorCount = computed(() => counts.value.visitor_count);
+const partnerCount = computed(() => counts.value.partner_count);
+const memberCount = computed(() => counts.value.member_count);
 const weeklyCount = computed(() => {
-  const oneWeekAgo = new Date()
-  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
+  const oneWeekAgo = new Date();
+  oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   return visitors.value.filter(v => {
-    const visitDate = new Date(v.first_visit_date || v.date || v.created_at)
-    return visitDate >= oneWeekAgo
-  }).length
-})
+    const visitDate = new Date(v.first_visit_date || v.date || v.created_at);
+    return visitDate >= oneWeekAgo;
+  }).length;
+});
 
 // Smart pagination display (show max 7 pages with ellipsis)
 const displayPages = computed(() => {
-  const current = pagination.value.current_page
-  const last = pagination.value.last_page
+  const current = pagination.value.current_page;
+  const last = pagination.value.last_page;
 
   if (last <= 7) {
-    return Array.from({ length: last }, (_, i) => i + 1)
+    return Array.from({ length: last }, (_, i) => i + 1);
   }
 
   if (current <= 3) {
-    return [1, 2, 3, 4, 5, '...', last]
+    return [1, 2, 3, 4, 5, '...', last];
   }
 
   if (current >= last - 2) {
-    return [1, '...', last - 4, last - 3, last - 2, last - 1, last]
+    return [1, '...', last - 4, last - 3, last - 2, last - 1, last];
   }
 
-  return [1, '...', current - 1, current, current + 1, '...', last]
-})
+  return [1, '...', current - 1, current, current + 1, '...', last];
+});
 
 onMounted(() => {
-  fetchVisitors()
-})
+  fetchVisitors();
+});
 
 // Search watcher
 watch(searchQuery, () => {
-  pagination.value.current_page = 1
-  fetchVisitors()
-})
+  pagination.value.current_page = 1;
+  fetchVisitors();
+});
 
 async function fetchVisitors(page = 1) {
-  isLoading.value = true
+  isLoading.value = true;
   try {
     const res = await visitorsApi.getAll({
       page,
       search: searchQuery.value,
-      per_page: pagination.value.per_page
-    })
+      per_page: pagination.value.per_page,
+    });
 
-    visitors.value = res.data?.data || []
+    visitors.value = res.data?.data || [];
     pagination.value = {
       current_page: res.data?.current_page || 1,
       last_page: res.data?.last_page || 1,
       total: res.data?.total || 0,
-      per_page: res.data?.per_page || 10
-    }
-    counts.value.visitor_count = res.data?.visitor_count || 0
-    counts.value.partner_count = res.data?.partner_count || 0
-    counts.value.member_count = res.data?.member_count || 0
+      per_page: res.data?.per_page || 10,
+    };
+    counts.value.visitor_count = res.data?.visitor_count || 0;
+    counts.value.partner_count = res.data?.partner_count || 0;
+    counts.value.member_count = res.data?.member_count || 0;
   } catch (err) {
-    toast.error('Failed to load visitors')
+    toast.error('Failed to load visitors');
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 function changePage(page) {
-  if (page < 1 || page > pagination.value.last_page) return
-  fetchVisitors(page)
+  if (page < 1 || page > pagination.value.last_page) return;
+  fetchVisitors(page);
 }
 
 // Helper Functions
 function getInitials(name) {
-  if (!name) return '?'
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  if (!name) return '?';
+  return name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 function formatDate(date) {
-  if (!date) return '-'
+  if (!date) return '-';
 
   // Parse date string (treat as local to avoid offset shifts)
-  const d = new Date(date)
-  if (isNaN(d.getTime())) return '-'
+  const d = new Date(date);
+  if (isNaN(d.getTime())) return '-';
 
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
 
   // Use local matching for Today/Yesterday
-  const dateStr = d.toLocaleDateString()
-  if (dateStr === today.toLocaleDateString()) return 'Today'
-  if (dateStr === yesterday.toLocaleDateString()) return 'Yesterday'
+  const dateStr = d.toLocaleDateString();
+  if (dateStr === today.toLocaleDateString()) return 'Today';
+  if (dateStr === yesterday.toLocaleDateString()) return 'Yesterday';
 
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
-
 
 // Validation
 function validatePhone(phone) {
-  const digits = (phone || '').replace(/\D/g, '')
+  const digits = (phone || '').replace(/\D/g, '');
 
   if (!phone || digits.length < 9) {
-    return 'Phone number must be at least 9 digits'
+    return 'Phone number must be at least 9 digits';
   }
 
   if (/(.)\1{5,}/.test(digits)) {
-    return 'Invalid phone number - too many repeating digits'
+    return 'Invalid phone number - too many repeating digits';
   }
 
-  const lastEight = digits.slice(-8)
+  const lastEight = digits.slice(-8);
   if (/^(\d{2})\1{3}$/.test(lastEight)) {
-    return 'Invalid phone number - repeating pattern detected'
+    return 'Invalid phone number - repeating pattern detected';
   }
 
-  const ghanaPrefixes = ['20', '23', '24', '25', '26', '27', '28', '29', '50', '54', '55', '56', '57', '59']
+  const ghanaPrefixes = [
+    '20',
+    '23',
+    '24',
+    '25',
+    '26',
+    '27',
+    '28',
+    '29',
+    '50',
+    '54',
+    '55',
+    '56',
+    '57',
+    '59',
+  ];
 
-  let localNumber = digits
+  let localNumber = digits;
   if (digits.startsWith('233')) {
-    localNumber = digits.slice(3)
+    localNumber = digits.slice(3);
   } else if (digits.startsWith('0')) {
-    localNumber = digits.slice(1)
+    localNumber = digits.slice(1);
   }
 
   if (localNumber.length === 9) {
-    const prefix = localNumber.slice(0, 2)
+    const prefix = localNumber.slice(0, 2);
     if (!ghanaPrefixes.includes(prefix) && !phone.startsWith('+')) {
-      return 'Invalid Ghana mobile number prefix'
+      return 'Invalid Ghana mobile number prefix';
     }
   }
 
-  return null
+  return null;
 }
 
 // Actions
 async function addVisitor() {
-  phoneError.value = ''
+  phoneError.value = '';
 
-  const error = validatePhone(form.value.phone)
+  const error = validatePhone(form.value.phone);
   if (error) {
-    phoneError.value = error
-    return
+    phoneError.value = error;
+    return;
   }
 
-  if (!form.value.name.trim()) return
+  if (!form.value.name.trim()) return;
 
-  isSubmitting.value = true
+  isSubmitting.value = true;
   try {
     const res = await visitorsApi.create({
       name: form.value.name,
@@ -612,125 +774,141 @@ async function addVisitor() {
       category: form.value.category,
       service_type: form.value.service_type,
       occupation: form.value.occupation,
-      date: form.value.date
-    })
+      date: form.value.date,
+    });
 
     if (res.data.success) {
-      toast.success('Visitor registered successfully')
+      toast.success('Visitor registered successfully');
       form.value = {
         name: '',
         phone: '',
         category: 'Visitor',
         service_type: 'Sunday',
         occupation: '',
-        date: new Date().toISOString().slice(0, 10)
-      }
-      fetchVisitors()
+        date: new Date().toISOString().slice(0, 10),
+      };
+      fetchVisitors();
     }
   } catch (err) {
-    toast.error('Failed to register visitor')
+    toast.error('Failed to register visitor');
   } finally {
-    isSubmitting.value = false
+    isSubmitting.value = false;
   }
 }
 
 function openEditVisitor(v) {
   // Ensure we get a clean date string (YYYY-MM-DD)
-  let dateVal = ''
+  let dateVal = '';
   if (v.first_visit_date) {
-    dateVal = String(v.first_visit_date).slice(0, 10)
+    dateVal = String(v.first_visit_date).slice(0, 10);
   } else if (v.created_at) {
-    dateVal = String(v.created_at).slice(0, 10)
+    dateVal = String(v.created_at).slice(0, 10);
   } else {
-    dateVal = new Date().toISOString().slice(0, 10)
+    dateVal = new Date().toISOString().slice(0, 10);
   }
 
   editVisitor.value = {
     ...v,
     service_type: v.service_type || 'Sunday',
     occupation: v.occupation || '',
-    date: dateVal
-  }
-  editModalVisible.value = true
+    date: dateVal,
+  };
+
+  editModalVisible.value = true;
 }
 
 async function saveEditVisitor() {
   if (!editVisitor.value.id) {
-    toast.error('No visitor selected for editing')
-    return
+    toast.error('No visitor selected for editing');
+    return;
   }
 
-  isSavingEdit.value = true
+  isSavingEdit.value = true;
   try {
-    console.log('Updating visitor:', editVisitor.value.id, editVisitor.value)
+    const vid = String(editVisitor.value.id);
 
-    const res = await visitorsApi.update(editVisitor.value.id, {
+    const res = await visitorsApi.update(vid, {
       name: editVisitor.value.name,
       phone: editVisitor.value.phone,
       category: editVisitor.value.category,
       service_type: editVisitor.value.service_type,
       occupation: editVisitor.value.occupation,
-      date: editVisitor.value.date
-    })
-
-    console.log('Update response:', res.data)
+      date: editVisitor.value.date,
+    });
 
     if (res.data.success) {
-      toast.success(`${editVisitor.value.name} updated successfully`)
-      editModalVisible.value = false
-      await fetchVisitors(pagination.value.current_page)
+      toast.success(`${editVisitor.value.name} updated successfully`);
+      closeEditModal();
+      await fetchVisitors(pagination.value.current_page);
     } else {
-      toast.error(res.data.message || 'Failed to update visitor')
+      toast.error(res.data.message || 'Failed to update visitor');
     }
   } catch (err) {
-    console.error('Update error:', err)
-    const message = err.response?.data?.message || err.message || 'Failed to update visitor'
-    toast.error(message)
+    console.error('Update error:', err);
+    const message = err.response?.data?.message || err.message || 'Failed to update visitor';
+    toast.error(message);
   } finally {
-    isSavingEdit.value = false
+    isSavingEdit.value = false;
   }
 }
 
 function confirmDelete(v) {
-  visitorToDelete.value = v
-  deleteModalVisible.value = true
+  visitorToDelete.value = v;
+  deleteModalVisible.value = true;
+}
+
+function closeDeleteModal() {
+  if (isDeleting.value) return;
+  deleteModalVisible.value = false;
+  visitorToDelete.value = null;
+}
+
+function closeEditModal() {
+  if (isSavingEdit.value) return;
+  editModalVisible.value = false;
+  editVisitor.value = {
+    id: '',
+    name: '',
+    phone: '',
+    category: '',
+    service_type: '',
+    occupation: '',
+    date: '',
+  };
 }
 
 async function deleteVisitor() {
   if (!visitorToDelete.value) {
-    toast.error('No visitor selected for deletion')
-    return
+    toast.error('No visitor selected for deletion');
+    return;
   }
 
-  isDeleting.value = true
+  isDeleting.value = true;
   try {
-    console.log('Deleting visitor:', visitorToDelete.value.id, visitorToDelete.value.name)
+    const vid = String(visitorToDelete.value.id);
 
-    const res = await visitorsApi.delete(visitorToDelete.value.id)
-
-    console.log('Delete response:', res.data)
+    const res = await visitorsApi.delete(vid);
 
     if (res.data.success) {
-      const name = visitorToDelete.value.name
-      toast.success(`${name} removed successfully`)
+      const name = visitorToDelete.value.name;
+      toast.success(`${name} removed successfully`);
 
-      deleteModalVisible.value = false
-      visitorToDelete.value = null
+      closeDeleteModal();
 
       // Stay on current page if possible
-      const maxPage = Math.ceil((pagination.value.total - 1) / pagination.value.per_page)
-      const targetPage = Math.min(pagination.value.current_page, Math.max(1, maxPage))
+      const maxPage = Math.ceil((pagination.value.total - 1) / pagination.value.per_page);
+      const targetPage = Math.min(pagination.value.current_page, Math.max(1, maxPage));
 
-      await fetchVisitors(targetPage)
+      await fetchVisitors(targetPage);
     } else {
-      toast.error(res.data.message || 'Failed to remove visitor')
+      toast.error(res.data.message || 'Failed to remove visitor');
     }
   } catch (err) {
-    console.error('Delete error:', err)
-    const message = err.response?.data?.message || err.message || 'Failed to remove visitor'
-    toast.error(message)
+    console.error('Delete error:', err);
+    const message = err.response?.data?.message || err.message || 'Failed to remove visitor';
+    toast.error(message);
   } finally {
-    isDeleting.value = false
+    isDeleting.value = false;
   }
 }
 
@@ -739,10 +917,10 @@ function exportVisitors() {
     { key: 'name', header: 'Name' },
     { key: 'phone', header: 'Phone' },
     { key: 'category', header: 'Category' },
-    { key: 'date', header: 'Date', transform: (v) => formatDateForExport(v) }
-  ]
-  exportToExcel(visitors.value, columns, `Visitors_${new Date().toISOString().split('T')[0]}`)
-  toast.success('Visitors data has been exported to Excel')
+    { key: 'date', header: 'Date', transform: v => formatDateForExport(v) },
+  ];
+  exportToExcel(visitors.value, columns, `Visitors_${new Date().toISOString().split('T')[0]}`);
+  toast.success('Visitors data has been exported to Excel');
 }
 </script>
 
@@ -776,47 +954,8 @@ function exportVisitors() {
 }
 
 /* Form Styles */
-.md-input-wrapper {
-  position: relative;
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 10px 16px;
-  border: 1px solid #e2e8f0;
-  transition: all 0.2s;
-}
-
-.md-input-wrapper:focus-within {
-  background: white;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-}
-
-.md-input {
-  width: 100%;
-  background: transparent;
-  outline: none;
-  font-size: 1rem;
-  padding-top: 12px;
-  color: #1e293b;
-}
-
-.md-label-floating {
-  position: absolute;
-  left: 16px;
-  top: 14px;
-  font-size: 0.85rem;
-  color: #64748b;
-  pointer-events: none;
-  transition: all 0.2s;
-}
-
-.md-input:focus+.md-label-floating,
-.md-input:not(:placeholder-shown)+.md-label-floating,
-select.md-input+.md-label-floating {
-  top: 4px;
-  font-size: 0.7rem;
-  color: var(--primary);
-  font-weight: 600;
+.visitor-form .md-input-container {
+  margin-bottom: 0;
 }
 
 .md-btn {
@@ -840,6 +979,10 @@ select.md-input+.md-label-floating {
 .md-btn-tonal {
   background: #f1f5f9;
   color: #475569;
+}
+
+.md-btn-tonal:hover {
+  background: #e2e8f0;
 }
 
 /* Stats */
@@ -945,6 +1088,11 @@ select.md-input+.md-label-floating {
   box-shadow: none;
 }
 
+.action-buttons-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
 .md-icon-btn {
   width: 36px;
   height: 36px;
@@ -955,11 +1103,28 @@ select.md-input+.md-label-floating {
   border: none;
   transition: all 0.2s;
   font-size: 1rem;
+  cursor: pointer;
+  background: transparent;
+  position: relative;
+  z-index: 1;
 }
 
-.md-icon-btn:hover {
+.md-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.md-icon-btn:hover:not(:disabled) {
   transform: translateY(-2px);
   filter: brightness(0.95);
+}
+
+.md-icon-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.md-icon-btn i {
+  pointer-events: none;
 }
 
 .pointer {
@@ -1145,7 +1310,11 @@ select.md-input+.md-label-floating {
 }
 
 :deep(.page-link:hover) {
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%) !important;
+  background: linear-gradient(
+    135deg,
+    rgba(99, 102, 241, 0.1) 0%,
+    rgba(139, 92, 246, 0.1) 100%
+  ) !important;
   color: #6366f1 !important;
   transform: translateY(-2px) !important;
   box-shadow: 0 4px 8px rgba(99, 102, 241, 0.15) !important;
@@ -1205,6 +1374,158 @@ select.md-input+.md-label-floating {
 
   .pagination-info {
     font-size: 0.8rem;
+  }
+}
+</style>
+
+<!-- GLOBAL styles for Teleported modals (scoped CSS cannot reach Teleported elements) -->
+<style>
+.modal-bottom-sheet.modal {
+  z-index: 9999 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+}
+
+.modal-bottom-sheet.modal.show {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+.modal-bottom-sheet .modal-dialog {
+  position: relative;
+  margin: 5vh auto !important;
+  max-width: 600px;
+  pointer-events: none;
+}
+
+.modal-bottom-sheet.modal.show .modal-dialog {
+  transform: none !important;
+  pointer-events: auto;
+}
+
+.modal-bottom-sheet .modal-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  pointer-events: auto;
+  background-color: #fff !important;
+  border: none !important;
+  border-radius: 16px !important;
+  outline: 0;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+}
+
+.modal-bottom-sheet .modal-body {
+  padding: 0 !important;
+}
+
+.modal-bottom-sheet .md-card {
+  box-shadow: none !important;
+}
+
+/* Backdrop */
+.modal-backdrop {
+  z-index: 9998 !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background-color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.modal-backdrop.show {
+  opacity: 1 !important;
+}
+
+/* Edit modal specific */
+.edit-modal .modal-dialog {
+  max-width: 600px;
+}
+
+/* Form content inside modal */
+.modal-bottom-sheet .modal-form-content {
+  padding: 0.5rem 0;
+}
+
+.modal-bottom-sheet .modal-form-content .md-input-container {
+  margin-bottom: 0;
+}
+
+/* Close button in modals */
+.modal-bottom-sheet .btn-close {
+  background: transparent;
+  border: none;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  font-size: 1.25rem;
+  padding: 0.5rem;
+  cursor: pointer;
+}
+
+.modal-bottom-sheet .btn-close:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.modal-bottom-sheet .btn-close:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+}
+
+/* Modal buttons */
+.modal-bottom-sheet .md-btn {
+  border-radius: 12px;
+  font-weight: 600;
+  transition: all 0.2s;
+  border: none;
+}
+
+.modal-bottom-sheet .md-btn-filled {
+  background: var(--md-primary, #6366f1);
+  color: white;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.modal-bottom-sheet .md-btn-filled:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.modal-bottom-sheet .md-btn-filled.bg-danger {
+  background: #ef4444 !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+}
+
+.modal-bottom-sheet .md-btn-tonal {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.modal-bottom-sheet .md-btn-tonal:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+/* Header icon in modals */
+.modal-bottom-sheet .header-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+/* Responsive modal */
+@media (max-width: 768px) {
+  .modal-bottom-sheet .modal-dialog {
+    max-width: 95% !important;
+    margin: 1rem auto !important;
   }
 }
 </style>

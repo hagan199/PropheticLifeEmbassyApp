@@ -7,42 +7,67 @@
     </RouterLink>
 
     <!-- Admin: Users -->
-    <RouterLink v-if="hasRole(['admin'])" to="/users" class="item" :class="{ active: isActive('/users') }">
+    <RouterLink
+      v-if="hasRole(['admin'])"
+      to="/users"
+      class="item"
+      :class="{ active: isActive('/users') }"
+    >
       <i class="bi bi-people"></i>
       <span>Users</span>
     </RouterLink>
 
     <!-- Usher: My Submissions -->
-    <RouterLink v-if="hasRole(['usher'])" to="/my-submissions" class="item"
-      :class="{ active: isActive('/my-submissions') }">
+    <RouterLink
+      v-if="hasRole(['usher'])"
+      to="/my-submissions"
+      class="item"
+      :class="{ active: isActive('/my-submissions') }"
+    >
       <i class="bi bi-send-check"></i>
       <span>Submit</span>
     </RouterLink>
 
     <!-- Admin/Pastor/Usher: Attendance -->
-    <RouterLink v-if="hasRole(['admin', 'pastor', 'usher'])" to="/attendance" class="item"
-      :class="{ active: isActive('/attendance') }">
+    <RouterLink
+      v-if="hasRole(['admin', 'pastor', 'usher'])"
+      to="/attendance"
+      class="item"
+      :class="{ active: isActive('/attendance') }"
+    >
       <i class="bi bi-calendar-check"></i>
       <span>Attend</span>
     </RouterLink>
 
     <!-- PR: Follow-ups -->
-    <RouterLink v-if="hasRole(['admin', 'pastor', 'pr_follow_up'])" to="/follow-ups" class="item"
-      :class="{ active: isActive('/follow-ups') }">
+    <RouterLink
+      v-if="hasRole(['admin', 'pastor', 'pr_follow_up'])"
+      to="/follow-ups"
+      class="item"
+      :class="{ active: isActive('/follow-ups') }"
+    >
       <i class="bi bi-chat-heart"></i>
       <span>Follow</span>
     </RouterLink>
 
     <!-- Finance: Contributions -->
-    <RouterLink v-if="hasRole(['admin', 'finance'])" to="/contributions" class="item"
-      :class="{ active: isActive('/contributions') }">
+    <RouterLink
+      v-if="hasRole(['admin', 'finance'])"
+      to="/contributions"
+      class="item"
+      :class="{ active: isActive('/contributions') }"
+    >
       <i class="bi bi-cash-coin"></i>
       <span>Finance</span>
     </RouterLink>
 
     <!-- Dept Leader: My Department -->
-    <RouterLink v-if="hasRole(['department_leader'])" to="/my-department" class="item"
-      :class="{ active: isActive('/my-department') }">
+    <RouterLink
+      v-if="hasRole(['department_leader'])"
+      to="/my-department"
+      class="item"
+      :class="{ active: isActive('/my-department') }"
+    >
       <i class="bi bi-diagram-3"></i>
       <span>Dept</span>
     </RouterLink>
@@ -56,18 +81,20 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import { RouterLink, useRoute } from 'vue-router'
-import { useAuthStore } from '../store/auth'
+import { computed } from 'vue';
+import { RouterLink, useRoute } from 'vue-router';
+import { useAuthStore } from '../store/auth';
 
-const route = useRoute()
-function isActive(path) { return route.path.startsWith(path) }
+const route = useRoute();
+function isActive(path) {
+  return route.path.startsWith(path);
+}
 
-const auth = useAuthStore()
-const userRole = computed(() => auth.user?.role || 'admin')
+const auth = useAuthStore();
+const userRole = computed(() => auth.user?.role || 'admin');
 
 function hasRole(roles) {
-  return roles.includes(userRole.value)
+  return roles.includes(userRole.value);
 }
 </script>
 

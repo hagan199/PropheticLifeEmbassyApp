@@ -1,7 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "Bash(composer update:*)"
+      "Bash(composer update:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run lint:*)",
+      "Bash(php artisan migrate:*)",
+      "Bash(php artisan optimize:clear:*)",
+      "Bash(php artisan make:migration:*)",
+      "Bash(php artisan:*)"
     ]
   }
 }

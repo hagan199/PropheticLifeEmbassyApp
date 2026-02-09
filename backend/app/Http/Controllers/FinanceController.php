@@ -225,14 +225,54 @@ class FinanceController extends Controller
     // ========== Expense Types ==========
 
     /**
-     * Get all expense types
+     * Get all expense types with pagination and search
      */
-    public function expenseTypes()
+    public function expenseTypes(Request $request)
     {
-        $types = ExpenseType::active()->get(['id', 'name', 'description']);
+        $query = ExpenseType::query();
+
+        // Search functionality
+        if ($request->has('search') && $request->search) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%");
+            });
+        }
+
+        // Filter by active/inactive
+        if ($request->has('is_active')) {
+            $query->where('is_active', $request->is_active);
+        } else {
+            // Default: only active types
+            $query->where('is_active', true);
+        }
+
+        // Order by name
+        $query->orderBy('name', 'asc');
+
+        // Pagination
+        $perPage = $request->get('per_page', 15);
+        if ($perPage === 'all') {
+            $types = $query->withCount('expenses')->get();
+            return response()->json([
+                'success' => true,
+                'data' => $types,
+                'total' => $types->count(),
+            ]);
+        }
+
+        $types = $query->withCount('expenses')->paginate($perPage);
+
         return response()->json([
             'success' => true,
-            'data' => $types,
+            'data' => $types->items(),
+            'meta' => [
+                'current_page' => $types->currentPage(),
+                'last_page' => $types->lastPage(),
+                'per_page' => $types->perPage(),
+                'total' => $types->total(),
+            ],
         ]);
     }
 
@@ -241,11 +281,110 @@ class FinanceController extends Controller
      */
     public function storeExpenseType(StoreExpenseTypeRequest $request)
     {
+        // Check for duplicates
+        $exists = ExpenseType::where('name', $request->name)
+            ->where('is_active', true)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An expense type with this name already exists',
+            ], 422);
+        }
+
+        $expenseType = ExpenseType::create([
+            'name' => $request->name,
+            'description' => $request->description,
+            'is_active' => true,
+        ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Expense type created successfully',
+            'data' => $expenseType,
         ], 201);
+    }
+
+    /**
+     * Update expense type
+     */
+    public function updateExpenseType(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:500',
+        ]);
+
+        $expenseType = ExpenseType::find($id);
+
+        if (!$expenseType) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Expense type not found',
+            ], 404);
+        }
+
+        // Check for duplicates (excluding current record)
+        $exists = ExpenseType::where('name', $request->name)
+            ->where('is_active', true)
+            ->where('id', '!=', $id)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'An expense type with this name already exists',
+            ], 422);
+        }
+
+        $expenseType->update([
+            'name' => $request->name,
+            'description' => $request->description,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Expense type updated successfully',
+            'data' => $expenseType,
+        ]);
+    }
+
+    /**
+     * Delete expense type (soft delete - set inactive)
+     */
+    public function deleteExpenseType($id)
+    {
+        $expenseType = ExpenseType::find($id);
+
+        if (!$expenseType) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Expense type not found',
+            ], 404);
+        }
+
+        // Check if type is being used by any expenses
+        $expenseCount = $expenseType->expenses()->count();
+
+        if ($expenseCount > 0) {
+            // Soft delete - mark as inactive instead of deleting
+            $expenseType->update(['is_active' => false]);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Expense type deactivated (used by {$expenseCount} expense(s))",
+                'data' => $expenseType,
+            ]);
+        }
+
+        // Hard delete if not used
+        $expenseType->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Expense type deleted successfully',
+        ]);
     }
 
     // ========== Reports ==========

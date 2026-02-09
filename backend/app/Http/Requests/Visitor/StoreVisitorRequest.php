@@ -14,12 +14,13 @@ class StoreVisitorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'required|string|max:255',
-            'phone' => 'required|string',
+            'name' => 'required|string|max:255|regex:/^[a-zA-Z\s]+$/',
+            'phone' => 'required|string|regex:/^\d{9,15}$/',
             'email' => 'nullable|email',
             'source' => 'required|in:friend,social_media,walk_in,other',
             'ministry_interests' => 'nullable|array',
-            'notes' => 'nullable|string',
+            'notes' => 'nullable|string|max:500',
+            'occupation' => 'nullable|string|max:100|regex:/^[a-zA-Z\s]*$/',
         ];
     }
 

@@ -11,6 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
+        // Drop existing empty table from conflict migration if it exists
+        Schema::dropIfExists('families');
+
         // Families - to group parents and dependents
         Schema::create('families', function (Blueprint $table) {
             $table->uuid('id')->primary();

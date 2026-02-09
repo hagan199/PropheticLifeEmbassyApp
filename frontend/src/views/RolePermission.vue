@@ -1,6 +1,6 @@
 <template>
-  <div class="page-wrap">
-    <div class="page-header d-flex justify-content-between align-items-center">
+  <div class="page-wrap roles-permissions-ui">
+    <div class="page-header d-flex justify-content-between align-items-center mb-4">
       <div>
         <h2 class="title">Roles & Permissions</h2>
         <Breadcrumbs />
@@ -8,20 +8,26 @@
       </div>
     </div>
 
-    <CRow class="g-4">
+    <CRow class="g-4 mt-2 mb-5">
       <CCol lg="5">
-        <CCard>
-          <CCardHeader class="d-flex justify-content-between align-items-center">
+        <CCard class="shadow-sm rounded-4 roles-card">
+          <CCardHeader
+            class="d-flex justify-content-between align-items-center bg-light rounded-top-4 px-4 py-3"
+          >
             <div class="fw-semibold">Users</div>
             <div class="d-flex">
               <CFormInput v-model="userSearch" placeholder="Search users" />
             </div>
           </CCardHeader>
-          <CCardBody>
+          <CCardBody class="px-4 py-3">
             <CListGroup>
-              <CListGroupItem v-for="u in filteredUsers" :key="u.id"
+              <CListGroupItem
+                v-for="u in filteredUsers"
+                :key="u.id"
                 class="d-flex justify-content-between align-items-center"
-                :class="{ active: selectedUser && selectedUser.id === u.id }" @click="selectUser(u)">
+                :class="{ active: selectedUser && selectedUser.id === u.id }"
+                @click="selectUser(u)"
+              >
                 <span>{{ u.name }}</span>
                 <CBadge color="secondary">{{ roleNameById(u.roleId) }}</CBadge>
               </CListGroupItem>
@@ -30,13 +36,17 @@
         </CCard>
       </CCol>
       <CCol lg="7">
-        <CCard>
-          <CCardHeader class="d-flex justify-content-between align-items-center">
+        <CCard class="shadow-sm rounded-4 permissions-card">
+          <CCardHeader
+            class="d-flex justify-content-between align-items-center bg-light rounded-top-4 px-4 py-3"
+          >
             <div class="fw-semibold">Permissions</div>
-            <div class="text-muted" v-if="selectedUser">Editing: {{ selectedUser.name }}</div>
+            <div v-if="selectedUser" class="text-muted">Editing: {{ selectedUser.name }}</div>
           </CCardHeader>
-          <CCardBody>
-            <div v-if="!selectedUser" class="text-muted">Select a user to configure permissions</div>
+          <CCardBody class="px-4 py-3">
+            <div v-if="!selectedUser" class="text-muted">
+              Select a user to configure permissions
+            </div>
             <div v-else>
               <CRow class="g-3 mb-2">
                 <CCol md="6">
@@ -47,9 +57,13 @@
                 </CCol>
               </CRow>
               <CRow class="g-3">
-                <CCol md="6" v-for="p in permissions" :key="p">
-                  <CFormCheck :id="'perm-' + p" :label="labelFor(p)" :checked="hasUserPerm(p)"
-                    @change="toggleUserPerm(p)" />
+                <CCol v-for="p in permissions" :key="p" md="6">
+                  <CFormCheck
+                    :id="'perm-' + p"
+                    :label="labelFor(p)"
+                    :checked="hasUserPerm(p)"
+                    @change="toggleUserPerm(p)"
+                  />
                 </CCol>
               </CRow>
               <div class="mt-3 d-flex justify-content-end">
@@ -64,73 +78,163 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
-import { CRow, CCol, CCard, CCardBody, CCardHeader, CListGroup, CListGroupItem, CBadge, CButton, CFormInput, CFormCheck, CFormSelect, CFormLabel } from '@coreui/vue'
-import Breadcrumbs from '../components/Breadcrumbs.vue'
+import { ref, computed } from 'vue';
+import {
+  CRow,
+  CCol,
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CListGroup,
+  CListGroupItem,
+  CBadge,
+  CButton,
+  CFormInput,
+  CFormCheck,
+  CFormSelect,
+  CFormLabel,
+} from '@coreui/vue';
+import Breadcrumbs from '../components/Breadcrumbs.vue';
 
 const roles = ref([
-  { id: 1, name: 'Pastor', permissions: ['attendance.read', 'attendance.write', 'finance.read', 'visitors.read'] },
-  { id: 2, name: 'Finance', permissions: ['finance.read', 'finance.write', 'expenses.read', 'expenses.write'] },
-  { id: 3, name: 'Usher', permissions: ['attendance.read', 'visitors.read'] }
-])
+  {
+    id: 1,
+    name: 'Pastor',
+    permissions: ['attendance.read', 'attendance.write', 'finance.read', 'visitors.read'],
+  },
+  {
+    id: 2,
+    name: 'Finance',
+    permissions: ['finance.read', 'finance.write', 'expenses.read', 'expenses.write'],
+  },
+  { id: 3, name: 'Usher', permissions: ['attendance.read', 'visitors.read'] },
+]);
 const permissions = ref([
-  'attendance.read', 'attendance.write',
-  'visitors.read', 'visitors.write',
-  'finance.read', 'finance.write',
-  'expenses.read', 'expenses.write',
-  'departments.read', 'departments.write',
-  'appointments.read', 'appointments.write',
-  'membership.read', 'membership.write',
-  'roles.manage'
-])
+  'attendance.read',
+  'attendance.write',
+  'visitors.read',
+  'visitors.write',
+  'finance.read',
+  'finance.write',
+  'expenses.read',
+  'expenses.write',
+  'departments.read',
+  'departments.write',
+  'appointments.read',
+  'appointments.write',
+  'membership.read',
+  'membership.write',
+  'roles.manage',
+]);
 const users = ref([
-  { id: 1, name: 'Admin User', roleId: 1, perms: ['attendance.read', 'visitors.read', 'finance.read'] },
-  { id: 2, name: 'Finance Officer', roleId: 2, perms: ['finance.read', 'finance.write', 'expenses.read'] },
-  { id: 3, name: 'Usher Team Lead', roleId: 3, perms: ['attendance.read', 'visitors.read'] }
-])
-const selectedUser = ref(null)
-const selectedRoleId = ref(null)
-const userSearch = ref('')
-const filteredUsers = computed(() => users.value.filter(u => u.name.toLowerCase().includes(userSearch.value.toLowerCase())))
+  {
+    id: 1,
+    name: 'Admin User',
+    roleId: 1,
+    perms: ['attendance.read', 'visitors.read', 'finance.read'],
+  },
+  {
+    id: 2,
+    name: 'Finance Officer',
+    roleId: 2,
+    perms: ['finance.read', 'finance.write', 'expenses.read'],
+  },
+  { id: 3, name: 'Usher Team Lead', roleId: 3, perms: ['attendance.read', 'visitors.read'] },
+]);
+const selectedUser = ref(null);
+const selectedRoleId = ref(null);
+const userSearch = ref('');
+const filteredUsers = computed(() =>
+  users.value.filter(u => u.name.toLowerCase().includes(userSearch.value.toLowerCase()))
+);
 
 function labelFor(p) {
   return p
     .replace('.read', ' — View')
     .replace('.write', ' — Manage')
-    .replace('roles.manage', 'Roles — Manage')
+    .replace('roles.manage', 'Roles — Manage');
 }
-function roleNameById(id) { const r = roles.value.find(r => r.id === id); return r ? r.name : '—' }
-function selectUser(u) { selectedUser.value = { ...u, perms: [...u.perms] }; selectedRoleId.value = u.roleId }
+function roleNameById(id) {
+  const r = roles.value.find(r => r.id === id);
+  return r ? r.name : '—';
+}
+function selectUser(u) {
+  selectedUser.value = { ...u, perms: [...u.perms] };
+  selectedRoleId.value = u.roleId;
+}
 function applyRole() {
-  if (!selectedUser.value) return
-  const role = roles.value.find(r => r.id === selectedRoleId.value)
-  if (role) selectedUser.value.perms = [...role.permissions]
+  if (!selectedUser.value) return;
+  const role = roles.value.find(r => r.id === selectedRoleId.value);
+  if (role) selectedUser.value.perms = [...role.permissions];
 }
-function hasUserPerm(p) { return selectedUser.value?.perms.includes(p) }
+function hasUserPerm(p) {
+  return selectedUser.value?.perms.includes(p);
+}
 function toggleUserPerm(p) {
-  if (!selectedUser.value) return
-  const perms = new Set(selectedUser.value.perms)
-  if (perms.has(p)) perms.delete(p)
-  else perms.add(p)
-  selectedUser.value.perms = Array.from(perms)
+  if (!selectedUser.value) return;
+  const perms = new Set(selectedUser.value.perms);
+  if (perms.has(p)) perms.delete(p);
+  else perms.add(p);
+  selectedUser.value.perms = Array.from(perms);
 }
 function saveUser() {
-  if (!selectedUser.value) return
-  users.value = users.value.map(u => u.id === selectedUser.value.id ? { ...selectedUser.value, roleId: selectedRoleId.value } : u)
+  if (!selectedUser.value) return;
+  users.value = users.value.map(u =>
+    u.id === selectedUser.value.id ? { ...selectedUser.value, roleId: selectedRoleId.value } : u
+  );
 }
 </script>
 
 <style scoped>
-.page-wrap {
-  padding: 20px;
+.roles-permissions-ui {
+  padding: 32px 20px;
+  background: #f8fafc;
 }
 
-.page-header {
-  margin-bottom: 16px;
+.roles-permissions-ui .roles-card,
+.roles-permissions-ui .permissions-card {
+  background: #fff;
+  border-radius: 1.5rem;
+  box-shadow: 0 2px 16px rgba(99, 102, 241, 0.08);
 }
 
-.list-group-item.active {
-  background: rgba(13, 110, 253, .12);
-  color: #0d6efd;
+.roles-permissions-ui .page-header {
+  margin-bottom: 32px;
+}
+
+.roles-permissions-ui .list-group-item.active {
+  background: linear-gradient(90deg, #a5b4fc 0%, #6366f1 100%);
+  color: #fff;
+  border-radius: 0.75rem;
+}
+
+.roles-permissions-ui .list-group-item {
+  border-radius: 0.75rem;
+  margin-bottom: 6px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.roles-permissions-ui .badge {
+  font-size: 0.85rem;
+  padding: 0.35em 0.7em;
+  border-radius: 0.5rem;
+}
+
+.roles-permissions-ui .form-label {
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.roles-permissions-ui .form-select {
+  border-radius: 0.5rem;
+}
+
+.roles-permissions-ui .form-check {
+  margin-bottom: 0.5rem;
+}
+
+.roles-permissions-ui .btn-primary {
+  border-radius: 0.5rem;
+  padding: 0.5em 2em;
 }
 </style>

@@ -2,7 +2,7 @@
   <CHeader class="header">
     <div class="d-flex align-items-center w-100">
       <!-- Menu Toggle -->
-      <button class="menu-btn" @click="toggleSidebar" aria-label="Toggle sidebar">
+      <button class="menu-btn" aria-label="Toggle sidebar" @click="handleToggleSidebar">
         <span class="menu-icon">
           <span></span>
           <span></span>
@@ -24,65 +24,57 @@
         </div>
       </div>
 
-    <!-- Search Modal -->
-    <teleport to="body">
-      <transition name="search-modal">
-        <div v-if="searchOpen" class="search-overlay" @click.self="closeSearch">
-          <div class="search-modal">
-            <div class="search-header">
-              <i class="bi bi-search"></i>
-              <input
-                ref="searchInputRef"
-                type="text"
-                v-model="searchQuery"
-                placeholder="Search pages, actions..."
-                @keydown.esc="closeSearch"
-                @keydown.down.prevent="navigateResults(1)"
-                @keydown.up.prevent="navigateResults(-1)"
-                @keydown.enter.prevent="selectResult"
-              />
-              <kbd @click="closeSearch">ESC</kbd>
-            </div>
-            <div class="search-results" v-if="filteredResults.length > 0">
-              <div class="results-group" v-for="group in groupedResults" :key="group.category">
-                <div class="group-label">{{ group.category }}</div>
-                <div
-                  v-for="(item, idx) in group.items"
-                  :key="item.path"
-                  class="result-item"
-                  :class="{ active: selectedIndex === getGlobalIndex(group.category, idx) }"
-                  @click="goToPage(item)"
-                  @mouseenter="selectedIndex = getGlobalIndex(group.category, idx)"
-                >
-                  <div class="result-icon" :style="{ background: item.color }">
-                    <i :class="item.icon"></i>
+      <!-- Search Modal -->
+      <teleport to="body">
+        <transition name="search-modal">
+          <div v-if="searchOpen" class="search-overlay" @click.self="closeSearch">
+            <div class="search-modal">
+              <div class="search-header">
+                <i class="bi bi-search"></i>
+                <input
+ref="searchInputRef" v-model="searchQuery" type="text" placeholder="Search pages, actions..."
+                  @keydown.esc="closeSearch" @keydown.down.prevent="navigateResults(1)"
+                  @keydown.up.prevent="navigateResults(-1)" @keydown.enter.prevent="selectResult" />
+                <kbd @click="closeSearch">ESC</kbd>
+              </div>
+              <div v-if="filteredResults.length > 0" class="search-results">
+                <div v-for="group in groupedResults" :key="group.category" class="results-group">
+                  <div class="group-label">{{ group.category }}</div>
+                  <div
+v-for="(item, idx) in group.items" :key="item.path" class="result-item"
+                    :class="{ active: selectedIndex === getGlobalIndex(group.category, idx) }" @click="goToPage(item)"
+                    @mouseenter="selectedIndex = getGlobalIndex(group.category, idx)">
+                    <div class="result-icon" :style="{ background: item.color }">
+                      <i :class="item.icon"></i>
+                    </div>
+                    <div class="result-info">
+                      <div class="result-name">{{ item.name }}</div>
+                      <div class="result-path">{{ item.path }}</div>
+                    </div>
+                    <i class="bi bi-arrow-return-left result-enter"></i>
                   </div>
-                  <div class="result-info">
-                    <div class="result-name">{{ item.name }}</div>
-                    <div class="result-path">{{ item.path }}</div>
-                  </div>
-                  <i class="bi bi-arrow-return-left result-enter"></i>
                 </div>
               </div>
-            </div>
-            <div class="search-empty" v-else-if="searchQuery">
-              <i class="bi bi-search"></i>
-              <span>No results for "{{ searchQuery }}"</span>
-            </div>
-            <div class="search-footer">
-              <div class="footer-hint"><kbd>↑↓</kbd> Navigate</div>
-              <div class="footer-hint"><kbd>↵</kbd> Select</div>
-              <div class="footer-hint"><kbd>ESC</kbd> Close</div>
+              <div v-else-if="searchQuery" class="search-empty">
+                <i class="bi bi-search"></i>
+                <span>No results for "{{ searchQuery }}"</span>
+              </div>
+              <div class="search-footer">
+                <div class="footer-hint"><kbd>↑↓</kbd> Navigate</div>
+                <div class="footer-hint"><kbd>↵</kbd> Select</div>
+                <div class="footer-hint"><kbd>ESC</kbd> Close</div>
+              </div>
             </div>
           </div>
-        </div>
-      </transition>
-    </teleport>
+        </transition>
+      </teleport>
 
       <!-- Nav Actions -->
       <CHeaderNav class="ms-auto d-flex align-items-center gap-2">
         <!-- Theme Toggle -->
-        <button class="nav-action-btn" @click="theme.toggle()" :title="theme.mode === 'dark' ? 'Light mode' : 'Dark mode'">
+        <button
+class="nav-action-btn" :title="theme.mode === 'dark' ? 'Light mode' : 'Dark mode'"
+          @click="theme.toggle()">
           <transition name="theme-icon" mode="out-in">
             <i v-if="theme.mode === 'dark'" key="sun" class="bi bi-sun-fill"></i>
             <i v-else key="moon" class="bi bi-moon-stars-fill"></i>
@@ -109,21 +101,15 @@
             </div>
             <div class="notifications-list">
               <div
-                v-for="n in notifications"
-                :key="n.id"
-                class="notification-item"
-                :class="{ unread: !n.read }"
-                @click="handleNotification(n)"
-              >
+v-for="n in notifications" :key="n.id" class="notification-item" :class="{ unread: !n.read }"
+                @click="handleNotification(n)">
                 <div class="notification-icon" :class="n.type">
                   <i :class="getNotificationIcon(n.type)"></i>
                 </div>
                 <div class="notification-content">
                   <div class="notification-title">{{ n.title }}</div>
                   <div class="notification-message">{{ n.message }}</div>
-                  <div class="notification-time">
-                    <i class="bi bi-clock me-1"></i>{{ n.time }}
-                  </div>
+                  <div class="notification-time"><i class="bi bi-clock me-1"></i>{{ n.time }}</div>
                 </div>
               </div>
               <div v-if="notifications.length === 0" class="empty-notifications">
@@ -137,6 +123,38 @@
             </div>
           </CDropdownMenu>
         </CDropdown>
+
+        <!-- Report Dropdown -->
+        <CDropdown alignment="start" class="ms-3">
+          <CDropdownToggle class="nav-action-btn" :caret="true">
+            <i class="bi bi-bar-chart-fill"></i>
+            <span class="d-none d-md-inline ms-1">Report</span>
+          </CDropdownToggle>
+          <CDropdownMenu>
+            <div class="dropdown-header-custom">Reports</div>
+            <div class="menu-item" @click="router.push('/reports/finance')">
+              <i class="bi bi-cash-stack"></i>
+              <span>Finance Monthly Report</span>
+            </div>
+            <div class="menu-item" @click="router.push('/reports/finance-export')">
+              <i class="bi bi-file-earmark-arrow-down"></i>
+              <span>Finance Export Report</span>
+            </div>
+            <div class="menu-item" @click="router.push('/reports/attendance')">
+              <i class="bi bi-calendar-check"></i>
+              <span>Attendance Report</span>
+            </div>
+            <div class="menu-item" @click="router.push('/reports/attendance-import')">
+              <i class="bi bi-file-earmark-arrow-up"></i>
+              <span>Attendance Import</span>
+            </div>
+            <div class="menu-item" @click="router.push('/reports/audit-logs')">
+              <i class="bi bi-journal-text"></i>
+              <span>Audit Logs Export</span>
+            </div>
+          </CDropdownMenu>
+        </CDropdown>
+        <!-- End Report Dropdown -->
 
         <!-- Profile -->
         <CDropdown alignment="end">
@@ -171,7 +189,7 @@
               <span>Settings</span>
             </div>
             <div class="dropdown-divider-custom"></div>
-            <div class="menu-item danger" @click="signOut">
+            <div class="menu-item danger" @click="handleLogout">
               <i class="bi bi-box-arrow-right"></i>
               <span>Sign Out</span>
             </div>
@@ -183,152 +201,283 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
-import { CHeader, CHeaderBrand, CHeaderNav, CDropdown, CDropdownToggle, CDropdownMenu } from '@coreui/vue'
-import { useAuthStore } from '../store/auth'
-import { useThemeStore } from '../store/theme'
-import { useRouter } from 'vue-router'
-import { dashboardApi } from '../api/dashboard'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
+import {
+  CHeader,
+  CHeaderBrand,
+  CHeaderNav,
+  CDropdown,
+  CDropdownToggle,
+  CDropdownMenu,
+} from '@coreui/vue';
+import { useAuthStore } from '../store/auth';
+import { useThemeStore } from '../store/theme';
+import { useRouter } from 'vue-router';
+import { dashboardApi } from '../api/dashboard';
 
-const props = defineProps({ toggleSidebar: { type: Function, default: () => { } } })
-const auth = useAuthStore()
-const theme = useThemeStore()
-const router = useRouter()
+const props = defineProps({ toggleSidebar: { type: Function, default: () => { } } });
+const auth = useAuthStore();
+const theme = useThemeStore();
+const router = useRouter();
 
 // Search
-const searchOpen = ref(false)
-const searchQuery = ref('')
-const searchInputRef = ref(null)
-const selectedIndex = ref(0)
+const searchOpen = ref(false);
+const searchQuery = ref('');
+const searchInputRef = ref(null);
+const selectedIndex = ref(0);
 
 // All searchable pages
 const allPages = [
-  { name: 'Dashboard', path: '/dashboard', icon: 'bi bi-grid-1x2-fill', category: 'Pages', color: 'rgba(99, 102, 241, 0.15)', roles: ['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader'] },
-  { name: 'Users', path: '/users', icon: 'bi bi-people-fill', category: 'Administration', color: 'rgba(239, 68, 68, 0.15)', roles: ['admin'] },
-  { name: 'Roles & Permissions', path: '/roles-permissions', icon: 'bi bi-key-fill', category: 'Administration', color: 'rgba(239, 68, 68, 0.15)', roles: ['admin'] },
-  { name: 'Attendance Approvals', path: '/attendance-approvals', icon: 'bi bi-clipboard-check-fill', category: 'Administration', color: 'rgba(239, 68, 68, 0.15)', roles: ['admin'] },
-  { name: 'Broadcasts', path: '/broadcasts', icon: 'bi bi-broadcast-pin', category: 'Administration', color: 'rgba(239, 68, 68, 0.15)', roles: ['admin'] },
-  { name: 'Audit Logs', path: '/audit-logs', icon: 'bi bi-journal-text', category: 'Administration', color: 'rgba(239, 68, 68, 0.15)', roles: ['admin'] },
-  { name: 'Attendance Records', path: '/attendance', icon: 'bi bi-calendar-check-fill', category: 'Attendance', color: 'rgba(16, 185, 129, 0.15)', roles: ['admin', 'pastor', 'usher'] },
-  { name: 'Visitors', path: '/visitors', icon: 'bi bi-person-plus-fill', category: 'Attendance', color: 'rgba(16, 185, 129, 0.15)', roles: ['admin', 'pastor'] },
-  { name: 'Follow-ups', path: '/follow-ups', icon: 'bi bi-chat-heart-fill', category: 'Follow-ups', color: 'rgba(245, 158, 11, 0.15)', roles: ['admin', 'pastor', 'pr_follow_up'] },
-  { name: 'Contributions', path: '/contributions', icon: 'bi bi-cash-stack', category: 'Finance', color: 'rgba(59, 130, 246, 0.15)', roles: ['admin', 'finance'] },
-  { name: 'Expenses', path: '/expense', icon: 'bi bi-receipt', category: 'Finance', color: 'rgba(59, 130, 246, 0.15)', roles: ['admin', 'finance'] },
-  { name: 'Expense Types', path: '/expense-types', icon: 'bi bi-tags-fill', category: 'Finance', color: 'rgba(59, 130, 246, 0.15)', roles: ['admin', 'finance'] },
-  { name: 'Departments', path: '/departments', icon: 'bi bi-diagram-3-fill', category: 'Departments', color: 'rgba(139, 92, 246, 0.15)', roles: ['admin', 'pastor'] },
-  { name: 'My Department', path: '/my-department', icon: 'bi bi-people-fill', category: 'Departments', color: 'rgba(139, 92, 246, 0.15)', roles: ['department_leader'] },
-  { name: 'My Submissions', path: '/my-submissions', icon: 'bi bi-send-check-fill', category: 'Pages', color: 'rgba(99, 102, 241, 0.15)', roles: ['usher'] },
-  { name: 'Settings', path: '/settings', icon: 'bi bi-gear-fill', category: 'Pages', color: 'rgba(100, 116, 139, 0.15)', roles: ['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader'] },
-  { name: 'Profile', path: '/profile', icon: 'bi bi-person-fill', category: 'Pages', color: 'rgba(100, 116, 139, 0.15)', roles: ['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader'] },
-]
+  {
+    name: 'Dashboard',
+    path: '/dashboard',
+    icon: 'bi bi-grid-1x2-fill',
+    category: 'Pages',
+    color: 'rgba(99, 102, 241, 0.15)',
+    roles: ['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader'],
+  },
+  {
+    name: 'Users',
+    path: '/users',
+    icon: 'bi bi-people-fill',
+    category: 'Administration',
+    color: 'rgba(239, 68, 68, 0.15)',
+    roles: ['admin'],
+  },
+  {
+    name: 'Roles & Permissions',
+    path: '/roles-permissions',
+    icon: 'bi bi-key-fill',
+    category: 'Administration',
+    color: 'rgba(239, 68, 68, 0.15)',
+    roles: ['admin'],
+  },
+  {
+    name: 'Attendance Approvals',
+    path: '/attendance-approvals',
+    icon: 'bi bi-clipboard-check-fill',
+    category: 'Administration',
+    color: 'rgba(239, 68, 68, 0.15)',
+    roles: ['admin'],
+  },
+  {
+    name: 'Broadcasts',
+    path: '/broadcasts',
+    icon: 'bi bi-broadcast-pin',
+    category: 'Administration',
+    color: 'rgba(239, 68, 68, 0.15)',
+    roles: ['admin'],
+  },
+  {
+    name: 'Audit Logs',
+    path: '/audit-logs',
+    icon: 'bi bi-journal-text',
+    category: 'Administration',
+    color: 'rgba(239, 68, 68, 0.15)',
+    roles: ['admin'],
+  },
+  {
+    name: 'Attendance Records',
+    path: '/attendance',
+    icon: 'bi bi-calendar-check-fill',
+    category: 'Attendance',
+    color: 'rgba(16, 185, 129, 0.15)',
+    roles: ['admin', 'pastor', 'usher'],
+  },
+  {
+    name: 'Visitors',
+    path: '/visitors',
+    icon: 'bi bi-person-plus-fill',
+    category: 'Attendance',
+    color: 'rgba(16, 185, 129, 0.15)',
+    roles: ['admin', 'pastor'],
+  },
+  {
+    name: 'Follow-ups',
+    path: '/follow-ups',
+    icon: 'bi bi-chat-heart-fill',
+    category: 'Follow-ups',
+    color: 'rgba(245, 158, 11, 0.15)',
+    roles: ['admin', 'pastor', 'pr_follow_up'],
+  },
+  {
+    name: 'Contributions',
+    path: '/contributions',
+    icon: 'bi bi-cash-stack',
+    category: 'Finance',
+    color: 'rgba(59, 130, 246, 0.15)',
+    roles: ['admin', 'finance'],
+  },
+  {
+    name: 'Expenses',
+    path: '/expense',
+    icon: 'bi bi-receipt',
+    category: 'Finance',
+    color: 'rgba(59, 130, 246, 0.15)',
+    roles: ['admin', 'finance'],
+  },
+  {
+    name: 'Expense Types',
+    path: '/expense-types',
+    icon: 'bi bi-tags-fill',
+    category: 'Finance',
+    color: 'rgba(59, 130, 246, 0.15)',
+    roles: ['admin', 'finance'],
+  },
+  {
+    name: 'Departments',
+    path: '/departments',
+    icon: 'bi bi-diagram-3-fill',
+    category: 'Departments',
+    color: 'rgba(139, 92, 246, 0.15)',
+    roles: ['admin', 'pastor'],
+  },
+  {
+    name: 'My Department',
+    path: '/my-department',
+    icon: 'bi bi-people-fill',
+    category: 'Departments',
+    color: 'rgba(139, 92, 246, 0.15)',
+    roles: ['department_leader'],
+  },
+  {
+    name: 'My Submissions',
+    path: '/my-submissions',
+    icon: 'bi bi-send-check-fill',
+    category: 'Pages',
+    color: 'rgba(99, 102, 241, 0.15)',
+    roles: ['usher'],
+  },
+  {
+    name: 'Settings',
+    path: '/settings',
+    icon: 'bi bi-gear-fill',
+    category: 'Pages',
+    color: 'rgba(100, 116, 139, 0.15)',
+    roles: ['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader'],
+  },
+  {
+    name: 'Profile',
+    path: '/profile',
+    icon: 'bi bi-person-fill',
+    category: 'Pages',
+    color: 'rgba(100, 116, 139, 0.15)',
+    roles: ['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader'],
+  },
+];
 
 // Filter pages based on user role and search query
 const filteredResults = computed(() => {
-  const userRole = auth.user?.role || ''
-  const query = searchQuery.value.toLowerCase().trim()
+  const userRole = auth.user?.role || '';
+  const query = searchQuery.value.toLowerCase().trim();
 
   return allPages.filter(page => {
-    const hasRole = page.roles.includes(userRole)
-    const matchesQuery = !query ||
+    const hasRole = page.roles.includes(userRole);
+    const matchesQuery =
+      !query ||
       page.name.toLowerCase().includes(query) ||
       page.category.toLowerCase().includes(query) ||
-      page.path.toLowerCase().includes(query)
-    return hasRole && matchesQuery
-  })
-})
+      page.path.toLowerCase().includes(query);
+    return hasRole && matchesQuery;
+  });
+});
 
 // Group results by category
 const groupedResults = computed(() => {
-  const groups = {}
+  const groups = {};
   filteredResults.value.forEach(item => {
     if (!groups[item.category]) {
-      groups[item.category] = []
+      groups[item.category] = [];
     }
-    groups[item.category].push(item)
-  })
+    groups[item.category].push(item);
+  });
   return Object.keys(groups).map(category => ({
     category,
-    items: groups[category]
-  }))
-})
+    items: groups[category],
+  }));
+});
 
 // Get global index for keyboard navigation
 function getGlobalIndex(category, localIdx) {
-  let globalIdx = 0
+  let globalIdx = 0;
   for (const group of groupedResults.value) {
     if (group.category === category) {
-      return globalIdx + localIdx
+      return globalIdx + localIdx;
     }
-    globalIdx += group.items.length
+    globalIdx += group.items.length;
   }
-  return 0
+  return 0;
 }
 
 function openSearch() {
-  searchOpen.value = true
-  searchQuery.value = ''
-  selectedIndex.value = 0
+  searchOpen.value = true;
+  searchQuery.value = '';
+  selectedIndex.value = 0;
   nextTick(() => {
-    searchInputRef.value?.focus()
-  })
+    searchInputRef.value?.focus();
+  });
 }
 
 function closeSearch() {
-  searchOpen.value = false
-  searchQuery.value = ''
+  searchOpen.value = false;
+  searchQuery.value = '';
 }
 
 function navigateResults(direction) {
-  const total = filteredResults.value.length
-  if (total === 0) return
-  selectedIndex.value = (selectedIndex.value + direction + total) % total
+  const total = filteredResults.value.length;
+  if (total === 0) return;
+  selectedIndex.value = (selectedIndex.value + direction + total) % total;
 }
 
 function selectResult() {
   if (filteredResults.value.length > 0) {
-    goToPage(filteredResults.value[selectedIndex.value])
+    goToPage(filteredResults.value[selectedIndex.value]);
   }
 }
 
 function goToPage(item) {
-  router.push(item.path)
-  closeSearch()
+  router.push(item.path);
+  closeSearch();
 }
 
 // Keyboard shortcut (Cmd/Ctrl + K)
 function handleKeydown(e) {
   if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-    e.preventDefault()
+    e.preventDefault();
     if (searchOpen.value) {
-      closeSearch()
+      closeSearch();
     } else {
-      openSearch()
+      openSearch();
     }
   }
 }
 
 // Notifications
-const notifications = ref([])
-const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
+const notifications = ref([]);
+const unreadCount = computed(() => notifications.value.filter(n => !n.read).length);
 
 async function fetchNotifications() {
   try {
-    const response = await dashboardApi.getStats()
+    const response = await dashboardApi.stats();
     if (response.data.success && response.data.data.quick_actions) {
       notifications.value = response.data.data.quick_actions
         .filter(a => a.count > 0)
         .map((action, idx) => ({
           id: idx + 1,
-          type: action.label.includes('Approval') ? 'approval' : action.label.includes('Visitor') ? 'visitor' : 'expense',
+          type: action.label.includes('Approval')
+            ? 'approval'
+            : action.label.includes('Visitor')
+              ? 'visitor'
+              : 'expense',
           title: action.label,
           message: `${action.count} items require your attention`,
           time: 'Just now',
           read: false,
-          link: action.link
-        }))
+          link: action.link,
+        }));
     }
   } catch (error) {
-    console.error('Failed to fetch notifications:', error)
+    console.error('Failed to fetch notifications:', error);
   }
 }
 
@@ -337,69 +486,70 @@ function getNotificationIcon(type) {
     approval: 'bi bi-clipboard-check-fill',
     visitor: 'bi bi-person-plus-fill',
     expense: 'bi bi-receipt',
-    default: 'bi bi-bell-fill'
-  }
-  return icons[type] || icons.default
+    default: 'bi bi-bell-fill',
+  };
+  return icons[type] || icons.default;
 }
 
 function handleNotification(n) {
-  n.read = true
+  n.read = true;
   if (n.link) {
-    router.push(n.link)
+    router.push(n.link);
   }
 }
 
 function markAllRead() {
-  notifications.value.forEach(n => n.read = true)
+  notifications.value.forEach(n => (n.read = true));
 }
 
 onMounted(() => {
-  document.addEventListener('keydown', handleKeydown)
-  fetchNotifications()
-})
+  document.addEventListener('keydown', handleKeydown);
+  fetchNotifications();
+});
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-})
+  document.removeEventListener('keydown', handleKeydown);
+});
 
-const userInitials = computed(() => auth.userInitials || 'U')
+const userInitials = computed(() => auth.userInitials || 'U');
 const displayName = computed(() => {
-  const name = auth.user?.name || 'User'
-  return name.split(' ')[0]
-})
+  const name = auth.user?.name || 'User';
+  return name.split(' ')[0];
+});
 
-async function signOut() {
-  await auth.signOut()
-  router.push('/login')
+async function handleLogout() {
+  await auth.logout();
+  router.push('/login');
 }
 
 function goToProfile() {
-  router.push('/profile')
+  router.push('/profile');
 }
 
 function goToSettings() {
-  router.push('/settings')
+  router.push('/settings');
 }
 
-function toggleSidebar() {
-  props.toggleSidebar()
+function handleToggleSidebar() {
+  props.toggleSidebar();
 }
 </script>
 
 <style scoped>
 /* Header */
 :deep(.header) {
-  background: rgba(255, 255, 255, 0.95) !important;
+  background: rgba(255, 255, 255, 0.98) !important;
   backdrop-filter: saturate(180%) blur(20px);
   -webkit-backdrop-filter: saturate(180%) blur(20px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.6) !important;
-  padding: 0.625rem 1.25rem !important;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.12) !important;
+  padding: 0.75rem 1.5rem !important;
   position: sticky;
   top: 0;
   z-index: 1020;
-  min-height: 64px;
+  min-height: 72px;
   transition: all 0.3s ease;
   width: 100%;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.06), inset 0 -1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .theme-dark :deep(.header) {
@@ -409,20 +559,22 @@ function toggleSidebar() {
 
 /* Menu Button */
 .menu-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   background: transparent;
-  border: none;
+  border: 1px solid transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .menu-btn:hover {
-  background: rgba(99, 102, 241, 0.08);
+  background: rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.2);
+  transform: scale(1.05);
 }
 
 .menu-icon {
@@ -434,19 +586,28 @@ function toggleSidebar() {
 
 .menu-icon span {
   display: block;
-  height: 2px;
-  background: #64748b;
-  border-radius: 2px;
+  height: 2.5px;
+  background: #667eea;
+  border-radius: 3px;
   transition: all 0.3s ease;
 }
 
-.menu-icon span:nth-child(1) { width: 100%; }
-.menu-icon span:nth-child(2) { width: 75%; }
-.menu-icon span:nth-child(3) { width: 50%; }
+.menu-icon span:nth-child(1) {
+  width: 100%;
+}
+
+.menu-icon span:nth-child(2) {
+  width: 75%;
+}
+
+.menu-icon span:nth-child(3) {
+  width: 50%;
+}
 
 .menu-btn:hover .menu-icon span {
-  background: #6366f1;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   width: 100%;
+  box-shadow: 0 2px 6px rgba(102, 126, 234, 0.4);
 }
 
 .theme-dark .menu-icon span {
@@ -455,12 +616,13 @@ function toggleSidebar() {
 
 /* Brand */
 .brand-text {
-  font-weight: 700;
-  font-size: 1.125rem;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  font-weight: 800;
+  font-size: 1.25rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  letter-spacing: -0.02em;
 }
 
 /* Search Trigger */
@@ -471,14 +633,14 @@ function toggleSidebar() {
 .search-box {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  height: 40px;
-  padding: 0 14px;
-  border: 1.5px solid transparent;
-  border-radius: 12px;
-  background: #f1f5f9;
+  gap: 0.875rem;
+  height: 44px;
+  padding: 0 16px;
+  border: 1.5px solid rgba(102, 126, 234, 0.15);
+  border-radius: 14px;
+  background: rgba(102, 126, 234, 0.04);
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.3s ease;
 }
 
 .theme-dark .search-box {
@@ -486,8 +648,10 @@ function toggleSidebar() {
 }
 
 .search-box:hover {
-  background: #e2e8f0;
-  border-color: rgba(99, 102, 241, 0.2);
+  background: rgba(102, 126, 234, 0.1);
+  border-color: rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.12);
+  transform: translateY(-1px);
 }
 
 .theme-dark .search-box:hover {
@@ -553,6 +717,7 @@ function toggleSidebar() {
     opacity: 0;
     transform: scale(0.95) translateY(-10px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -758,19 +923,19 @@ function toggleSidebar() {
 
 /* Nav Action Button */
 .nav-action-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: none;
-  background: #f1f5f9;
-  color: #64748b;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  background: rgba(102, 126, 234, 0.06);
+  color: #667eea;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   position: relative;
-  transition: all 0.25s ease;
-  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  font-size: 1.15rem;
 }
 
 .theme-dark .nav-action-btn {
@@ -779,9 +944,11 @@ function toggleSidebar() {
 }
 
 .nav-action-btn:hover {
-  background: #e2e8f0;
-  color: #6366f1;
-  transform: translateY(-2px);
+  background: rgba(102, 126, 234, 0.12);
+  border-color: rgba(102, 126, 234, 0.2);
+  color: #667eea;
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
 }
 
 .theme-dark .nav-action-btn:hover {
@@ -831,18 +998,26 @@ function toggleSidebar() {
 }
 
 @keyframes badgePulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 /* Notifications Dropdown */
 .notifications-dropdown {
-  width: 360px !important;
+  width: 380px !important;
   padding: 0 !important;
-  border-radius: 16px !important;
+  border-radius: 20px !important;
   overflow: hidden;
-  border: 1px solid #e2e8f0 !important;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15) !important;
+  border: 1px solid rgba(102, 126, 234, 0.15) !important;
+  box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15), 0 8px 16px rgba(0, 0, 0, 0.08) !important;
+  backdrop-filter: blur(20px);
 }
 
 .theme-dark .notifications-dropdown {
@@ -854,9 +1029,9 @@ function toggleSidebar() {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 1.25rem;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.05) 100%);
-  border-bottom: 1px solid #e2e8f0;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.06) 100%);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.12);
 }
 
 .theme-dark .dropdown-header-custom {
@@ -873,7 +1048,7 @@ function toggleSidebar() {
 }
 
 .header-title i {
-  color: #6366f1;
+  color: #667eea;
 }
 
 .theme-dark .header-title {
@@ -883,16 +1058,18 @@ function toggleSidebar() {
 .mark-read-btn {
   background: none;
   border: none;
-  color: #6366f1;
-  font-size: 0.75rem;
-  font-weight: 500;
+  color: #667eea;
+  font-size: 0.775rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  padding: 4px 8px;
+  border-radius: 8px;
 }
 
 .mark-read-btn:hover {
-  color: #4f46e5;
-  text-decoration: underline;
+  color: #764ba2;
+  background: rgba(102, 126, 234, 0.1);
 }
 
 .notifications-list {
@@ -902,11 +1079,12 @@ function toggleSidebar() {
 
 .notification-item {
   display: flex;
-  padding: 1rem 1.25rem;
-  gap: 0.875rem;
+  padding: 1.125rem 1.5rem;
+  gap: 1rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  position: relative;
 }
 
 .theme-dark .notification-item {
@@ -914,11 +1092,12 @@ function toggleSidebar() {
 }
 
 .notification-item:hover {
-  background: rgba(99, 102, 241, 0.05);
+  background: rgba(102, 126, 234, 0.08);
+  transform: translateX(2px);
 }
 
 .notification-item.unread {
-  background: rgba(99, 102, 241, 0.04);
+  background: rgba(102, 126, 234, 0.06);
 }
 
 .notification-item.unread::before {
@@ -927,19 +1106,21 @@ function toggleSidebar() {
   left: 0;
   top: 0;
   bottom: 0;
-  width: 3px;
-  background: #6366f1;
+  width: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 2px 0 8px rgba(102, 126, 234, 0.3);
 }
 
 .notification-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
+  font-size: 1.1rem;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .notification-icon.approval {
@@ -1246,6 +1427,7 @@ function toggleSidebar() {
 }
 
 @media (max-width: 768px) {
+
   .nav-action-btn,
   .menu-btn {
     width: 36px;

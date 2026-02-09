@@ -24,10 +24,12 @@ class AuthController extends Controller
         $request->validate([
             'phone' => 'required|string',
             'password' => 'required|string',
+            'remember' => 'sometimes|boolean',
         ]);
 
         $phone = $request->input('phone');
         $password = $request->input('password');
+        $remember = $request->input('remember', false);
 
         // Find user by phone number
         $user = User::where('phone', $phone)->first();
@@ -46,12 +48,17 @@ class AuthController extends Controller
             return ResponseHelper::error('Invalid credentials', null, 401);
         }
 
-        // Create token for user
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // Create token for user with expiration
+        // If remember is true, token expires in 30 days, otherwise 2 hours
+        $tokenName = $remember ? 'auth_token_remember' : 'auth_token';
+        $expiresAt = $remember ? now()->addDays(30) : now()->addHours(2);
+
+        $token = $user->createToken($tokenName, ['*'], $expiresAt)->plainTextToken;
 
         return ResponseHelper::success([
             'user' => $this->formatUserData($user),
             'token' => $token,
+            'expires_at' => $expiresAt->toIso8601String(),
         ], 'Login successful');
     }
 
@@ -234,15 +241,35 @@ class AuthController extends Controller
      */
     private function formatUserData(User $user): array
     {
-        $user->load('department');
+        $user->load(['department', 'roles']);
+
+        // Get roles array (supports both old single role and new multiple roles)
+        $userRoles = [];
+        if ($user->roles && $user->roles->count() > 0) {
+            $userRoles = $user->roles->map(function($role) {
+                return [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                    'display_name' => $role->display_name,
+                ];
+            })->toArray();
+        } elseif ($user->role) {
+            // Fallback to old single role field
+            $userRoles = [[
+                'id' => $user->role,
+                'name' => $user->role,
+                'display_name' => $user->role_name,
+            ]];
+        }
 
         return [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
             'phone' => $user->phone,
-            'role' => $user->role,
-            'role_name' => $user->role_name,
+            'role' => $user->role, // Keep for backward compatibility
+            'role_name' => $user->role_name, // Keep for backward compatibility
+            'roles' => $userRoles, // New: array of roles
             'department' => $user->department ? [
                 'id' => $user->department->id,
                 'name' => $user->department->name,

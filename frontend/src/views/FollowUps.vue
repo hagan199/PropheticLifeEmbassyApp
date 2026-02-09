@@ -1,9 +1,5 @@
 <template>
   <div class="page-wrap">
-    <CAlert v-if="notification.show" :color="notification.type" dismissible @close="notification.show = false">
-      {{ notification.message }}
-    </CAlert>
-
     <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-2">
       <div>
         <h2 class="title">Follow-ups</h2>
@@ -92,9 +88,7 @@
           <strong>{{ dueThisWeek.length }} follow-ups due this week</strong>
           <span class="ms-2 text-muted">{{ overdueCount }} overdue</span>
         </div>
-        <CButton color="warning" size="sm" @click="showDueList = true">
-          View Due List
-        </CButton>
+        <CButton color="warning" size="sm" @click="showDueList = true"> View Due List </CButton>
       </div>
     </CAlert>
 
@@ -117,9 +111,13 @@
           </CCardHeader>
           <CCardBody class="p-0">
             <CListGroup flush>
-              <CListGroupItem v-for="v in filteredVisitors" :key="v.id"
+              <CListGroupItem
+                v-for="v in filteredVisitors"
+                :key="v.id"
                 class="visitor-item d-flex justify-content-between align-items-start py-3"
-                :class="{ active: selectedVisitor?.id === v.id }" @click="selectVisitor(v)">
+                :class="{ active: selectedVisitor?.id === v.id }"
+                @click="selectVisitor(v)"
+              >
                 <div class="d-flex">
                   <CAvatar :color="statusAvatarColor(v.status)" text-color="white" class="me-3">
                     {{ v.name.charAt(0) }}
@@ -128,15 +126,22 @@
                     <div class="fw-semibold">{{ v.name }}</div>
                     <div class="text-muted small">{{ v.phone }}</div>
                     <div class="mt-1">
-                      <CBadge :color="statusColor(v.status)" size="sm">{{ statusLabel(v.status) }}</CBadge>
-                      <CBadge color="light" text-color="dark" size="sm" class="ms-1">{{ v.source }}</CBadge>
+                      <CBadge :color="statusColor(v.status)" size="sm">{{
+                        statusLabel(v.status)
+                      }}</CBadge>
+                      <CBadge color="light" text-color="dark" size="sm" class="ms-1">{{
+                        v.source
+                      }}</CBadge>
                     </div>
                   </div>
                 </div>
                 <div class="text-end">
                   <div class="text-muted small">{{ formatDate(v.firstVisitDate) }}</div>
-                  <div v-if="v.nextFollowUp" class="small"
-                    :class="isOverdue(v.nextFollowUp) ? 'text-danger' : 'text-muted'">
+                  <div
+                    v-if="v.nextFollowUp"
+                    class="small"
+                    :class="isOverdue(v.nextFollowUp) ? 'text-danger' : 'text-muted'"
+                  >
                     <i class="bi bi-clock me-1"></i>{{ formatDate(v.nextFollowUp) }}
                   </div>
                 </div>
@@ -162,7 +167,11 @@
           <CCardBody>
             <!-- Visitor Info -->
             <div class="text-center mb-4">
-              <CAvatar :color="statusAvatarColor(selectedVisitor.status)" text-color="white" size="xl">
+              <CAvatar
+                :color="statusAvatarColor(selectedVisitor.status)"
+                text-color="white"
+                size="xl"
+              >
                 {{ selectedVisitor.name.charAt(0) }}
               </CAvatar>
               <h5 class="mt-2 mb-1">{{ selectedVisitor.name }}</h5>
@@ -181,13 +190,19 @@
                 <div class="text-muted small">First Visit</div>
                 <div class="fw-semibold">{{ formatDate(selectedVisitor.firstVisitDate) }}</div>
               </CCol>
-              <CCol xs="12" v-if="selectedVisitor.interests?.length">
+              <CCol v-if="selectedVisitor.interests?.length" xs="12">
                 <div class="text-muted small">Interests</div>
                 <div>
-                  <CBadge v-for="i in selectedVisitor.interests" :key="i" color="info" class="me-1">{{ i }}</CBadge>
+                  <CBadge
+                    v-for="i in selectedVisitor.interests"
+                    :key="i"
+                    color="info"
+                    class="me-1"
+                    >{{ i }}</CBadge
+                  >
                 </div>
               </CCol>
-              <CCol xs="12" v-if="selectedVisitor.notes">
+              <CCol v-if="selectedVisitor.notes" xs="12">
                 <div class="text-muted small">Notes</div>
                 <div>{{ selectedVisitor.notes }}</div>
               </CCol>
@@ -209,15 +224,21 @@
                   <i class="bi bi-chat-dots"></i>
                 </CButton>
               </div>
-              <CButton v-if="selectedVisitor.status === 'engaged'" color="success" variant="outline"
-                @click="convertToMember">
+              <CButton
+                v-if="selectedVisitor.status === 'engaged'"
+                color="success"
+                variant="outline"
+                @click="convertToMember"
+              >
                 <i class="bi bi-person-check me-1"></i> Convert to Member
               </CButton>
             </div>
 
             <!-- Follow-up History -->
             <div class="fw-semibold mb-2">Follow-up History</div>
-            <div v-if="!selectedVisitor.followUps?.length" class="text-muted small">No follow-ups logged yet</div>
+            <div v-if="!selectedVisitor.followUps?.length" class="text-muted small">
+              No follow-ups logged yet
+            </div>
             <div v-else class="timeline">
               <div v-for="f in selectedVisitor.followUps" :key="f.id" class="timeline-item">
                 <div class="timeline-marker" :class="'bg-' + methodColor(f.method)"></div>
@@ -248,11 +269,12 @@
     </CRow>
 
     <!-- Add Visitor Modal -->
-    <CModal :visible="showAddVisitor" @close="showAddVisitor = false" size="lg">
-      <CModalHeader>
-        <CModalTitle>Add New Visitor</CModalTitle>
-      </CModalHeader>
-      <CModalBody>
+    <Teleport to="body">
+      <CModal :visible="showAddVisitor" size="lg" @close="showAddVisitor = false">
+        <CModalHeader>
+          <CModalTitle>Add New Visitor</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
         <CForm>
           <CRow class="g-3">
             <CCol md="6">
@@ -300,36 +322,70 @@
             </CCol>
           </CRow>
         </CForm>
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="showAddVisitor = false">Cancel</CButton>
-        <CButton color="primary" @click="saveVisitor">Save Visitor</CButton>
-      </CModalFooter>
-    </CModal>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" @click="showAddVisitor = false">Cancel</CButton>
+          <CButton color="primary" @click="saveVisitor">Save Visitor</CButton>
+        </CModalFooter>
+      </CModal>
+    </Teleport>
 
     <!-- Log Follow-up Modal -->
-    <CModal :visible="showFollowUpModal" @close="showFollowUpModal = false">
-      <CModalHeader>
-        <CModalTitle>Log Follow-up</CModalTitle>
-      </CModalHeader>
-      <CModalBody>
+    <Teleport to="body">
+      <CModal :visible="showFollowUpModal" @close="showFollowUpModal = false">
+        <CModalHeader>
+          <CModalTitle>Log Follow-up</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
         <CForm>
           <div class="mb-3">
             <CFormLabel>Contact Method <span class="text-danger">*</span></CFormLabel>
             <div class="d-flex gap-2 flex-wrap">
-              <CFormCheck type="radio" name="method" id="m-whatsapp" value="WhatsApp" v-model="followUpForm.method"
-                label="WhatsApp" inline />
-              <CFormCheck type="radio" name="method" id="m-sms" value="SMS" v-model="followUpForm.method" label="SMS"
-                inline />
-              <CFormCheck type="radio" name="method" id="m-call" value="Call" v-model="followUpForm.method" label="Call"
-                inline />
-              <CFormCheck type="radio" name="method" id="m-person" value="In-Person" v-model="followUpForm.method"
-                label="In-Person" inline />
+              <CFormCheck
+                id="m-whatsapp"
+                v-model="followUpForm.method"
+                type="radio"
+                name="method"
+                value="WhatsApp"
+                label="WhatsApp"
+                inline
+              />
+              <CFormCheck
+                id="m-sms"
+                v-model="followUpForm.method"
+                type="radio"
+                name="method"
+                value="SMS"
+                label="SMS"
+                inline
+              />
+              <CFormCheck
+                id="m-call"
+                v-model="followUpForm.method"
+                type="radio"
+                name="method"
+                value="Call"
+                label="Call"
+                inline
+              />
+              <CFormCheck
+                id="m-person"
+                v-model="followUpForm.method"
+                type="radio"
+                name="method"
+                value="In-Person"
+                label="In-Person"
+                inline
+              />
             </div>
           </div>
           <div class="mb-3">
             <CFormLabel>Notes <span class="text-danger">*</span></CFormLabel>
-            <CFormTextarea v-model="followUpForm.notes" rows="3" placeholder="What was discussed?" />
+            <CFormTextarea
+              v-model="followUpForm.notes"
+              rows="3"
+              placeholder="What was discussed?"
+            />
           </div>
           <div class="mb-3">
             <CFormLabel>Update Status</CFormLabel>
@@ -344,20 +400,22 @@
             <CFormLabel>Next Follow-up Date</CFormLabel>
             <CFormInput v-model="followUpForm.nextDate" type="date" />
           </div>
-        </CForm>
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="showFollowUpModal = false">Cancel</CButton>
-        <CButton color="primary" @click="saveFollowUp">Save Follow-up</CButton>
-      </CModalFooter>
-    </CModal>
+          </CForm>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" @click="showFollowUpModal = false">Cancel</CButton>
+          <CButton color="primary" @click="saveFollowUp">Save Follow-up</CButton>
+        </CModalFooter>
+      </CModal>
+    </Teleport>
 
     <!-- Due List Modal -->
-    <CModal :visible="showDueList" @close="showDueList = false" size="lg">
-      <CModalHeader>
-        <CModalTitle>Follow-ups Due This Week</CModalTitle>
-      </CModalHeader>
-      <CModalBody>
+    <Teleport to="body">
+      <CModal :visible="showDueList" size="lg" @close="showDueList = false">
+        <CModalHeader>
+          <CModalTitle>Follow-ups Due This Week</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
         <CTable hover responsive>
           <CTableHead>
             <CTableRow>
@@ -369,7 +427,11 @@
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            <CTableRow v-for="v in dueThisWeek" :key="v.id" :class="{ 'table-danger': isOverdue(v.nextFollowUp) }">
+            <CTableRow
+              v-for="v in dueThisWeek"
+              :key="v.id"
+              :class="{ 'table-danger': isOverdue(v.nextFollowUp) }"
+            >
               <CTableDataCell>
                 <div class="fw-semibold">{{ v.name }}</div>
                 <div class="text-muted small">{{ v.phone }}</div>
@@ -394,123 +456,234 @@
             </CTableRow>
           </CTableBody>
         </CTable>
-      </CModalBody>
-    </CModal>
+        </CModalBody>
+      </CModal>
+    </Teleport>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive } from 'vue';
 import {
-  CCard, CCardBody, CCardHeader, CRow, CCol, CButton, CTable, CTableHead, CTableBody,
-  CTableRow, CTableHeaderCell, CTableDataCell, CBadge, CAvatar, CFormInput, CFormSelect,
-  CFormLabel, CFormTextarea, CFormCheck, CInputGroup, CInputGroupText, CModal, CModalHeader,
-  CModalTitle, CModalBody, CModalFooter, CAlert, CListGroup, CListGroupItem, CForm
-} from '@coreui/vue'
-import Breadcrumbs from '../components/Breadcrumbs.vue'
-import { exportToExcel, formatDateForExport } from '../utils/export.js'
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CRow,
+  CCol,
+  CButton,
+  CTable,
+  CTableHead,
+  CTableBody,
+  CTableRow,
+  CTableHeaderCell,
+  CTableDataCell,
+  CBadge,
+  CAvatar,
+  CFormInput,
+  CFormSelect,
+  CFormLabel,
+  CFormTextarea,
+  CFormCheck,
+  CInputGroup,
+  CInputGroupText,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
+  CAlert,
+  CListGroup,
+  CListGroupItem,
+  CForm,
+} from '@coreui/vue';
+import Breadcrumbs from '../components/Breadcrumbs.vue';
+import { useToast } from '../composables/useToast';
+import { exportToExcel, formatDateForExport } from '../utils/export.js';
 
 // Data
 const visitors = ref([
   {
-    id: 1, name: 'Ama Kwarteng', phone: '+233241234567', email: 'ama@email.com', source: 'Friend',
-    firstVisitDate: '2026-01-15', status: 'engaged', nextFollowUp: '2026-01-24', lastContactMethod: 'WhatsApp',
-    interests: ['Youth', 'Choir'], notes: 'Interested in joining the choir',
+    id: 1,
+    name: 'Ama Kwarteng',
+    phone: '+233241234567',
+    email: 'ama@email.com',
+    source: 'Friend',
+    firstVisitDate: '2026-01-15',
+    status: 'engaged',
+    nextFollowUp: '2026-01-24',
+    lastContactMethod: 'WhatsApp',
+    interests: ['Youth', 'Choir'],
+    notes: 'Interested in joining the choir',
     followUps: [
-      { id: 1, method: 'WhatsApp', date: '2026-01-18', notes: 'Had a great conversation, very interested in choir ministry', statusAfter: 'engaged' },
-      { id: 2, method: 'Call', date: '2026-01-16', notes: 'Brief call, will follow up later', statusAfter: 'contacted' }
-    ]
+      {
+        id: 1,
+        method: 'WhatsApp',
+        date: '2026-01-18',
+        notes: 'Had a great conversation, very interested in choir ministry',
+        statusAfter: 'engaged',
+      },
+      {
+        id: 2,
+        method: 'Call',
+        date: '2026-01-16',
+        notes: 'Brief call, will follow up later',
+        statusAfter: 'contacted',
+      },
+    ],
   },
   {
-    id: 2, name: 'Kofi Asante', phone: '+233201234567', source: 'Social Media',
-    firstVisitDate: '2026-01-12', status: 'not_contacted', nextFollowUp: '2026-01-20',
-    interests: [], notes: '', followUps: []
+    id: 2,
+    name: 'Kofi Asante',
+    phone: '+233201234567',
+    source: 'Social Media',
+    firstVisitDate: '2026-01-12',
+    status: 'not_contacted',
+    nextFollowUp: '2026-01-20',
+    interests: [],
+    notes: '',
+    followUps: [],
   },
   {
-    id: 3, name: 'Yaa Mensah', phone: '+233551234567', source: 'Walk-in',
-    firstVisitDate: '2026-01-19', status: 'contacted', nextFollowUp: '2026-01-26', lastContactMethod: 'SMS',
-    interests: ['Prayer'], notes: 'First-time visitor, seemed interested',
+    id: 3,
+    name: 'Yaa Mensah',
+    phone: '+233551234567',
+    source: 'Walk-in',
+    firstVisitDate: '2026-01-19',
+    status: 'contacted',
+    nextFollowUp: '2026-01-26',
+    lastContactMethod: 'SMS',
+    interests: ['Prayer'],
+    notes: 'First-time visitor, seemed interested',
     followUps: [
-      { id: 1, method: 'SMS', date: '2026-01-20', notes: 'Sent welcome message', statusAfter: 'contacted' }
-    ]
+      {
+        id: 1,
+        method: 'SMS',
+        date: '2026-01-20',
+        notes: 'Sent welcome message',
+        statusAfter: 'contacted',
+      },
+    ],
   },
   {
-    id: 4, name: 'Kwame Boateng', phone: '+233271234567', source: 'Friend',
-    firstVisitDate: '2025-12-08', status: 'converted', interests: ['Media'],
-    notes: 'Now a regular member', followUps: [
-      { id: 1, method: 'In-Person', date: '2026-01-05', notes: 'Completed membership class', statusAfter: 'converted' },
-      { id: 2, method: 'Call', date: '2025-12-15', notes: 'Invited to membership class', statusAfter: 'engaged' }
-    ]
-  }
-])
+    id: 4,
+    name: 'Kwame Boateng',
+    phone: '+233271234567',
+    source: 'Friend',
+    firstVisitDate: '2025-12-08',
+    status: 'converted',
+    interests: ['Media'],
+    notes: 'Now a regular member',
+    followUps: [
+      {
+        id: 1,
+        method: 'In-Person',
+        date: '2026-01-05',
+        notes: 'Completed membership class',
+        statusAfter: 'converted',
+      },
+      {
+        id: 2,
+        method: 'Call',
+        date: '2025-12-15',
+        notes: 'Invited to membership class',
+        statusAfter: 'engaged',
+      },
+    ],
+  },
+]);
 
 // State
-const search = ref('')
-const statusFilter = ref('')
-const selectedVisitor = ref(null)
-const showAddVisitor = ref(false)
-const showFollowUpModal = ref(false)
-const showDueList = ref(false)
+const search = ref('');
+const statusFilter = ref('');
+const selectedVisitor = ref(null);
+const showAddVisitor = ref(false);
+const showFollowUpModal = ref(false);
+const showDueList = ref(false);
 
 // Stats
 const stats = computed(() => ({
   total: visitors.value.length,
   notContacted: visitors.value.filter(v => v.status === 'not_contacted').length,
   engaged: visitors.value.filter(v => v.status === 'engaged').length,
-  converted: visitors.value.filter(v => v.status === 'converted').length
-}))
+  converted: visitors.value.filter(v => v.status === 'converted').length,
+}));
 
 // Filtered
 const filteredVisitors = computed(() => {
   return visitors.value.filter(v => {
-    if (statusFilter.value && v.status !== statusFilter.value) return false
-    if (search.value && !v.name.toLowerCase().includes(search.value.toLowerCase()) &&
-      !v.phone.includes(search.value)) return false
-    return true
-  })
-})
+    if (statusFilter.value && v.status !== statusFilter.value) return false;
+    if (
+      search.value &&
+      !v.name.toLowerCase().includes(search.value.toLowerCase()) &&
+      !v.phone.includes(search.value)
+    )
+      return false;
+    return true;
+  });
+});
 
 // Due this week
 const dueThisWeek = computed(() => {
-  const today = new Date()
-  const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-  return visitors.value.filter(v => {
-    if (!v.nextFollowUp || v.status === 'converted') return false
-    const dueDate = new Date(v.nextFollowUp)
-    return dueDate <= weekFromNow
-  }).sort((a, b) => new Date(a.nextFollowUp) - new Date(b.nextFollowUp))
-})
+  const today = new Date();
+  const weekFromNow = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
+  return visitors.value
+    .filter(v => {
+      if (!v.nextFollowUp || v.status === 'converted') return false;
+      const dueDate = new Date(v.nextFollowUp);
+      return dueDate <= weekFromNow;
+    })
+    .sort((a, b) => new Date(a.nextFollowUp) - new Date(b.nextFollowUp));
+});
 
-const overdueCount = computed(() => dueThisWeek.value.filter(v => isOverdue(v.nextFollowUp)).length)
+const overdueCount = computed(
+  () => dueThisWeek.value.filter(v => isOverdue(v.nextFollowUp)).length
+);
 
 // Forms
 const visitorForm = reactive({
-  name: '', phone: '', email: '', source: '', firstVisitDate: '', interests: [], notes: ''
-})
+  name: '',
+  phone: '',
+  email: '',
+  source: '',
+  firstVisitDate: '',
+  interests: [],
+  notes: '',
+});
 
 const followUpForm = reactive({
-  method: '', notes: '', statusAfter: '', nextDate: ''
-})
+  method: '',
+  notes: '',
+  statusAfter: '',
+  nextDate: '',
+});
 
 // Notification
-const notification = reactive({ show: false, type: 'success', message: '' })
+const toast = useToast();
 
 // Methods
 function selectVisitor(v) {
-  selectedVisitor.value = v
+  selectedVisitor.value = v;
 }
 
 function filterByStatus(status) {
-  statusFilter.value = status
+  statusFilter.value = status;
 }
 
 function openAddVisitor() {
-  Object.assign(visitorForm, { name: '', phone: '', email: '', source: '', firstVisitDate: new Date().toISOString().split('T')[0], interests: [], notes: '' })
-  showAddVisitor.value = true
+  Object.assign(visitorForm, {
+    name: '',
+    phone: '',
+    email: '',
+    source: '',
+    firstVisitDate: new Date().toISOString().split('T')[0],
+    interests: [],
+    notes: '',
+  });
+  showAddVisitor.value = true;
 }
 
 function saveVisitor() {
-  const newId = Math.max(...visitors.value.map(v => v.id)) + 1
+  const newId = Math.max(...visitors.value.map(v => v.id)) + 1;
   visitors.value.push({
     id: newId,
     name: visitorForm.name,
@@ -521,106 +694,123 @@ function saveVisitor() {
     status: 'not_contacted',
     interests: Array.isArray(visitorForm.interests) ? visitorForm.interests : [],
     notes: visitorForm.notes,
-    followUps: []
-  })
-  showAddVisitor.value = false
-  showNotification('success', 'Visitor added successfully')
+    followUps: [],
+  });
+  showAddVisitor.value = false;
+  toast.success('Visitor added successfully');
 }
 
 function openFollowUpModal() {
-  Object.assign(followUpForm, { method: '', notes: '', statusAfter: '', nextDate: '' })
-  showFollowUpModal.value = true
+  Object.assign(followUpForm, { method: '', notes: '', statusAfter: '', nextDate: '' });
+  showFollowUpModal.value = true;
 }
 
 function saveFollowUp() {
-  if (!selectedVisitor.value) return
+  if (!selectedVisitor.value) return;
   const newFollowUp = {
     id: (selectedVisitor.value.followUps?.length || 0) + 1,
     method: followUpForm.method,
     date: new Date().toISOString().split('T')[0],
     notes: followUpForm.notes,
-    statusAfter: followUpForm.statusAfter
-  }
-  if (!selectedVisitor.value.followUps) selectedVisitor.value.followUps = []
-  selectedVisitor.value.followUps.unshift(newFollowUp)
-  selectedVisitor.value.lastContactMethod = followUpForm.method
-  if (followUpForm.statusAfter) selectedVisitor.value.status = followUpForm.statusAfter
-  if (followUpForm.nextDate) selectedVisitor.value.nextFollowUp = followUpForm.nextDate
-  showFollowUpModal.value = false
-  showNotification('success', 'Follow-up logged')
+    statusAfter: followUpForm.statusAfter,
+  };
+  if (!selectedVisitor.value.followUps) selectedVisitor.value.followUps = [];
+  selectedVisitor.value.followUps.unshift(newFollowUp);
+  selectedVisitor.value.lastContactMethod = followUpForm.method;
+  if (followUpForm.statusAfter) selectedVisitor.value.status = followUpForm.statusAfter;
+  if (followUpForm.nextDate) selectedVisitor.value.nextFollowUp = followUpForm.nextDate;
+  showFollowUpModal.value = false;
+  toast.success('Follow-up logged');
 }
 
 function callVisitor() {
-  window.open(`tel:${selectedVisitor.value.phone}`)
+  window.open(`tel:${selectedVisitor.value.phone}`);
 }
 
 function whatsappVisitor() {
-  const phone = selectedVisitor.value.phone.replace('+', '')
-  window.open(`https://wa.me/${phone}`)
+  const phone = selectedVisitor.value.phone.replace('+', '');
+  window.open(`https://wa.me/${phone}`);
 }
 
 function smsVisitor() {
-  window.open(`sms:${selectedVisitor.value.phone}`)
+  window.open(`sms:${selectedVisitor.value.phone}`);
 }
 
 function convertToMember() {
-  selectedVisitor.value.status = 'converted'
-  showNotification('success', `${selectedVisitor.value.name} converted to member!`)
+  selectedVisitor.value.status = 'converted';
+  toast.success(`${selectedVisitor.value.name} converted to member!`);
 }
 
 function selectAndCall(v) {
-  showDueList.value = false
-  selectVisitor(v)
-  setTimeout(callVisitor, 300)
+  showDueList.value = false;
+  selectVisitor(v);
+  setTimeout(callVisitor, 300);
 }
 
 function selectAndLog(v) {
-  showDueList.value = false
-  selectVisitor(v)
-  setTimeout(openFollowUpModal, 300)
-}
-
-function showNotification(type, message) {
-  notification.type = type
-  notification.message = message
-  notification.show = true
-  setTimeout(() => { notification.show = false }, 3000)
+  showDueList.value = false;
+  selectVisitor(v);
+  setTimeout(openFollowUpModal, 300);
 }
 
 // Helpers
 function formatDate(date) {
-  if (!date) return '—'
-  return new Date(date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  if (!date) return '—';
+  return new Date(date).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
 }
 
 function isOverdue(date) {
-  if (!date) return false
-  return new Date(date) < new Date()
+  if (!date) return false;
+  return new Date(date) < new Date();
 }
 
 function statusColor(status) {
-  const colors = { not_contacted: 'danger', contacted: 'info', engaged: 'warning', converted: 'success' }
-  return colors[status] || 'secondary'
+  const colors = {
+    not_contacted: 'danger',
+    contacted: 'info',
+    engaged: 'warning',
+    converted: 'success',
+  };
+  return colors[status] || 'secondary';
 }
 
 function statusAvatarColor(status) {
-  const colors = { not_contacted: 'danger', contacted: 'info', engaged: 'warning', converted: 'success' }
-  return colors[status] || 'secondary'
+  const colors = {
+    not_contacted: 'danger',
+    contacted: 'info',
+    engaged: 'warning',
+    converted: 'success',
+  };
+  return colors[status] || 'secondary';
 }
 
 function statusLabel(status) {
-  const labels = { not_contacted: 'Not Contacted', contacted: 'Contacted', engaged: 'Engaged', converted: 'Converted' }
-  return labels[status] || status
+  const labels = {
+    not_contacted: 'Not Contacted',
+    contacted: 'Contacted',
+    engaged: 'Engaged',
+    converted: 'Converted',
+  };
+  return labels[status] || status;
 }
 
 function methodColor(method) {
-  const colors = { WhatsApp: 'success', SMS: 'primary', Call: 'info', 'In-Person': 'warning' }
-  return colors[method] || 'secondary'
+  const colors = { WhatsApp: 'success', SMS: 'primary', Call: 'info', 'In-Person': 'warning' };
+  return colors[method] || 'secondary';
 }
 
 function methodIcon(method) {
-  const icons = { WhatsApp: 'bi bi-whatsapp', SMS: 'bi bi-chat-dots', Call: 'bi bi-telephone', 'In-Person': 'bi bi-person' }
-  return icons[method] || 'bi bi-circle'
+  const icons = {
+    WhatsApp: 'bi bi-whatsapp',
+    SMS: 'bi bi-chat-dots',
+    Call: 'bi bi-telephone',
+    'In-Person': 'bi bi-person',
+  };
+  return icons[method] || 'bi bi-circle';
 }
 
 function exportVisitors() {
@@ -629,25 +819,29 @@ function exportVisitors() {
     { key: 'phone', header: 'Phone' },
     { key: 'email', header: 'Email' },
     { key: 'source', header: 'Source' },
-    { key: 'firstVisitDate', header: 'First Visit', transform: (v) => formatDateForExport(v) },
-    { key: 'status', header: 'Status', transform: (v) => statusLabel(v) },
+    { key: 'firstVisitDate', header: 'First Visit', transform: v => formatDateForExport(v) },
+    { key: 'status', header: 'Status', transform: v => statusLabel(v) },
     { key: 'lastContactMethod', header: 'Last Contact Method' },
-    { key: 'nextFollowUp', header: 'Next Follow-up', transform: (v) => formatDateForExport(v) },
-    { key: 'interests', header: 'Interests', transform: (v) => v?.join(', ') || '' },
-    { key: 'notes', header: 'Notes' }
-  ]
-  exportToExcel(filteredVisitors.value, columns, `Visitors_FollowUps_${new Date().toISOString().split('T')[0]}`)
-  showNotification('success', 'Visitor data exported successfully')
+    { key: 'nextFollowUp', header: 'Next Follow-up', transform: v => formatDateForExport(v) },
+    { key: 'interests', header: 'Interests', transform: v => v?.join(', ') || '' },
+    { key: 'notes', header: 'Notes' },
+  ];
+  exportToExcel(
+    filteredVisitors.value,
+    columns,
+    `Visitors_FollowUps_${new Date().toISOString().split('T')[0]}`
+  );
+  toast.success('Visitor data exported successfully');
 }
 </script>
 
 <style scoped>
 .page-wrap {
-  padding: 20px;
+  padding: 24px;
 }
 
 .page-header {
-  margin-bottom: 16px;
+  margin-bottom: 20px;
 }
 
 .stat-card {

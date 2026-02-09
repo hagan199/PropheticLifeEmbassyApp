@@ -1,0 +1,592 @@
+/**
+ * Utility Classes for Material Design 3
+ * Bootstrap-like utilities using MD3 tokens
+ */
+
+/* ========================================
+   GRID SYSTEM
+   ======================================== */
+
+.container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 var(--md-space-4);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 calc(var(--md-space-3) * -1);
+}
+
+.col {
+  flex: 1;
+  padding: 0 var(--md-space-3);
+}
+
+.col-12 {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+
+.col-6 {
+  flex: 0 0 50%;
+  max-width: 50%;
+}
+
+.col-4 {
+  flex: 0 0 33.333%;
+  max-width: 33.333%;
+}
+
+.col-3 {
+  flex: 0 0 25%;
+  max-width: 25%;
+}
+
+@media (min-width: 576px) {
+  .col-sm-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .col-sm-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .col-sm-4 {
+    flex: 0 0 33.333%;
+    max-width: 33.333%;
+  }
+
+  .col-sm-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+}
+
+@media (min-width: 768px) {
+  .col-md-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .col-md-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .col-md-4 {
+    flex: 0 0 33.333%;
+    max-width: 33.333%;
+  }
+
+  .col-md-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+}
+
+@media (min-width: 992px) {
+  .col-lg-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .col-lg-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .col-lg-4 {
+    flex: 0 0 33.333%;
+    max-width: 33.333%;
+  }
+
+  .col-lg-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+}
+
+@media (min-width: 1200px) {
+  .col-xl-12 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  .col-xl-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  .col-xl-4 {
+    flex: 0 0 33.333%;
+    max-width: 33.333%;
+  }
+
+  .col-xl-3 {
+    flex: 0 0 25%;
+    max-width: 25%;
+  }
+}
+
+/* ========================================
+   PAGE HEADER
+   ======================================== */
+
+.md-page-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--md-space-4);
+  margin-bottom: var(--md-space-6);
+}
+
+.md-page-title {
+  font: var(--md-headline-medium);
+  color: var(--md-on-surface);
+  margin: 0;
+}
+
+.md-page-subtitle {
+  font: var(--md-body-large);
+  color: var(--md-on-surface-variant);
+  margin-top: var(--md-space-1);
+}
+
+.md-page-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--md-space-3);
+}
+
+/* ========================================
+   STAT CARDS ROW
+   ======================================== */
+
+.md-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--md-space-6);
+  margin-bottom: var(--md-space-6);
+}
+
+@media (max-width: 1200px) {
+  .md-stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 576px) {
+  .md-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--md-space-4);
+  }
+}
+
+/* ========================================
+   CONTENT GRID
+   ======================================== */
+
+.md-content-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--md-space-6);
+}
+
+.md-col-12 {
+  grid-column: span 12;
+}
+
+.md-col-8 {
+  grid-column: span 8;
+}
+
+.md-col-6 {
+  grid-column: span 6;
+}
+
+.md-col-4 {
+  grid-column: span 4;
+}
+
+.md-col-3 {
+  grid-column: span 3;
+}
+
+@media (max-width: 992px) {
+  .md-col-8,
+  .md-col-6,
+  .md-col-4,
+  .md-col-3 {
+    grid-column: span 12;
+  }
+}
+
+/* ========================================
+   CHART CONTAINER
+   ======================================== */
+
+.md-chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+.md-chart-container-sm {
+  height: 200px;
+}
+
+.md-chart-container-lg {
+  height: 400px;
+}
+
+/* ========================================
+   LIST STYLES
+   ======================================== */
+
+.md-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.md-list-item {
+  display: flex;
+  align-items: center;
+  gap: var(--md-space-4);
+  padding: var(--md-space-4);
+  border-bottom: 1px solid var(--md-outline-variant);
+  transition: background var(--md-motion-duration-short3) var(--md-motion-easing-standard);
+}
+
+.md-list-item:last-child {
+  border-bottom: none;
+}
+
+.md-list-item:hover {
+  background: var(--md-surface-container-low);
+}
+
+.md-list-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--md-shape-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--md-surface-container);
+  color: var(--md-on-surface-variant);
+  flex-shrink: 0;
+}
+
+.md-list-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.md-list-item-title {
+  font: var(--md-body-large);
+  color: var(--md-on-surface);
+  margin: 0;
+}
+
+.md-list-item-subtitle {
+  font: var(--md-body-small);
+  color: var(--md-on-surface-muted);
+}
+
+.md-list-item-action {
+  flex-shrink: 0;
+}
+
+/* ========================================
+   FILTER BAR
+   ======================================== */
+
+.md-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--md-space-3);
+  padding: var(--md-space-4);
+  background: var(--md-surface);
+  border-radius: var(--md-shape-lg);
+  margin-bottom: var(--md-space-4);
+}
+
+.md-filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--md-space-2);
+}
+
+.md-filter-label {
+  font: var(--md-label-medium);
+  color: var(--md-on-surface-variant);
+}
+
+/* ========================================
+   EMPTY STATES
+   ======================================== */
+
+.md-empty-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--md-space-16);
+  text-align: center;
+}
+
+.md-empty-icon {
+  font-size: 4rem;
+  color: var(--md-on-surface-muted);
+  margin-bottom: var(--md-space-6);
+}
+
+.md-empty-title {
+  font: var(--md-title-large);
+  color: var(--md-on-surface);
+  margin-bottom: var(--md-space-2);
+}
+
+.md-empty-description {
+  font: var(--md-body-medium);
+  color: var(--md-on-surface-variant);
+  max-width: 400px;
+  margin-bottom: var(--md-space-6);
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+
+.md-loading-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--md-glass-background);
+  backdrop-filter: var(--md-glass-blur);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.md-spinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--md-surface-container-high);
+  border-top-color: var(--md-primary);
+  border-radius: var(--md-shape-full);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ========================================
+   ANIMATION UTILITIES
+   ======================================== */
+
+.md-fade-in {
+  animation: fadeIn var(--md-motion-duration-medium2) var(--md-motion-easing-emphasized);
+  will-change: opacity;
+}
+
+.md-slide-up {
+  animation: slideUp var(--md-motion-duration-medium2) var(--md-motion-easing-emphasized);
+  will-change: opacity, transform;
+}
+
+.md-scale-in {
+  animation: scaleIn var(--md-motion-duration-medium2) var(--md-motion-easing-emphasized);
+  will-change: opacity, transform;
+  backface-visibility: hidden;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Staggered animation for grid items */
+.md-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.md-stagger > *:nth-child(2) {
+  animation-delay: 50ms;
+}
+
+.md-stagger > *:nth-child(3) {
+  animation-delay: 100ms;
+}
+
+.md-stagger > *:nth-child(4) {
+  animation-delay: 150ms;
+}
+
+.md-stagger > *:nth-child(5) {
+  animation-delay: 200ms;
+}
+
+.md-stagger > *:nth-child(6) {
+  animation-delay: 250ms;
+}
+
+/* ========================================
+   TEXT UTILITIES
+   ======================================== */
+
+.text-primary {
+  color: var(--md-primary) !important;
+}
+
+.text-secondary {
+  color: var(--md-secondary) !important;
+}
+
+.text-success {
+  color: var(--md-success) !important;
+}
+
+.text-warning {
+  color: var(--md-warning) !important;
+}
+
+.text-error {
+  color: var(--md-error) !important;
+}
+
+.text-muted {
+  color: var(--md-on-surface-muted) !important;
+}
+
+.bg-primary {
+  background: var(--md-primary) !important;
+  color: var(--md-on-primary) !important;
+}
+
+.bg-success {
+  background: var(--md-success) !important;
+  color: var(--md-on-success) !important;
+}
+
+.bg-warning {
+  background: var(--md-warning) !important;
+  color: var(--md-on-warning) !important;
+}
+
+.bg-error {
+  background: var(--md-error) !important;
+  color: var(--md-on-error) !important;
+}
+
+.overflow-hidden {
+  overflow: hidden !important;
+}
+
+.overflow-auto {
+  overflow: auto !important;
+}
+
+.position-relative {
+  position: relative !important;
+}
+
+.position-absolute {
+  position: absolute !important;
+}
+
+.rounded {
+  border-radius: var(--md-shape-md) !important;
+}
+
+.rounded-lg {
+  border-radius: var(--md-shape-lg) !important;
+}
+
+.rounded-xl {
+  border-radius: var(--md-shape-xl) !important;
+}
+
+.rounded-full {
+  border-radius: var(--md-shape-full) !important;
+}
+
+.shadow-sm {
+  box-shadow: var(--md-elevation-1) !important;
+}
+
+.shadow {
+  box-shadow: var(--md-elevation-2) !important;
+}
+
+.shadow-md {
+  box-shadow: var(--md-elevation-3) !important;
+}
+
+.shadow-lg {
+  box-shadow: var(--md-elevation-4) !important;
+}
+
+.shadow-xl {
+  box-shadow: var(--md-elevation-5) !important;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

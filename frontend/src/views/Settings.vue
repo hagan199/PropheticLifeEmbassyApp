@@ -1,19 +1,18 @@
 <template>
   <div class="settings-page">
     <!-- Modern Page Header -->
-    <PageHeader
-      title="Settings"
-      subtitle="Configure roles, permissions, and system preferences">
+    <PageHeader title="Settings" subtitle="Configure roles, permissions, and system preferences">
+      <!-- @ts-ignore -->
       <template #actions>
         <button class="settings-action-btn" @click="refreshData">
-          <i class="bi bi-arrow-clockwise" :class="{ 'rotating': isLoading }"></i>
+          <i class="bi bi-arrow-clockwise" :class="{ rotating: isLoading }"></i>
           <span>Refresh</span>
         </button>
       </template>
     </PageHeader>
 
     <!-- Summary KPI Cards -->
-    <div class="kpi-grid mb-5" v-if="tab === 'roles' || tab === 'permissions'">
+    <div v-if="tab === 'roles' || tab === 'permissions'" class="kpi-grid mb-5">
       <div class="kpi-card" style="--delay: 0s">
         <div class="kpi-icon" style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)">
           <i class="bi bi-shield-check"></i>
@@ -50,7 +49,7 @@
 
     <!-- Improved Tab Navigation -->
     <div class="settings-tabs mb-4">
-      <button v-for="t in tabs" :key="t.id" :class="['tab-button', { 'active': tab === t.id }]" @click="tab = t.id">
+      <button v-for="t in tabs" :key="t.id" :class="['tab-button', { active: tab === t.id }]" @click="tab = t.id">
         <i :class="t.icon" class="me-2"></i>
         <span>{{ t.label }}</span>
       </button>
@@ -118,11 +117,13 @@
           <CCol lg="6">
             <div class="md-help-card">
               <h5><i class="bi bi-info-circle me-2"></i>Usage Tips</h5>
-              <p>Service types define the kinds of gatherings your church hosts. These will appear in the Attendance
-                recording module.</p>
+              <p>
+                Service types define the kinds of gatherings your church hosts. These will appear in
+                the Attendance recording module.
+              </p>
               <div class="alert alert-info py-2 small mb-3">
-                <i class="bi bi-info-circle me-2"></i>Note: These types are currently pre-defined in the database
-                schema.
+                <i class="bi bi-info-circle me-2"></i>Note: These types are currently pre-defined in
+                the database schema.
               </div>
               <ul>
                 <li><strong>Sunday Service:</strong> Main weekly gathering.</li>
@@ -143,9 +144,9 @@
                 <span class="fw-bold">Expense Categories</span>
                 <div class="d-flex gap-2">
                   <CFormInput v-model="catName" placeholder="New category..." size="sm" :disabled="isSaving"
-                    @keyup.enter="addCategory" style="min-width: 160px;" />
+                    style="min-width: 160px" @keyup.enter="addCategory" />
                   <CFormInput v-model="catDescription" placeholder="Description..." size="sm" :disabled="isSaving"
-                    @keyup.enter="addCategory" style="min-width: 200px;" />
+                    style="min-width: 200px" @keyup.enter="addCategory" />
                   <CButton color="primary" size="sm" :disabled="isSaving || !catName.trim()" @click="addCategory">
                     <CSpinner v-if="isSaving && !editingCategory" size="sm" class="me-1" />
                     <span>Add</span>
@@ -200,11 +201,15 @@
           <CCol lg="6" class="d-flex align-items-stretch">
             <div class="md-help-card w-100 d-flex flex-column justify-content-center align-items-center text-center">
               <h5 class="mb-3"><i class="bi bi-cash-coin me-2"></i>Finance Guidance</h5>
-              <p class="mb-2">Categories help in organizing church expenses for better reporting and budgeting.</p>
+              <p class="mb-2">
+                Categories help in organizing church expenses for better reporting and budgeting.
+              </p>
               <div class="alert alert-success py-2 small mb-3 w-75 mx-auto">
                 <i class="bi bi-cloud-check me-2"></i>Enabled real-time server synchronization.
               </div>
-              <p class="mb-0">Common categories: Utilities, Missions, Welfare, Repairs, Honorarium.</p>
+              <p class="mb-0">
+                Common categories: Utilities, Missions, Welfare, Repairs, Honorarium.
+              </p>
             </div>
           </CCol>
         </CRow>
@@ -216,14 +221,12 @@
           <CCol lg="5">
             <div class="roles-card-modern">
               <div class="roles-header">
-                <h5 class="mb-1 fw-bold">
-                  <i class="bi bi-shield-lock me-2"></i>System Roles
-                </h5>
+                <h5 class="mb-1 fw-bold"><i class="bi bi-shield-lock me-2"></i>System Roles</h5>
                 <p class="small text-muted mb-0">{{ roles.length }} roles configured</p>
               </div>
               <div class="roles-list">
-                <div v-for="r in roles" :key="r.id" :class="['role-card-item', { 'active': selectedRole?.id === r.id }]"
-                  @click="fetchRolePermissions(r)" tabindex="0" @keyup.enter="fetchRolePermissions(r)">
+                <div v-for="r in roles" :key="r.id" :class="['role-card-item', { active: selectedRole?.id === r.id }]"
+                  tabindex="0" @click="fetchRolePermissions(r)" @keyup.enter="fetchRolePermissions(r)">
                   <div class="role-icon-wrapper" :class="getRoleColor(r.name)">
                     <i :class="roleIcon(r.name)" class="role-icon-lg"></i>
                   </div>
@@ -259,10 +262,10 @@
                 </div>
                 <template v-else>
                   <div class="permissions-modern-grid">
-                    <div v-for="p in allPermissions" :key="p" :class="['perm-card', { 'active': hasRolePerm(p) }]"
+                    <div v-for="p in allPermissions" :key="p" :class="['perm-card', { active: hasRolePerm(p) }]"
                       @click="toggleRolePerm(p)">
                       <div class="perm-checkbox-wrapper">
-                        <div class="custom-checkbox" :class="{ 'checked': hasRolePerm(p) }">
+                        <div class="custom-checkbox" :class="{ checked: hasRolePerm(p) }">
                           <i v-if="hasRolePerm(p)" class="bi bi-check"></i>
                         </div>
                         <label :for="'perm-' + p" class="perm-checkbox-label ms-2">
@@ -279,8 +282,8 @@
                         {{ rolePerms.length }} of {{ allPermissions.length }} permissions enabled
                       </span>
                     </div>
-                    <CButton color="primary" size="lg" :disabled="isSaving" @click="saveRolePerms"
-                      class="save-btn-modern">
+                    <CButton color="primary" size="lg" :disabled="isSaving" class="save-btn-modern"
+                      @click="saveRolePerms">
                       <CSpinner v-if="isSaving" size="sm" class="me-2" />
                       <i v-else class="bi bi-check-lg me-2"></i>
                       Save Permissions
@@ -294,7 +297,9 @@
                 <i class="bi bi-shield-lock"></i>
               </div>
               <h5 class="mt-4 mb-2">Select a Role</h5>
-              <p class="text-muted mb-0">Choose a role from the list to view and manage permissions</p>
+              <p class="text-muted mb-0">
+                Choose a role from the list to view and manage permissions
+              </p>
             </div>
           </CCol>
         </CRow>
@@ -307,9 +312,7 @@
             <div class="users-card-modern">
               <!-- Search & Filter Header -->
               <div class="users-header">
-                <h5 class="mb-1 fw-bold">
-                  <i class="bi bi-people-fill me-2"></i>User Management
-                </h5>
+                <h5 class="mb-1 fw-bold"><i class="bi bi-people-fill me-2"></i>User Management</h5>
                 <p class="small text-muted mb-0">{{ users.length }} users loaded</p>
               </div>
 
@@ -317,19 +320,19 @@
               <div class="users-search-section">
                 <div class="search-input-wrapper">
                   <i class="bi bi-search search-icon"></i>
-                  <input type="text" v-model="userSearch" placeholder="Search by name, email, or phone..."
-                    @input="handleUserSearch" class="search-input-modern" />
-                  <button v-if="userSearch" @click="clearUserSearch" class="search-clear-btn">
+                  <input v-model="userSearch" type="text" placeholder="Search by name, email, or phone..."
+                    class="search-input-modern" @input="handleUserSearch" />
+                  <button v-if="userSearch" class="search-clear-btn" @click="clearUserSearch">
                     <i class="bi bi-x-circle-fill"></i>
                   </button>
                 </div>
 
                 <!-- Quick Filter Chips -->
                 <div class="filter-chips">
-                  <button :class="['filter-chip', { 'active': userRoleFilter === null }]" @click="filterByRole(null)">
+                  <button :class="['filter-chip', { active: userRoleFilter === null }]" @click="filterByRole(null)">
                     <i class="bi bi-grid-fill me-1"></i>All Roles
                   </button>
-                  <button v-for="r in roles" :key="r.id" :class="['filter-chip', { 'active': userRoleFilter === r.id }]"
+                  <button v-for="r in roles" :key="r.id" :class="['filter-chip', { active: userRoleFilter === r.id }]"
                     @click="filterByRole(r.id)">
                     <i :class="roleIcon(r.name)" class="me-1"></i>{{ r.name }}
                   </button>
@@ -349,7 +352,7 @@
                 </div>
                 <div v-else class="users-list">
                   <div v-for="u in users" :key="u.id"
-                    :class="['user-card-modern', { 'active': selectedUser?.id === u.id }]" @click="selectUser(u)">
+                    :class="['user-card-modern', { active: selectedUser?.id === u.id }]" @click="selectUser(u)">
                     <div class="user-avatar-modern" :class="getRandomColor(u.name)">
                       {{ u.name.charAt(0).toUpperCase() }}
                     </div>
@@ -395,8 +398,10 @@
                     <i class="bi bi-chevron-right"></i>
                   </CPaginationItem>
                 </CPagination>
-              </div> <!-- pagination -->
-            </div> <!-- users-card-modern -->
+              </div>
+              <!-- pagination -->
+            </div>
+            <!-- users-card-modern -->
           </CCol>
           <CCol lg="7">
             <div v-if="selectedUser" class="user-details-card-modern">
@@ -430,9 +435,10 @@
 
                   <!-- Multiple Role Selection Cards -->
                   <div class="role-selection-grid">
-                    <div v-for="role in roles" :key="role.id"
-                      :class="['role-selection-card', { 'selected': selectedUserRoles.includes(role.id) }]"
-                      @click="toggleUserRole(role.id)">
+                    <div v-for="role in roles" :key="role.id" :class="[
+                      'role-selection-card',
+                      { selected: selectedUserRoles.includes(role.id) },
+                    ]" @click="toggleUserRole(role.id)">
                       <div class="role-selection-checkbox">
                         <i v-if="selectedUserRoles.includes(role.id)" class="bi bi-check-circle-fill"></i>
                         <i v-else class="bi bi-circle"></i>
@@ -442,7 +448,9 @@
                           <i :class="roleIcon(role.name)"></i>
                         </div>
                         <div class="role-selection-info">
-                          <div class="role-selection-name">{{ role.display_name || role.name }}</div>
+                          <div class="role-selection-name">
+                            {{ role.display_name || role.name }}
+                          </div>
                           <div class="role-selection-desc">{{ getRoleDescription(role.name) }}</div>
                         </div>
                       </div>
@@ -463,10 +471,10 @@
                     <i class="bi bi-key-fill me-2"></i>Custom Permissions
                   </h6>
                   <div class="permissions-modern-grid">
-                    <div v-for="p in allPermissions" :key="p" :class="['perm-card', { 'active': hasUserPerm(p) }]"
+                    <div v-for="p in allPermissions" :key="p" :class="['perm-card', { active: hasUserPerm(p) }]"
                       @click="toggleUserPerm(p)">
                       <div class="perm-checkbox-wrapper">
-                        <input type="checkbox" :id="'uprm-' + p" :checked="hasUserPerm(p)" class="perm-checkbox-input"
+                        <input :id="'uprm-' + p" type="checkbox" :checked="hasUserPerm(p)" class="perm-checkbox-input"
                           @click.stop @change="toggleUserPerm(p)" />
                         <label :for="'uprm-' + p" class="perm-checkbox-label">
                           <i :class="getPermissionIcon(p)" class="me-2"></i>
@@ -479,8 +487,8 @@
 
                 <!-- Save Button -->
                 <div class="user-details-footer">
-                  <CButton color="primary" size="lg" :disabled="isSaving" @click="saveUserChanges"
-                    class="save-btn-modern">
+                  <CButton color="primary" size="lg" :disabled="isSaving" class="save-btn-modern"
+                    @click="saveUserChanges">
                     <CSpinner v-if="isSaving" size="sm" class="me-2" />
                     <i v-else class="bi bi-check-lg me-2"></i>
                     Save User Privileges
@@ -493,7 +501,9 @@
                 <i class="bi bi-person-badge"></i>
               </div>
               <h5 class="mt-4 mb-2">Select a User</h5>
-              <p class="text-muted mb-0">Choose a user from the list to customize their access and permissions</p>
+              <p class="text-muted mb-0">
+                Choose a user from the list to customize their access and permissions
+              </p>
             </div>
           </CCol>
         </CRow>
@@ -502,375 +512,430 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue';
 import {
-  CRow, CCol, CCard, CCardBody, CCardHeader, CListGroup, CListGroupItem,
-  CBadge, CButton, CFormInput, CFormCheck, CFormLabel, CFormSelect, CSpinner
-} from '@coreui/vue'
-import Breadcrumbs from '../components/Breadcrumbs.vue'
-import PageHeader from '@/components/shared/PageHeader.vue'
-import { expensesApi, rolesApi, usersApi } from '../api'
-import { useToast } from '../composables/useToast'
+  CRow,
+  CCol,
+  CCard,
+  CCardBody,
+  CCardHeader,
+  CListGroup,
+  CListGroupItem,
+  CBadge,
+  CButton,
+  CFormInput,
+  CFormCheck,
+  CFormLabel,
+  CFormSelect,
+  CSpinner,
+} from '@coreui/vue';
+import _Breadcrumbs from '../components/Breadcrumbs.vue';
+import PageHeader from '@/components/shared/PageHeader.vue';
+import { expensesApi, rolesApi, usersApi } from '../api';
+import { useToast } from '../composables/useToast';
 
-const toast = useToast()
+// Types
+interface Category {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+interface Role {
+  id: number;
+  name: string;
+  is_system?: boolean;
+}
+
+interface Permission {
+  id: number;
+  name: string;
+  display_name?: string;
+  module?: string;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email?: string;
+  phone?: string;
+  roles?: Role[];
+}
+
+const toast = useToast();
 
 // Global states
-const tab = ref('categories')
-const isLoading = ref(false)
-const isSaving = ref(false)
-const isLoadingPerms = ref(false)
-const isLoadingUsers = ref(false)
+const tab = ref<string>('categories');
+const isLoading = ref<boolean>(false);
+const isSaving = ref<boolean>(false);
+const isLoadingPerms = ref<boolean>(false);
+const isLoadingUsers = ref<boolean>(false);
 
 const tabs = [
   { id: 'categories', label: 'Finance Categories', icon: 'bi bi-tags' },
   { id: 'serviceType', label: 'Service Types', icon: 'bi bi-calendar-event' },
   { id: 'roles', label: 'Roles & Access', icon: 'bi bi-shield-lock' },
-  { id: 'permissions', label: 'User Management', icon: 'bi bi-people' }
-]
+  { id: 'permissions', label: 'User Management', icon: 'bi bi-people' },
+];
 
 // KPI Computed Properties
-const totalRoles = computed(() => roles.value?.length || 0)
-const systemRoles = computed(() => roles.value?.filter(r => r.is_system)?.length || 0)
-const totalPermissions = computed(() => allPermissions.value?.length || 0)
-const modulesCount = computed(() => {
-  if (!allPermissions.value || allPermissions.value.length === 0) return 0
-  return new Set(allPermissions.value.map(p => p.module || 'general')).size
-})
-const multiRoleUsers = computed(() => users.value?.filter(u => u.roles && u.roles.length > 1)?.length || 0)
+const totalRoles = computed<number>(() => roles.value?.length || 0);
+const systemRoles = computed<number>(() => roles.value?.filter((r: Role) => r.is_system)?.length || 0);
+const totalPermissions = computed<number>(() => allPermissions.value?.length || 0);
+const modulesCount = computed<number>(() => {
+  if (!allPermissions.value || allPermissions.value.length === 0) return 0;
+  return new Set(allPermissions.value.map((p: Permission) => p.module || 'general')).size;
+});
+const multiRoleUsers = computed<number>(
+  () => users.value?.filter((u: User) => u.roles && u.roles.length > 1)?.length || 0
+);
 
 // --- Expense Categories ---
-const categories = ref([])
-const catName = ref('')
-const catDescription = ref('')
-const editingCategory = ref(null)
-const editCategoryName = ref('')
-const editCategoryDescription = ref('')
+const categories = ref<Category[]>([]);
+const catName = ref<string>('');
+const catDescription = ref<string>('');
+const editingCategory = ref<Category | null>(null);
+const editCategoryName = ref<string>('');
+const editCategoryDescription = ref<string>('');
 
-async function loadCategories() {
-  isLoading.value = true
+async function loadCategories(): Promise<void> {
+  isLoading.value = true;
   try {
-    const { data } = await expensesApi.getTypes()
-    categories.value = data.data || []
-  } catch (error) {
-    toast.error('Failed to load categories', { color: 'danger' })
-    console.error(error)
+    const { data } = await expensesApi.getTypes();
+    categories.value = data.data || [];
+  } catch (error: any) {
+    toast.error('Failed to load categories', { color: 'danger' });
+    console.error(error);
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 async function addCategory() {
-  if (!catName.value.trim()) return
-  isSaving.value = true
+  if (!catName.value.trim()) return;
+  isSaving.value = true;
   try {
-    const { data } = await expensesApi.createType({ name: catName.value.trim(), description: catDescription.value.trim() })
-    categories.value.push(data.data)
-    catName.value = ''
-    catDescription.value = ''
-    toast.success('Category added successfully', { color: 'success' })
+    const { data } = await expensesApi.createType({
+      name: catName.value.trim(),
+      description: catDescription.value.trim(),
+    });
+    categories.value.push(data.data);
+    catName.value = '';
+    catDescription.value = '';
+    toast.success('Category added successfully', { color: 'success' });
   } catch (error) {
-    toast.error('Failed to add category', { color: 'danger' })
+    toast.error('Failed to add category', { color: 'danger' });
   } finally {
-    isSaving.value = false
+    isSaving.value = false;
   }
 }
 
 async function removeCategory(id) {
-  if (!confirm('Are you sure you want to delete this category?')) return
-  isSaving.value = true
+  if (!confirm('Are you sure you want to delete this category?')) return;
+  isSaving.value = true;
   try {
-    // Assuming delete endpoint might not be fully standard for types, 
+    // Assuming delete endpoint might not be fully standard for types,
     // but trying to follow standard API patterns
-    categories.value = categories.value.filter(c => c.id !== id)
-    toast.info('Category removed locally', { color: 'danger' })
+    categories.value = categories.value.filter(c => c.id !== id);
+    toast.info('Category removed locally', { color: 'danger' });
   } catch (error) {
-    toast.error('Failed to remove category', { color: 'danger' })
+    toast.error('Failed to remove category', { color: 'danger' });
   } finally {
-    isSaving.value = false
+    isSaving.value = false;
   }
 }
 
 function startEditCategory(c) {
-  editingCategory.value = c.id
-  editCategoryName.value = c.name
-  editCategoryDescription.value = c.description || ''
+  editingCategory.value = c.id;
+  editCategoryName.value = c.name;
+  editCategoryDescription.value = c.description || '';
 }
 
 async function saveCategory(id) {
-  if (!editCategoryName.value.trim()) return
-  isSaving.value = true
+  if (!editCategoryName.value.trim()) return;
+  isSaving.value = true;
   try {
-    const { data } = await expensesApi.updateType(id, { name: editCategoryName.value.trim(), description: editCategoryDescription.value.trim() })
-    const idx = categories.value.findIndex(x => x.id === id)
-    if (idx !== -1) categories.value[idx] = data.data
-    toast.success('Category updated', { color: 'success' })
-    editingCategory.value = null
+    const { data } = await expensesApi.updateType(id, {
+      name: editCategoryName.value.trim(),
+      description: editCategoryDescription.value.trim(),
+    });
+    const idx = categories.value.findIndex(x => x.id === id);
+    if (idx !== -1) categories.value[idx] = data.data;
+    toast.success('Category updated', { color: 'success' });
+    editingCategory.value = null;
   } catch (error) {
-    toast.error('Failed to update category', { color: 'danger' })
+    toast.error('Failed to update category', { color: 'danger' });
   } finally {
-    isSaving.value = false
+    isSaving.value = false;
   }
 }
 
 function cancelEditCategory() {
-  editingCategory.value = null
-  editCategoryName.value = ''
+  editingCategory.value = null;
+  editCategoryName.value = '';
 }
 
 // --- Service Types ---
-const serviceTypes = ref([])
-const serviceTypeName = ref('')
-const editingServiceType = ref(null)
-const editServiceTypeName = ref('')
+const serviceTypes = ref([]);
+const serviceTypeName = ref('');
+const editingServiceType = ref(null);
+const editServiceTypeName = ref('');
 
 function loadServiceTypes() {
-  const raw = localStorage.getItem('service_types')
+  const raw = localStorage.getItem('service_types');
   const defaults = [
     { id: 1, name: 'Sunday Service' },
     { id: 2, name: 'Midweek Service' },
-    { id: 3, name: 'Prayer Meeting' }
-  ]
-  try { serviceTypes.value = raw ? JSON.parse(raw) : defaults } catch { serviceTypes.value = defaults }
+    { id: 3, name: 'Prayer Meeting' },
+  ];
+  try {
+    serviceTypes.value = raw ? JSON.parse(raw) : defaults;
+  } catch {
+    serviceTypes.value = defaults;
+  }
 }
 
 function saveServiceTypes() {
-  localStorage.setItem('service_types', JSON.stringify(serviceTypes.value))
+  localStorage.setItem('service_types', JSON.stringify(serviceTypes.value));
 }
 
 function addServiceType() {
-  if (!serviceTypeName.value.trim()) return
-  isSaving.value = true
+  if (!serviceTypeName.value.trim()) return;
+  isSaving.value = true;
   setTimeout(() => {
-    serviceTypes.value.push({ id: Date.now(), name: serviceTypeName.value.trim() })
-    serviceTypeName.value = ''
-    saveServiceTypes()
-    toast.success('Service type added', { color: 'success' })
-    isSaving.value = false
-  }, 400)
+    serviceTypes.value.push({ id: Date.now(), name: serviceTypeName.value.trim() });
+    serviceTypeName.value = '';
+    saveServiceTypes();
+    toast.success('Service type added', { color: 'success' });
+    isSaving.value = false;
+  }, 400);
 }
 
 function removeServiceType(id) {
-  if (!confirm('Delete this service type?')) return
-  serviceTypes.value = serviceTypes.value.filter(s => s.id !== id)
-  saveServiceTypes()
-  toast.info('Service type removed', { color: 'danger' })
+  if (!confirm('Delete this service type?')) return;
+  serviceTypes.value = serviceTypes.value.filter(s => s.id !== id);
+  saveServiceTypes();
+  toast.info('Service type removed', { color: 'danger' });
 }
 
 function startEditServiceType(s) {
-  editingServiceType.value = s.id
-  editServiceTypeName.value = s.name
+  editingServiceType.value = s.id;
+  editServiceTypeName.value = s.name;
 }
 
 function saveServiceType(id) {
-  isSaving.value = true
+  isSaving.value = true;
   setTimeout(() => {
-    const s = serviceTypes.value.find(x => x.id === id)
+    const s = serviceTypes.value.find(x => x.id === id);
     if (s && editServiceTypeName.value.trim()) {
-      s.name = editServiceTypeName.value.trim()
-      saveServiceTypes()
-      toast.success('Service type updated', { color: 'success' })
+      s.name = editServiceTypeName.value.trim();
+      saveServiceTypes();
+      toast.success('Service type updated', { color: 'success' });
     }
-    editingServiceType.value = null
-    isSaving.value = false
-  }, 400)
+    editingServiceType.value = null;
+    isSaving.value = false;
+  }, 400);
 }
 
 function cancelEditServiceType() {
-  editingServiceType.value = null
-  editServiceTypeName.value = ''
+  editingServiceType.value = null;
+  editServiceTypeName.value = '';
 }
 
 // --- Roles & Permissions ---
-const roles = ref([])
-const roleCounts = ref({})
-const allPermissions = ref([
-  { name: 'users.manage', display_name: 'Manage Users', module: 'users' },
-  { name: 'attendance.approve', display_name: 'Approve Attendance', module: 'attendance' },
-  { name: 'attendance.view', display_name: 'View Attendance', module: 'attendance' },
-  { name: 'attendance.record', display_name: 'Record Attendance', module: 'attendance' },
-  { name: 'finance.manage', display_name: 'Manage Finance', module: 'finance' },
-  { name: 'contributions.manage', display_name: 'Manage Contributions', module: 'contributions' },
-  { name: 'expenses.manage', display_name: 'Manage Expenses', module: 'expenses' },
-  { name: 'visitors.manage', display_name: 'Manage Visitors', module: 'visitors' },
-  { name: 'followups.manage', display_name: 'Manage Follow-ups', module: 'followups' },
-  { name: 'broadcasts.send', display_name: 'Send Broadcasts', module: 'broadcasts' },
-  { name: 'department.manage', display_name: 'Manage Departments', module: 'department' },
-  { name: 'audit.view', display_name: 'View Audit Logs', module: 'audit' },
-  { name: 'reports.view', display_name: 'View Reports', module: 'reports' }
-])
-const selectedRole = ref(null)
-const rolePerms = ref([])
+const roles = ref<Role[]>([]);
+const roleCounts = ref<Record<string, number>>({});
+const allPermissions = ref<Permission[]>([
+  { id: 1, name: 'users.manage', display_name: 'Manage Users', module: 'users' },
+  { id: 2, name: 'attendance.approve', display_name: 'Approve Attendance', module: 'attendance' },
+  { id: 3, name: 'attendance.view', display_name: 'View Attendance', module: 'attendance' },
+  { id: 4, name: 'attendance.record', display_name: 'Record Attendance', module: 'attendance' },
+  { id: 5, name: 'finance.manage', display_name: 'Manage Finance', module: 'finance' },
+  { id: 6, name: 'contributions.manage', display_name: 'Manage Contributions', module: 'contributions' },
+  { id: 7, name: 'expenses.manage', display_name: 'Manage Expenses', module: 'expenses' },
+  { id: 8, name: 'visitors.manage', display_name: 'Manage Visitors', module: 'visitors' },
+  { id: 9, name: 'followups.manage', display_name: 'Manage Follow-ups', module: 'followups' },
+  { id: 10, name: 'broadcasts.send', display_name: 'Send Broadcasts', module: 'broadcasts' },
+  { id: 11, name: 'department.manage', display_name: 'Manage Departments', module: 'department' },
+  { id: 12, name: 'audit.view', display_name: 'View Audit Logs', module: 'audit' },
+  { id: 13, name: 'reports.view', display_name: 'View Reports', module: 'reports' },
+]);
+const selectedRole = ref(null);
+const rolePerms = ref([]);
 
 async function loadRoles() {
   try {
-    const { data } = await rolesApi.getAll()
-    roles.value = data.data || []
+    const { data } = await rolesApi.getAll();
+    roles.value = data.data || [];
 
     // Load permission counts for all roles
     for (const role of roles.value) {
       try {
-        const permsData = await rolesApi.getPermissions(role.id)
-        roleCounts.value[role.id] = permsData.data.permissions?.length || 0
+        const permsData = await rolesApi.getPermissions(role.id);
+        roleCounts.value[role.id] = permsData.data.permissions?.length || 0;
       } catch (err) {
-        roleCounts.value[role.id] = 0
+        roleCounts.value[role.id] = 0;
       }
     }
   } catch (error) {
-    console.error('Failed to load roles')
+    console.error('Failed to load roles');
   }
 }
 
 async function fetchRolePermissions(role) {
-  selectedRole.value = role
-  isLoadingPerms.value = true
+  selectedRole.value = role;
+  isLoadingPerms.value = true;
   try {
-    const { data } = await rolesApi.getPermissions(role.id)
+    const { data } = await rolesApi.getPermissions(role.id);
     // Update rolePerms with permission names
-    rolePerms.value = data.permissions?.map(p => p.name) || []
+    rolePerms.value = data.permissions?.map(p => p.name) || [];
     // Update allPermissions from API if available
     if (data.all_permissions && data.all_permissions.length > 0) {
-      allPermissions.value = data.all_permissions
+      allPermissions.value = data.all_permissions;
     }
-    roleCounts.value[role.id] = rolePerms.value.length
+    roleCounts.value[role.id] = rolePerms.value.length;
   } catch (error) {
-    toast.error('Failed to load permissions', { color: 'danger' })
+    toast.error('Failed to load permissions', { color: 'danger' });
   } finally {
-    isLoadingPerms.value = false
+    isLoadingPerms.value = false;
   }
 }
 
 function toggleRolePerm(p) {
-  const idx = rolePerms.value.indexOf(p)
-  if (idx > -1) rolePerms.value.splice(idx, 1)
-  else rolePerms.value.push(p)
+  const idx = rolePerms.value.indexOf(p);
+  if (idx > -1) rolePerms.value.splice(idx, 1);
+  else rolePerms.value.push(p);
 }
 
 function hasRolePerm(p) {
-  return rolePerms.value.includes(p) || rolePerms.value.includes('all')
+  return rolePerms.value.includes(p) || rolePerms.value.includes('all');
 }
 
 async function saveRolePerms() {
-  if (!selectedRole.value) return
-  isSaving.value = true
+  if (!selectedRole.value) return;
+  isSaving.value = true;
   try {
-    await rolesApi.updatePermissions(selectedRole.value.id, rolePerms.value)
-    roleCounts.value[selectedRole.value.id] = rolePerms.value.length
-    toast.success(`${selectedRole.value.name} permissions updated`, { color: 'success' })
+    await rolesApi.updatePermissions(selectedRole.value.id, rolePerms.value);
+    roleCounts.value[selectedRole.value.id] = rolePerms.value.length;
+    toast.success(`${selectedRole.value.name} permissions updated`, { color: 'success' });
   } catch (error) {
-    toast.error('Failed to save permissions', { color: 'danger' })
+    toast.error('Failed to save permissions', { color: 'danger' });
   } finally {
-    isSaving.value = false
+    isSaving.value = false;
   }
 }
 
 function labelFor(p) {
-  return p.split('.').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(': ')
+  return p
+    .split('.')
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(': ');
 }
 
 // --- Users ---
-const users = ref([])
-const selectedUser = ref(null)
-const selectedRoleId = ref(null)
-const selectedUserRoles = ref([]) // New: for multiple role selection
-const userSearch = ref('')
-const userPerms = ref([])
-const userRoleFilter = ref(null)
+const users = ref<User[]>([]);
+const selectedUser = ref(null);
+const selectedRoleId = ref(null);
+const selectedUserRoles = ref([]); // New: for multiple role selection
+const userSearch = ref('');
+const userPerms = ref([]);
+const userRoleFilter = ref(null);
 
 // Pagination state
-const currentPage = ref(1)
-const perPage = ref(10)
-const totalUsers = ref(0)
-const totalPages = computed(() => Math.ceil(totalUsers.value / perPage.value))
+const currentPage = ref(1);
+const perPage = ref(10);
+const totalUsers = ref(0);
+const totalPages = computed(() => Math.ceil(totalUsers.value / perPage.value));
 
 async function loadUsers(search = '', roleFilter = null) {
-  isLoadingUsers.value = true
+  isLoadingUsers.value = true;
   try {
     const params = {
       search,
       page: currentPage.value,
       per_page: perPage.value,
-    }
+    };
     if (roleFilter) {
-      params.role = roleFilter
+      params.role = roleFilter;
     }
-    const { data } = await usersApi.getAll(params)
-    users.value = data.data || []
-    totalUsers.value = data.total || users.value.length
+    const { data } = await usersApi.getAll(params);
+    users.value = data.data || [];
+    totalUsers.value = data.total || users.value.length;
   } catch (error) {
-    console.error('Failed to load users')
+    console.error('Failed to load users');
   } finally {
-    isLoadingUsers.value = false
+    isLoadingUsers.value = false;
   }
 }
 
 function handlePageChange(page) {
-  currentPage.value = page
-  loadUsers(userSearch.value, userRoleFilter.value)
+  currentPage.value = page;
+  loadUsers(userSearch.value, userRoleFilter.value);
 }
 
-let searchTimeout = null
+let searchTimeout = null;
 function handleUserSearch() {
-  clearTimeout(searchTimeout)
+  clearTimeout(searchTimeout);
   searchTimeout = setTimeout(() => {
-    loadUsers(userSearch.value, userRoleFilter.value)
-  }, 300)
+    loadUsers(userSearch.value, userRoleFilter.value);
+  }, 300);
 }
 
 function clearUserSearch() {
-  userSearch.value = ''
-  loadUsers('', userRoleFilter.value)
+  userSearch.value = '';
+  loadUsers('', userRoleFilter.value);
 }
 
 function filterByRole(roleId) {
-  userRoleFilter.value = roleId
-  loadUsers(userSearch.value, roleId)
+  userRoleFilter.value = roleId;
+  loadUsers(userSearch.value, roleId);
 }
 
 function selectUser(u) {
-  selectedUser.value = u
-  selectedRoleId.value = u.role
-  userPerms.value = u.permissions || []
+  selectedUser.value = u;
+  selectedRoleId.value = u.role;
+  userPerms.value = u.permissions || [];
 
   // Populate selectedUserRoles from user's roles array
   if (u.roles && u.roles.length > 0) {
-    selectedUserRoles.value = u.roles.map(role => role.id)
+    selectedUserRoles.value = u.roles.map(role => role.id);
   } else if (u.role) {
     // Fallback: find role by name for backward compatibility
-    const role = roles.value.find(r => r.id === u.role || r.name === u.role)
-    selectedUserRoles.value = role ? [role.id] : []
+    const role = roles.value.find(r => r.id === u.role || r.name === u.role);
+    selectedUserRoles.value = role ? [role.id] : [];
   } else {
-    selectedUserRoles.value = []
+    selectedUserRoles.value = [];
   }
 }
 
 function roleNameById(roleKey) {
-  return roles.value.find(r => r.id === roleKey)?.name || roleKey
+  return roles.value.find(r => r.id === roleKey)?.name || roleKey;
 }
 
 function hasUserPerm(p) {
-  return userPerms.value.includes(p) || userPerms.value.includes('all')
+  return userPerms.value.includes(p) || userPerms.value.includes('all');
 }
 
 function toggleUserPerm(p) {
-  const idx = userPerms.value.indexOf(p)
-  if (idx > -1) userPerms.value.splice(idx, 1)
-  else userPerms.value.push(p)
+  const idx = userPerms.value.indexOf(p);
+  if (idx > -1) userPerms.value.splice(idx, 1);
+  else userPerms.value.push(p);
 }
 
-function applyRoleDefaults() {
-  toast.info('Synchronizing with standard role defaults...', { color: 'info' })
+function _applyRoleDefaults() {
+  toast.info('Synchronizing with standard role defaults...', { color: 'info' });
 }
 
 /**
  * Toggle a role for the selected user
  */
 function toggleUserRole(roleId) {
-  const index = selectedUserRoles.value.indexOf(roleId)
+  const index = selectedUserRoles.value.indexOf(roleId);
   if (index > -1) {
-    selectedUserRoles.value.splice(index, 1)
+    selectedUserRoles.value.splice(index, 1);
   } else {
-    selectedUserRoles.value.push(roleId)
+    selectedUserRoles.value.push(roleId);
   }
 }
 
@@ -878,27 +943,27 @@ function toggleUserRole(roleId) {
  * Save multiple roles for the selected user
  */
 async function saveUserRoles() {
-  if (!selectedUser.value || selectedUserRoles.value.length === 0) return
-  isSaving.value = true
+  if (!selectedUser.value || selectedUserRoles.value.length === 0) return;
+  isSaving.value = true;
   try {
     await usersApi.update(selectedUser.value.id, {
       role: selectedUserRoles.value[0], // Keep first role as primary for backward compatibility
-      role_ids: selectedUserRoles.value // Send all role IDs
-    })
-    toast.success(`Roles updated for ${selectedUser.value.name}`, { color: 'success' })
+      role_ids: selectedUserRoles.value, // Send all role IDs
+    });
+    toast.success(`Roles updated for ${selectedUser.value.name}`, { color: 'success' });
 
     // Refresh users list to show updated roles
-    await loadUsers(userSearch.value, userRoleFilter.value)
+    await loadUsers(userSearch.value, userRoleFilter.value);
 
     // Update selected user data
-    const updatedUser = users.value.find(u => u.id === selectedUser.value.id)
+    const updatedUser = users.value.find(u => u.id === selectedUser.value.id);
     if (updatedUser) {
-      selectUser(updatedUser)
+      selectUser(updatedUser);
     }
   } catch (error) {
-    toast.error('Failed to update roles', { color: 'danger' })
+    toast.error('Failed to update roles', { color: 'danger' });
   } finally {
-    isSaving.value = false
+    isSaving.value = false;
   }
 }
 
@@ -907,117 +972,118 @@ async function saveUserRoles() {
  */
 function getRoleDescription(roleName) {
   const descriptions = {
-    'admin': 'Full system access and management',
-    'Administrator': 'Full system access and management',
-    'pastor': 'Ministry oversight and leadership',
-    'Pastor': 'Ministry oversight and leadership',
-    'usher': 'Attendance recording and guest services',
-    'Usher': 'Attendance recording and guest services',
-    'finance': 'Financial management and reporting',
+    admin: 'Full system access and management',
+    Administrator: 'Full system access and management',
+    pastor: 'Ministry oversight and leadership',
+    Pastor: 'Ministry oversight and leadership',
+    usher: 'Attendance recording and guest services',
+    Usher: 'Attendance recording and guest services',
+    finance: 'Financial management and reporting',
     'Finance Officer': 'Financial management and reporting',
-    'pr_follow_up': 'Visitor tracking and follow-ups',
+    pr_follow_up: 'Visitor tracking and follow-ups',
     'PR/Follow-up': 'Visitor tracking and follow-ups',
-    'department_leader': 'Department coordination',
+    department_leader: 'Department coordination',
     'Department Leader': 'Department coordination',
-  }
-  return descriptions[roleName] || 'Standard access'
+  };
+  return descriptions[roleName] || 'Standard access';
 }
 
 async function saveUserChanges() {
-  if (!selectedUser.value) return
-  isSaving.value = true
+  if (!selectedUser.value) return;
+  isSaving.value = true;
   try {
     await usersApi.update(selectedUser.value.id, {
-      role: selectedRoleId.value
-    })
-    toast.success(`Access privileges updated for ${selectedUser.value.name}`, { color: 'success' })
+      role: selectedRoleId.value,
+    });
+    toast.success(`Access privileges updated for ${selectedUser.value.name}`, { color: 'success' });
   } catch (error) {
-    toast.error('Update failed', { color: 'danger' })
+    toast.error('Update failed', { color: 'danger' });
   } finally {
-    isSaving.value = false
+    isSaving.value = false;
   }
 }
 
 function getRandomColor(str) {
-  const colors = ['bg-primary', 'bg-success', 'bg-warning', 'bg-info', 'bg-danger']
-  if (!str) return colors[0]
-  let hash = 0
+  const colors = ['bg-primary', 'bg-success', 'bg-warning', 'bg-info', 'bg-danger'];
+  if (!str) return colors[0];
+  let hash = 0;
   for (let i = 0; i < str.length; i++) {
-    hash = str.charCodeAt(i) + ((hash << 5) - hash)
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
   }
-  return colors[Math.abs(hash) % colors.length]
+  return colors[Math.abs(hash) % colors.length];
 }
 
 // Role icon mapping
 function roleIcon(name) {
   const map = {
-    'Administrator': 'bi bi-person-badge',
-    'Pastor': 'bi bi-book',
-    'Usher': 'bi bi-people',
+    Administrator: 'bi bi-person-badge',
+    Pastor: 'bi bi-book',
+    Usher: 'bi bi-people',
     'Finance Officer': 'bi bi-cash-coin',
     'PR/Follow-up': 'bi bi-megaphone',
     'Department Leader': 'bi bi-diagram-3',
-  }
-  return map[name] || 'bi bi-person'
+  };
+  return map[name] || 'bi bi-person';
 }
 
 // Role color scheme
 function getRoleColor(name) {
   const colorMap = {
-    'Administrator': 'role-admin',
-    'Pastor': 'role-pastor',
-    'Usher': 'role-usher',
+    Administrator: 'role-admin',
+    Pastor: 'role-pastor',
+    Usher: 'role-usher',
     'Finance Officer': 'role-finance',
     'PR/Follow-up': 'role-pr',
     'Department Leader': 'role-dept',
-  }
-  return colorMap[name] || 'role-default'
+  };
+  return colorMap[name] || 'role-default';
 }
 
 // Permission icon mapping
+
 function getPermissionIcon(perm) {
-  const [category] = perm.split('.')
-  const iconMap = {
-    'users': 'bi bi-people-fill',
-    'attendance': 'bi bi-calendar-check-fill',
-    'finance': 'bi bi-cash-stack',
-    'contributions': 'bi bi-wallet2',
-    'expenses': 'bi bi-receipt',
-    'visitors': 'bi bi-person-plus-fill',
-    'followups': 'bi bi-telephone-fill',
-    'broadcasts': 'bi bi-megaphone-fill',
-    'department': 'bi bi-diagram-3-fill',
-    'audit': 'bi bi-file-earmark-text-fill',
-    'reports': 'bi bi-graph-up',
+  let permName = perm;
+  if (typeof perm === 'object' && perm !== null) {
+    permName = perm.name || '';
   }
-  return iconMap[category] || 'bi bi-check-circle-fill'
+  const [category] = String(permName).split('.');
+  const iconMap = {
+    users: 'bi bi-people-fill',
+    attendance: 'bi bi-calendar-check-fill',
+    finance: 'bi bi-cash-stack',
+    contributions: 'bi bi-wallet2',
+    expenses: 'bi bi-receipt',
+    visitors: 'bi bi-person-plus-fill',
+    followups: 'bi bi-telephone-fill',
+    broadcasts: 'bi bi-megaphone-fill',
+    department: 'bi bi-diagram-3-fill',
+    audit: 'bi bi-file-earmark-text-fill',
+    reports: 'bi bi-graph-up',
+  };
+  return iconMap[category] || 'bi bi-check-circle-fill';
 }
 
 /**
  * Refresh all data
  */
 async function refreshData() {
-  isLoading.value = true
+  isLoading.value = true;
   try {
-    await Promise.all([
-      loadCategories(),
-      loadRoles(),
-      loadUsers()
-    ])
-    toast.success('Settings refreshed successfully')
+    await Promise.all([loadCategories(), loadRoles(), loadUsers()]);
+    toast.success('Settings refreshed successfully');
   } catch (error) {
-    toast.error('Failed to refresh settings')
+    toast.error('Failed to refresh settings');
   } finally {
-    isLoading.value = false
+    isLoading.value = false;
   }
 }
 
 onMounted(() => {
-  loadCategories()
-  loadServiceTypes()
-  loadRoles()
-  loadUsers()
-})
+  loadCategories();
+  loadServiceTypes();
+  loadRoles();
+  loadUsers();
+});
 </script>
 
 <style scoped>
@@ -1094,6 +1160,7 @@ onMounted(() => {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1178,6 +1245,7 @@ onMounted(() => {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

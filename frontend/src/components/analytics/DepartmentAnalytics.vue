@@ -9,13 +9,7 @@
         </div>
         <div class="card-body">
           <CSpinner v-if="isLoading" color="dark" />
-          <CChart 
-            v-else
-            type="bar" 
-            :data="departmentData" 
-            :options="options"
-            height="300"
-          />
+          <CChart v-else type="bar" :data="departmentData" :options="options" height="300" />
         </div>
       </div>
     </div>
@@ -32,25 +26,26 @@ import { CSpinner } from '@coreui/vue';
 // Using the same cached key to avoid extra API hits
 const { data, isLoading } = useQuery({
   queryKey: ['analytics', 'departments'],
-  queryFn: () => dashboardApi.getAnalytics({ range: 'month' }),
-  staleTime: 10 * 60 * 1000 
+  queryFn: () => dashboardApi.analytics({ range: 'month' }),
+  staleTime: 10 * 60 * 1000,
 });
 
 const departmentData = computed(() => {
   const analytics = data.value?.data?.data || {};
   const depts = analytics.department_distribution || { labels: [], data: [] };
 
-  // Generate random colors for each bar
-  const colors = (depts.labels || []).map(() => '#' + Math.floor(Math.random()*16777215).toString(16));
+  // Colors generation removed (not used currently)
 
   return {
     labels: depts.labels || ['Choir', 'Ushering', 'Media'],
-    datasets: [{
-      label: 'Members',
-      backgroundColor: '#6610f2',
-      data: depts.data || [15, 8, 5],
-      barPercentage: 0.5
-    }]
+    datasets: [
+      {
+        label: 'Members',
+        backgroundColor: '#6610f2',
+        data: depts.data || [15, 8, 5],
+        barPercentage: 0.5,
+      },
+    ],
   };
 });
 
@@ -59,7 +54,7 @@ const options = {
   maintainAspectRatio: false,
   scales: {
     y: { beginAtZero: true },
-    x: { grid: { display: false } }
-  }
+    x: { grid: { display: false } },
+  },
 };
 </script>

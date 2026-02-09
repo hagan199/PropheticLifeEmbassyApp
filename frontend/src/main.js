@@ -1,18 +1,21 @@
+import { createApp } from 'vue';
+import { createPinia } from 'pinia';
+import { VueQueryPlugin } from '@tanstack/vue-query';
+import App from './App.vue';
+import router from './router';
+import setupNProgress from './plugins/nprogress';
+import CoreuiVue from '@coreui/vue';
+import 'bootstrap-icons/font/bootstrap-icons.css';
+import './assets/styles/theme.css';
+import './assets/styles/material.css';
+import './assets/styles/utilities.css';
+import './assets/styles/coreui-overrides.css';
+import './assets/styles/broadcasts.css';
 
-import { createApp } from 'vue'
-import App from './App.vue'
-import router from './router/index.js'
-import { createPinia } from 'pinia'
-import { VueQueryPlugin } from "@tanstack/vue-query";
-
-import '@coreui/coreui/dist/css/coreui.min.css'
-import 'bootstrap/dist/css/bootstrap.min.css'
-import 'bootstrap-icons/font/bootstrap-icons.css'
-import './style.css'
-
-const app = createApp(App)
-
-app.use(router)
-app.use(createPinia())
-app.use(VueQueryPlugin)
-app.mount('#app')
+const app = createApp(App);
+app.use(createPinia());
+app.use(router);
+app.use(CoreuiVue);
+app.use(VueQueryPlugin);
+setupNProgress(router);
+app.mount('#app');

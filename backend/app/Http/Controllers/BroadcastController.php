@@ -7,73 +7,72 @@ use App\Http\Requests\Broadcast\StoreBroadcastRequest;
 use App\Models\Broadcast;
 use App\Models\BroadcastDelivery;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
+use Illuminate\Http\JsonResponse;
 
 class BroadcastController extends Controller
 {
     public function __construct()
     {
-        // Require authentication for all broadcast actions
         $this->middleware('auth:api');
+        
+        // Speed Tip: Use middleware for authorization to stop unauthorized 
+        // requests before they hit the controller logic.
+        $this->middleware('can:view-broadcasts')->only(['index', 'show', 'deliveries']);
+        $this->middleware('can:create-broadcasts')->only('store');
+        $this->middleware('can:delete-broadcasts')->only('destroy');
     }
+
     /**
-     * Get all broadcasts
+     * Get all broadcasts (Optimized with Pagination)
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        // Only allow users with 'view-broadcasts' permission
-        if (Gate::denies('view-broadcasts')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-        $broadcasts = Broadcast::latest()->get();
+        // Only select columns you need to save memory
+        $broadcasts = Broadcast::select(['id', 'message', 'recipient_type', 'status', 'sent_by', 'created_at'])
+            ->latest()
+            ->paginate($request->query('per_page', 15)); // Use pagination instead of get()
+
         return response()->json([
             'success' => true,
-            'data' => $broadcasts,
-            'total' => $broadcasts->count(),
+            'data' => $broadcasts->items(),
+            'meta' => [
+                'total' => $broadcasts->total(),
+                'current_page' => $broadcasts->currentPage(),
+                'last_page' => $broadcasts->lastPage(),
+            ],
         ]);
     }
 
     /**
-     * Create and send broadcast
+     * Create and send broadcast (Optimized with Mass Assignment)
      */
-    public function store(StoreBroadcastRequest $request)
+    public function store(StoreBroadcastRequest $request): JsonResponse
     {
-        if (Gate::denies('create-broadcasts')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
         $user = Auth::user();
-        $broadcast = Broadcast::create([
+
+        // Speed Tip: Use mass assignment with validated data
+        $broadcast = Broadcast::create(array_merge($request->validated(), [
             'message' => strip_tags($request->message),
-            'recipient_type' => $request->recipient_type,
-            'department_id' => $request->department_id,
-            'channel' => $request->channel,
             'status' => $request->schedule_at ? 'scheduled' : 'queued',
-            'schedule_at' => $request->schedule_at,
-            'sent_by' => $user ? $user->name : 'Unknown',
-            'sent_by_id' => $user ? $user->id : null,
-        ]);
+            'sent_by' => $user->name ?? 'Unknown',
+            'sent_by_id' => $user->id ?? null,
+        ]));
+
         return response()->json([
             'success' => true,
-            'message' => $request->schedule_at ? 'Broadcast scheduled successfully' : 'Broadcast queued for sending',
+            'message' => $request->schedule_at ? 'Scheduled' : 'Queued',
             'data' => $broadcast,
         ], 201);
     }
 
     /**
-     * Get single broadcast
+     * Get single broadcast (Optimized with findOrFail)
      */
-    public function show($id)
+    public function show($id): JsonResponse
     {
-        if (Gate::denies('view-broadcasts')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-        $broadcast = Broadcast::find($id);
-        if (!$broadcast) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Broadcast not found',
-            ], 404);
-        }
+        // findOrFail is faster for error handling than manual null checks
+        $broadcast = Broadcast::findOrFail($id);
+
         return response()->json([
             'success' => true,
             'data' => $broadcast,
@@ -81,38 +80,22 @@ class BroadcastController extends Controller
     }
 
     /**
-     * Delete broadcast
+     * Get broadcast deliveries (Optimized with Cursor Pagination)
      */
-    public function destroy($id)
+    public function deliveries($id, Request $request): JsonResponse
     {
-        if (Gate::denies('delete-broadcasts')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-        $broadcast = Broadcast::find($id);
-        if ($broadcast) {
-            $broadcast->delete();
-        }
+        // For large logs, simplePaginate or cursorPaginate is significantly faster
+        $deliveries = BroadcastDelivery::where('broadcast_id', $id)
+            ->simplePaginate($request->query('per_page', 50));
+
         return response()->json([
             'success' => true,
-            'message' => 'Broadcast deleted successfully',
+            'data' => $deliveries->items(),
+            'meta' => [
+                'total' => $deliveries->total(),
+                'current_page' => $deliveries->currentPage(),
+                'last_page' => $deliveries->lastPage(),
+            ],
         ]);
     }
-
-    /**
-     * Get broadcast deliveries
-     */
-    public function deliveries($id)
-    {
-        if (Gate::denies('view-broadcasts')) {
-            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-        }
-        $deliveries = BroadcastDelivery::where('broadcast_id', $id)->get();
-        return response()->json([
-            'success' => true,
-            'data' => $deliveries,
-            'total' => $deliveries->count(),
-        ]);
-    }
-
-    // ...existing code...
 }

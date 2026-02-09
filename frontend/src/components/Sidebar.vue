@@ -12,6 +12,61 @@
       </div>
     </CSidebarHeader>
     <CSidebarNav>
+      <!-- Reports - All Roles (Moved to Top) -->
+      <CNavGroup :visible="reportsOpen">
+        <template #togglerContent>
+          <span class="d-inline-flex align-items-center w-100">
+            <span class="nav-icon-wrapper">
+              <i class="bi bi-bar-chart-fill"></i>
+            </span>
+            <span class="nav-text me-auto">Reports</span>
+          </span>
+        </template>
+        <CNavItem>
+          <RouterLink to="/reports/finance" class="nav-link" :class="{ active: isActive('/reports/finance') }">
+            <span class="nav-icon-wrapper small">
+              <i class="bi bi-cash-stack"></i>
+            </span>
+            <span class="nav-text">Finance Monthly Report</span>
+          </RouterLink>
+        </CNavItem>
+        <CNavItem>
+          <RouterLink to="/reports/finance-export" class="nav-link"
+            :class="{ active: isActive('/reports/finance-export') }">
+            <span class="nav-icon-wrapper small">
+              <i class="bi bi-file-earmark-arrow-down"></i>
+            </span>
+            <span class="nav-text">Finance Export Report</span>
+          </RouterLink>
+        </CNavItem>
+        <CNavItem>
+          <RouterLink to="/reports/attendance" class="nav-link" :class="{ active: isActive('/reports/attendance') }">
+            <span class="nav-icon-wrapper small">
+              <i class="bi bi-calendar-check"></i>
+            </span>
+            <span class="nav-text">Attendance Report</span>
+          </RouterLink>
+        </CNavItem>
+        <CNavItem>
+          <RouterLink to="/reports/attendance-import" class="nav-link"
+            :class="{ active: isActive('/reports/attendance-import') }">
+            <span class="nav-icon-wrapper small">
+              <i class="bi bi-file-earmark-arrow-up"></i>
+            </span>
+            <span class="nav-text">Attendance Import</span>
+          </RouterLink>
+        </CNavItem>
+        <CNavItem>
+          <RouterLink to="/reports/audit-logs" class="nav-link" :class="{ active: isActive('/reports/audit-logs') }">
+            <span class="nav-icon-wrapper small">
+              <i class="bi bi-journal-text"></i>
+            </span>
+            <span class="nav-text">Audit Logs Export</span>
+          </RouterLink>
+        </CNavItem>
+      </CNavGroup>
+      <!-- End Reports -->
+
       <!-- Dashboard - All Roles -->
       <CNavItem>
         <RouterLink to="/dashboard" class="nav-link" :class="{ active: isActive('/dashboard') }">
@@ -55,7 +110,9 @@
               <i class="bi bi-clipboard-check-fill"></i>
             </span>
             <span class="nav-text">Attendance Approvals</span>
-            <span v-if="pendingApprovals > 0" class="nav-badge warning">{{ pendingApprovals }}</span>
+            <span v-if="pendingApprovals > 0" class="nav-badge warning">{{
+              pendingApprovals
+              }}</span>
           </RouterLink>
         </CNavItem>
         <CNavItem>
@@ -221,93 +278,115 @@
 </template>
 
 <script setup>
-import { CSidebar, CSidebarHeader, CSidebarFooter, CSidebarNav, CNavItem, CNavGroup, CAvatar } from '@coreui/vue'
-import { RouterLink, useRoute } from 'vue-router'
-import { computed, ref, onMounted } from 'vue'
-import { useAuthStore } from '../store/auth'
-import { dashboardApi } from '../api'
+import {
+  CSidebar,
+  CSidebarHeader,
+  CSidebarFooter,
+  CSidebarNav,
+  CNavItem,
+  CNavGroup,
+} from '@coreui/vue';
+import { RouterLink, useRoute } from 'vue-router';
+import { computed, ref, onMounted } from 'vue';
+import { useAuthStore } from '../store/auth';
+import { dashboardApi } from '../api';
 
-defineProps({ visible: { type: Boolean, default: true } })
-const emit = defineEmits(['visible-change'])
-function emitVisibleChange(v) { emit('visible-change', v) }
-
-const route = useRoute()
-function isActive(path) { return route.path.startsWith(path) }
-
-// Nav group open states
-const adminOpen = computed(() => ['/users', '/roles-permissions', '/attendance-approvals', '/broadcasts', '/audit-logs'].some(p => route.path.startsWith(p)))
-const attendanceOpen = computed(() => ['/attendance', '/visitors'].some(p => route.path.startsWith(p)))
-const followUpOpen = computed(() => route.path.startsWith('/follow-ups'))
-const financeOpen = computed(() => ['/contributions', '/expense'].some(p => route.path.startsWith(p)))
-const departmentOpen = computed(() => ['/departments', '/my-department'].some(p => route.path.startsWith(p)))
-
-// Auth & Role
-const auth = useAuthStore()
-const userRole = computed(() => auth.user?.role || null)
-
-function hasRole(roles) {
-  if (!userRole.value) return false
-  return roles.includes(userRole.value)
+defineProps({ visible: { type: Boolean, default: true } });
+const emit = defineEmits(['visible-change']);
+function emitVisibleChange(v) {
+  emit('visible-change', v);
 }
 
-const name = computed(() => auth.user?.name || 'Admin User')
-const roleLabel = computed(() => {
-  const labels = {
-    admin: 'Administrator',
-    pastor: 'Pastor',
-    usher: 'Usher',
-    finance: 'Finance Officer',
-    pr_follow_up: 'PR / Follow-up',
-    department_leader: 'Dept. Leader'
-  }
-  return labels[userRole.value] || userRole.value
-})
-const avatar = computed(() => auth.user?.avatar)
-const userInitials = computed(() => {
-  const n = name.value
-  return n.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()
-})
+const route = useRoute();
+function isActive(path) {
+  return route.path.startsWith(path);
+}
+
+// Nav group open states
+const adminOpen = computed(() =>
+  ['/users', '/roles-permissions', '/attendance-approvals', '/broadcasts', '/audit-logs'].some(p =>
+    route.path.startsWith(p)
+  )
+);
+const attendanceOpen = computed(() =>
+  ['/attendance', '/visitors'].some(p => route.path.startsWith(p))
+);
+const followUpOpen = computed(() => route.path.startsWith('/follow-ups'));
+const financeOpen = computed(() =>
+  ['/contributions', '/expense'].some(p => route.path.startsWith(p))
+);
+const departmentOpen = computed(() =>
+  ['/departments', '/my-department'].some(p => route.path.startsWith(p))
+);
+const reportsOpen = computed(() => route.path.startsWith('/reports'));
+
+// Auth & Role
+const auth = useAuthStore();
+const userRole = computed(() => auth.user?.role || null);
+
+function hasRole(roles) {
+  if (!userRole.value) return false;
+  return roles.includes(userRole.value);
+}
+
+const _name = computed(() => auth.user?.name || 'Admin User');
+// role label, avatar and initials handled in Navbar/store; removed unused computed values
 
 // Badges - Fetch from API
-const pendingApprovals = ref(0)
-const dueFollowUps = ref(0)
+const pendingApprovals = ref(0);
+const dueFollowUps = ref(0);
 
 onMounted(async () => {
   if (auth.isAuthenticated) {
     try {
-      const { data } = await dashboardApi.getStats()
+      const { data } = await dashboardApi.stats();
       if (data.success && data.data) {
-        const quickActions = data.data.quick_actions || []
-        const pendingAction = quickActions.find(a => a.label?.toLowerCase().includes('pending approval'))
-        const followUpAction = quickActions.find(a => a.label?.toLowerCase().includes('follow-up') || a.label?.toLowerCase().includes('visitor'))
+        const quickActions = data.data.quick_actions || [];
+        const pendingAction = quickActions.find(a =>
+          a.label?.toLowerCase().includes('pending approval')
+        );
+        const followUpAction = quickActions.find(
+          a =>
+            a.label?.toLowerCase().includes('follow-up') ||
+            a.label?.toLowerCase().includes('visitor')
+        );
 
-        pendingApprovals.value = pendingAction?.count || 0
-        dueFollowUps.value = followUpAction?.count || 0
+        pendingApprovals.value = pendingAction?.count || 0;
+        dueFollowUps.value = followUpAction?.count || 0;
       }
     } catch (error) {
-      console.warn('Failed to load sidebar stats:', error)
+      console.warn('Failed to load sidebar stats:', error);
     }
   }
-})
+});
 </script>
 
+<style>
+/* IMPORTANT: Using non-scoped style for CoreUI overrides */
+</style>
+
 <style scoped>
-/* Sidebar Container */
-:deep(.sidebar) {
+/* Sidebar Container - Multiple selectors for specificity */
+:deep(.sidebar),
+:deep(.sidebar.sidebar-fixed),
+:deep(.sidebar.show),
+:deep(div.sidebar) {
   position: fixed !important;
-  top: 0;
-  left: 0;
-  height: 100vh;
-  height: 100dvh;
-  width: 260px;
-  background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%) !important;
-  border-right: 1px solid rgba(99, 102, 241, 0.1) !important;
-  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+  top: 0 !important;
+  left: 0 !important;
+  height: 100vh !important;
+  height: 100dvh !important;
+  width: 300px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  backdrop-filter: blur(12px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(12px) saturate(180%) !important;
+  border-right: 2px solid #764ba2 !important;
+  box-shadow: 8px 0 32px rgba(102, 126, 234, 0.12), 0 2px 8px rgba(118, 75, 162, 0.1) !important;
   z-index: 1040 !important;
-  overflow-y: auto;
-  overflow-x: hidden;
-  transform: translateX(0);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  transform: translateX(0) !important;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s !important;
 }
 
 :deep(.sidebar:not(.show)) {
@@ -332,10 +411,11 @@ onMounted(async () => {
 }
 
 /* Sidebar Header */
-:deep(.sidebar .sidebar-header) {
+:deep(.sidebar .sidebar-header),
+:deep(.sidebar-header) {
   background: transparent !important;
   padding: 1.25rem !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.12) !important;
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
@@ -345,29 +425,36 @@ onMounted(async () => {
 .sidebar-brand {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.875rem;
   margin-bottom: 1.25rem;
   padding-bottom: 1rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(102, 126, 234, 0.12);
 }
 
 .brand-logo {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.25rem;
+  font-size: 1.5rem;
   color: white;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4), 0 4px 8px rgba(118, 75, 162, 0.3);
   animation: glowPulse 3s ease-in-out infinite;
 }
 
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 4px 14px rgba(99, 102, 241, 0.5); }
-  50% { box-shadow: 0 4px 24px rgba(99, 102, 241, 0.7); }
+
+  0%,
+  100% {
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4), 0 4px 8px rgba(118, 75, 162, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6), 0 6px 12px rgba(118, 75, 162, 0.5);
+  }
 }
 
 .brand-text {
@@ -376,34 +463,40 @@ onMounted(async () => {
 }
 
 .brand-name {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #ffffff;
-  letter-spacing: -0.025em;
+  font-size: 1.25rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.03em;
 }
 
 .brand-tagline {
   font-size: 0.7rem;
-  color: #94a3b8;
+  color: #667eea;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+  font-weight: 600;
 }
 
 /* Profile Section */
 .profile {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  gap: 0.875rem;
+  padding: 1rem;
+  background: rgba(102, 126, 234, 0.06);
+  border-radius: 14px;
   transition: all 0.3s ease;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.12);
 }
 
 .profile:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(102, 126, 234, 0.12);
+  border-color: rgba(102, 126, 234, 0.25);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
 }
 
 .profile-avatar {
@@ -412,29 +505,40 @@ onMounted(async () => {
 }
 
 .profile-avatar :deep(.avatar) {
-  width: 44px !important;
-  height: 44px !important;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
-  font-size: 0.9rem;
-  font-weight: 600;
+  width: 48px !important;
+  height: 48px !important;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4), 0 2px 4px rgba(118, 75, 162, 0.3);
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 12px !important;
 }
 
 .status-dot {
   position: absolute;
   bottom: 2px;
   right: 2px;
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
   background: #10b981;
   border-radius: 50%;
-  border: 2px solid #0f172a;
+  border: 2.5px solid white;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.5);
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.1); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1);
+  }
 }
 
 .profile-info {
@@ -447,110 +551,128 @@ onMounted(async () => {
 }
 
 .profile-name {
-  color: #ffffff !important;
-  font-size: 0.925rem;
-  font-weight: 600;
+  color: #1e293b !important;
+  font-size: 0.95rem;
+  font-weight: 700;
   line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   display: block;
 }
 
 .profile-role {
-  color: #c4b5fd !important;
+  color: #667eea !important;
   font-size: 0.8rem;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.3;
   display: block;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 /* Sidebar Nav */
-:deep(.sidebar .sidebar-nav) {
-  overflow-y: auto;
-  max-height: calc(100vh - 200px);
-  padding: 0.75rem;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+:deep(.sidebar .sidebar-nav),
+:deep(.sidebar-nav) {
+  overflow-y: auto !important;
+  max-height: calc(100vh - 200px) !important;
+  padding: 0.75rem !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: rgba(102, 126, 234, 0.2) transparent !important;
 }
 
-:deep(.sidebar .sidebar-nav)::-webkit-scrollbar {
-  width: 5px;
+:deep(.sidebar .sidebar-nav)::-webkit-scrollbar,
+:deep(.sidebar-nav)::-webkit-scrollbar {
+  width: 6px !important;
 }
 
-:deep(.sidebar .sidebar-nav)::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 50px;
+:deep(.sidebar .sidebar-nav)::-webkit-scrollbar-thumb,
+:deep(.sidebar-nav)::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.2) !important;
+  border-radius: 50px !important;
 }
 
-:deep(.sidebar .sidebar-nav)::-webkit-scrollbar-track {
-  background: transparent;
+:deep(.sidebar .sidebar-nav)::-webkit-scrollbar-thumb:hover,
+:deep(.sidebar-nav)::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.3) !important;
+}
+
+:deep(.sidebar .sidebar-nav)::-webkit-scrollbar-track,
+:deep(.sidebar-nav)::-webkit-scrollbar-track {
+  background: transparent !important;
 }
 
 /* Nav Link */
 :deep(.sidebar .nav-link) {
-  color: rgba(255, 255, 255, 0.6) !important;
-  border-radius: 10px !important;
-  padding: 0.65rem 0.875rem !important;
-  margin: 2px 0;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  color: #f1f5f9 !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 1.15rem !important;
+  margin: 3px 0;
+  font-weight: 600;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
+  border: 1px solid transparent;
 }
 
 :deep(.sidebar .nav-link:hover) {
   color: #fff !important;
-  background: rgba(99, 102, 241, 0.15) !important;
-  transform: translateX(4px);
+  background: rgba(102, 126, 234, 0.22) !important;
+  border-color: #a5b4fc;
+  transform: translateX(6px) scale(1.03);
 }
 
 :deep(.sidebar .nav-link.active) {
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+  background: rgba(255, 255, 255, 0.12) !important;
   color: #fff !important;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.18), 0 4px 8px rgba(118, 75, 162, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
   transform: translateX(0);
+  border-color: transparent;
 }
 
 :deep(.sidebar .nav-link.active:hover) {
-  transform: translateX(0);
+  transform: scale(1.02);
 }
 
 /* Nav Icon Wrapper */
 .nav-icon-wrapper {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
-  margin-right: 0.75rem;
-  transition: all 0.25s ease;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  margin-right: 0.875rem;
+  transition: all 0.3s ease;
   flex-shrink: 0;
 }
 
 .nav-icon-wrapper.small {
-  width: 26px;
-  height: 26px;
-  font-size: 0.8rem;
+  width: 30px;
+  height: 30px;
+  font-size: 0.85rem;
 }
 
 .nav-icon-wrapper i {
-  font-size: 1rem;
-  opacity: 0.9;
+  font-size: 1.1rem;
+  color: #fff;
 }
 
 :deep(.sidebar .nav-link:hover) .nav-icon-wrapper {
-  background: rgba(99, 102, 241, 0.2);
-  transform: scale(1.05);
+  background: rgba(102, 126, 234, 0.15);
+  transform: scale(1.1) rotate(5deg);
 }
 
 :deep(.sidebar .nav-link.active) .nav-icon-wrapper {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+}
+
+:deep(.sidebar .nav-link.active) .nav-icon-wrapper i {
+  color: white;
 }
 
 .nav-text {
@@ -583,31 +705,34 @@ onMounted(async () => {
 
 /* Nav Group */
 :deep(.sidebar .nav-group-toggle) {
-  color: rgba(255, 255, 255, 0.6) !important;
-  border-radius: 10px !important;
-  padding: 0.65rem 0.875rem !important;
-  margin: 2px 0;
-  font-weight: 500;
-  font-size: 0.875rem;
-  transition: all 0.25s ease;
+  color: #64748b !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 1rem !important;
+  margin: 3px 0;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
 }
 
 :deep(.sidebar .nav-group-toggle:hover) {
-  color: #fff !important;
-  background: rgba(99, 102, 241, 0.1) !important;
+  color: #667eea !important;
+  background: rgba(102, 126, 234, 0.08) !important;
+  border-color: rgba(102, 126, 234, 0.15);
 }
 
 :deep(.sidebar .nav-group-items) {
-  background: rgba(0, 0, 0, 0.25) !important;
-  border-radius: 10px;
-  margin: 4px 0 4px 8px;
-  padding: 6px;
-  border-left: 2px solid rgba(99, 102, 241, 0.3);
+  background: rgba(102, 126, 234, 0.04) !important;
+  border-radius: 12px;
+  margin: 6px 0 6px 12px;
+  padding: 8px;
+  border-left: 3px solid rgba(102, 126, 234, 0.3);
 }
 
 :deep(.sidebar .nav-group-items .nav-link) {
-  padding: 0.5rem 0.75rem !important;
-  font-size: 0.8125rem;
+  padding: 0.6rem 0.875rem !important;
+  font-size: 0.85rem;
+  font-weight: 500;
 }
 
 /* Sidebar Footer */
@@ -633,5 +758,45 @@ onMounted(async () => {
 
 .version-info i {
   color: rgba(99, 102, 241, 0.6);
+}
+</style>
+
+<style>
+/* Global unscoped styles to override CoreUI with maximum specificity */
+.sidebar,
+.sidebar.sidebar-fixed,
+div.sidebar {
+  background: rgba(255, 255, 255, 0.98) !important;
+  backdrop-filter: blur(20px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(180%) !important;
+}
+
+.sidebar .sidebar-header,
+.sidebar-header {
+  background: transparent !important;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.12) !important;
+}
+
+.sidebar .nav-link {
+  color: #64748b !important;
+}
+
+.sidebar .nav-link:hover {
+  color: #667eea !important;
+  background: rgba(102, 126, 234, 0.08) !important;
+}
+
+.sidebar .nav-link.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: #fff !important;
+}
+
+.sidebar .nav-group-toggle {
+  color: #64748b !important;
+}
+
+.sidebar .nav-group-toggle:hover {
+  color: #667eea !important;
+  background: rgba(102, 126, 234, 0.08) !important;
 }
 </style>

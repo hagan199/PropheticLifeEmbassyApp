@@ -189,9 +189,11 @@
           </div>
           <h5 class="empty-title">No Users Found</h5>
           <p class="empty-subtitle">
-            {{ filters.search || filters.role || filters.status
-              ? 'No users match your current filters. Try adjusting your search criteria.'
-              : 'Get started by adding your first user to the system.' }}
+            {{
+              filters.search || filters.role || filters.status
+                ? 'No users match your current filters. Try adjusting your search criteria.'
+                : 'Get started by adding your first user to the system.'
+            }}
           </p>
           <CButton v-if="!filters.search && !filters.role && !filters.status" color="primary" @click="openAddModal">
             <i class="bi bi-plus-lg me-2"></i>Add Your First User
@@ -209,13 +211,13 @@
             of <span class="fw-bold text-dark">{{ totalUsers }}</span> users
           </div>
           <CPagination class="mb-0">
-            <CPaginationItem :disabled="currentPage === 1" @click="currentPage--" aria-label="Previous">
+            <CPaginationItem :disabled="currentPage === 1" aria-label="Previous" @click="currentPage--">
               <i class="bi bi-chevron-left"></i>
             </CPaginationItem>
             <CPaginationItem v-for="p in totalPages" :key="p" :active="p === currentPage" @click="currentPage = p">
               {{ p }}
             </CPaginationItem>
-            <CPaginationItem :disabled="currentPage === totalPages" @click="currentPage++" aria-label="Next">
+            <CPaginationItem :disabled="currentPage === totalPages" aria-label="Next" @click="currentPage++">
               <i class="bi bi-chevron-right"></i>
             </CPaginationItem>
           </CPagination>
@@ -228,110 +230,164 @@
     </MaterialCard>
 
     <!-- Add/Edit Modal -->
-    <CModal :visible="showModal" @close="closeModal" class="modal-bottom-sheet" size="lg">
-      <CModalHeader>
-        <CModalTitle>{{ isEditing ? 'Edit User' : 'Add New User' }}</CModalTitle>
-      </CModalHeader>
-      <CModalBody>
-        <CForm @submit.prevent="saveUser">
-          <CRow class="g-3">
-            <CCol md="6">
-              <CFormLabel>Phone <span class="text-danger">*</span></CFormLabel>
-              <CInputGroup>
-                <CInputGroupText>+233</CInputGroupText>
-                <CFormInput v-model="form.phone" :disabled="isEditing" placeholder="XXXXXXXXX"
-                  :invalid="!!errors.phone" />
-              </CInputGroup>
-              <div v-if="errors.phone" class="text-danger small mt-1">{{ errors.phone }}</div>
-            </CCol>
-            <CCol md="6">
-              <CFormLabel>Name <span class="text-danger">*</span></CFormLabel>
-              <CFormInput v-model="form.name" :invalid="!!errors.name" />
-              <div v-if="errors.name" class="text-danger small mt-1">{{ errors.name }}</div>
-            </CCol>
-            <CCol md="6">
-              <CFormLabel>Email</CFormLabel>
-              <CFormInput v-model="form.email" type="email" />
-            </CCol>
-            <CCol md="12">
-              <CFormLabel>Roles <span class="text-danger">*</span></CFormLabel>
-              <div class="role-multi-select">
-                <div v-for="r in roleOptions" :key="r.value" class="role-chip"
-                  :class="{ 'active': form.role_ids.includes(r.value) }" @click="toggleFormRole(r.value)">
-                  <i :class="roleIcon(roleLabelByValue(r.value))"></i>
-                  {{ r.label }}
-                  <i v-if="form.role_ids.includes(r.value)" class="bi bi-check-lg ms-1"></i>
+    <Teleport to="body">
+      <CModal :visible="showModal" class="modal-bottom-sheet" size="lg" @close="closeModal">
+        <CModalHeader>
+          <CModalTitle>{{ isEditing ? 'Edit User' : 'Add New User' }}</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <CForm @submit.prevent="saveUser">
+            <CRow class="g-3">
+              <CCol md="6">
+                <CFormLabel>Phone <span class="text-danger">*</span></CFormLabel>
+                <CInputGroup>
+                  <CInputGroupText>+233</CInputGroupText>
+                  <CFormInput
+                    v-model="form.phone"
+                    :disabled="isEditing"
+                    placeholder="XXXXXXXXX"
+                    :invalid="!!errors.phone"
+                  />
+                </CInputGroup>
+                <div v-if="errors.phone" class="text-danger small mt-1">{{ errors.phone }}</div>
+              </CCol>
+              <CCol md="6">
+                <CFormLabel>Name <span class="text-danger">*</span></CFormLabel>
+                <CFormInput v-model="form.name" :invalid="!!errors.name" />
+                <div v-if="errors.name" class="text-danger small mt-1">{{ errors.name }}</div>
+              </CCol>
+              <CCol md="6">
+                <CFormLabel>Email</CFormLabel>
+                <CFormInput v-model="form.email" type="email" />
+              </CCol>
+              <CCol md="12">
+                <CFormLabel>Roles <span class="text-danger">*</span></CFormLabel>
+                <div class="role-multi-select">
+                  <div
+                    v-for="r in roleOptions"
+                    :key="r.value"
+                    class="role-chip"
+                    :class="{ active: form.role_ids.includes(r.value) }"
+                    @click="toggleFormRole(r.value)"
+                  >
+                    <i :class="roleIcon(roleLabelByValue(r.value))"></i>
+                    {{ r.label }}
+                    <i v-if="form.role_ids.includes(r.value)" class="bi bi-check-lg ms-1"></i>
+                  </div>
                 </div>
-              </div>
-              <div v-if="errors.role_ids" class="text-danger small mt-1">{{ errors.role_ids }}</div>
-            </CCol>
-            <CCol md="6">
-              <CFormLabel>Department <span v-if="requiresDepartment" class="text-danger">*</span></CFormLabel>
-              <CFormSelect v-model="form.departmentId" :invalid="!!errors.departmentId"
-                :disabled="isLoadingDepartments">
-                <option value="">Select department...</option>
-                <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
-              </CFormSelect>
-              <div v-if="errors.departmentId" class="text-danger small mt-1">{{ errors.departmentId }}</div>
-              <div v-if="departmentError" class="text-danger small mt-1">{{ departmentError }}</div>
-            </CCol>
-            <CCol md="6" v-if="!isEditing">
-              <CFormLabel>Password <span class="text-danger">*</span></CFormLabel>
-              <CFormInput v-model="form.password" type="password" autocomplete="new-password"
-                :invalid="!!errors.password" />
-              <div v-if="errors.password" class="text-danger small mt-1">{{ errors.password }}</div>
-            </CCol>
-          </CRow>
-        </CForm>
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="closeModal">Cancel</CButton>
-        <CButton color="primary" :disabled="saving" @click="saveUser">
-          <CSpinner v-if="saving" size="sm" class="me-1" />
-          {{ isEditing ? 'Update' : 'Create' }}
-        </CButton>
-      </CModalFooter>
-    </CModal>
+                <div v-if="errors.role_ids" class="text-danger small mt-1">{{ errors.role_ids }}</div>
+              </CCol>
+              <CCol md="6">
+                <CFormLabel>Department <span v-if="requiresDepartment" class="text-danger">*</span></CFormLabel>
+                <CFormSelect
+                  v-model="form.departmentId"
+                  :invalid="!!errors.departmentId"
+                  :disabled="isLoadingDepartments"
+                >
+                  <option value="">Select department...</option>
+                  <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+                </CFormSelect>
+                <div v-if="errors.departmentId" class="text-danger small mt-1">
+                  {{ errors.departmentId }}
+                </div>
+                <div v-if="departmentError" class="text-danger small mt-1">{{ departmentError }}</div>
+              </CCol>
+              <CCol v-if="!isEditing" md="6">
+                <CFormLabel>Password <span class="text-danger">*</span></CFormLabel>
+                <CFormInput
+                  v-model="form.password"
+                  type="password"
+                  autocomplete="new-password"
+                  :invalid="!!errors.password"
+                />
+                <div v-if="errors.password" class="text-danger small mt-1">{{ errors.password }}</div>
+              </CCol>
+            </CRow>
+          </CForm>
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" @click="closeModal">Cancel</CButton>
+          <CButton color="primary" :disabled="saving" @click="saveUser">
+            <CSpinner v-if="saving" size="sm" class="me-1" />
+            {{ isEditing ? 'Update' : 'Create' }}
+          </CButton>
+        </CModalFooter>
+      </CModal>
+    </Teleport>
 
     <!-- Deactivate Confirmation Modal -->
-    <CModal :visible="showDeactivateModal" @close="showDeactivateModal = false" class="modal-bottom-sheet">
-      <CModalHeader>
-        <CModalTitle>Deactivate User</CModalTitle>
-      </CModalHeader>
-      <CModalBody>
-        <p>Are you sure you want to deactivate <strong>{{ userToDeactivate?.name }}</strong>?</p>
-        <CAlert color="warning" class="mb-3">
-          <i class="bi bi-exclamation-triangle me-2"></i>
-          This user will no longer be able to log in.
-        </CAlert>
-        <CFormLabel>Reason <span class="text-danger">*</span></CFormLabel>
-        <CFormTextarea v-model="deactivateReason" rows="3" placeholder="Provide a reason for deactivation..." />
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="showDeactivateModal = false">Cancel</CButton>
-        <CButton color="danger" :disabled="!deactivateReason.trim()" @click="deactivateUser">
-          Deactivate
-        </CButton>
-      </CModalFooter>
-    </CModal>
+    <Teleport to="body">
+      <CModal
+        :visible="showDeactivateModal"
+        class="modal-bottom-sheet"
+        @close="showDeactivateModal = false"
+      >
+        <CModalHeader>
+          <CModalTitle>Deactivate User</CModalTitle>
+        </CModalHeader>
+        <CModalBody>
+          <p>
+            Are you sure you want to deactivate <strong>{{ userToDeactivate?.name }}</strong>?
+          </p>
+          <CAlert color="warning" class="mb-3">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            This user will no longer be able to log in.
+          </CAlert>
+          <CFormLabel>Reason <span class="text-danger">*</span></CFormLabel>
+          <CFormTextarea
+            v-model="deactivateReason"
+            rows="3"
+            placeholder="Provide a reason for deactivation..."
+          />
+        </CModalBody>
+        <CModalFooter>
+          <CButton color="secondary" @click="showDeactivateModal = false">Cancel</CButton>
+          <CButton color="danger" :disabled="!deactivateReason.trim()" @click="deactivateUser">
+            Deactivate
+          </CButton>
+        </CModalFooter>
+      </CModal>
+    </Teleport>
   </div>
 </template>
 
-
 <script setup>
-import { ref, computed, reactive, onMounted, watch } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue';
 import {
-  CRow, CCol, CButton, CTable, CTableHead, CTableBody,
-  CTableRow, CTableHeaderCell, CTableDataCell, CBadge, CAvatar, CFormInput, CFormSelect,
-  CFormLabel, CFormTextarea, CInputGroup, CInputGroupText, CModal, CModalHeader,
-  CModalTitle, CModalBody, CModalFooter, CForm, CAlert, CPagination, CPaginationItem, CSpinner
-} from '@coreui/vue'
-import PageHeader from '../components/shared/PageHeader.vue'
-import MaterialCard from '../components/material/MaterialCard.vue'
-import Breadcrumbs from '../components/Breadcrumbs.vue'
-import { exportToExcel } from '../utils/export.js'
-import { usersApi, departmentsApi, rolesApi } from '../api'
-import { useToast } from '../composables/useToast'
+  CRow,
+  CCol,
+  CButton,
+  CTable,
+  CTableHead,
+  CTableBody,
+  CTableRow,
+  CTableHeaderCell,
+  CTableDataCell,
+  CBadge,
+  CAvatar,
+  CFormInput,
+  CFormSelect,
+  CFormLabel,
+  CFormTextarea,
+  CInputGroup,
+  CInputGroupText,
+  CModal,
+  CModalHeader,
+  CModalTitle,
+  CModalBody,
+  CModalFooter,
+  CForm,
+  CAlert,
+  CPagination,
+  CPaginationItem,
+  CSpinner,
+} from '@coreui/vue';
+import PageHeader from '../components/shared/PageHeader.vue';
+import MaterialCard from '../components/material/MaterialCard.vue';
+import _Breadcrumbs from '../components/Breadcrumbs.vue';
+import { exportToExcel } from '../utils/export.js';
+import { usersApi, departmentsApi, rolesApi } from '../api';
+import { useToast } from '../composables/useToast';
 
 const roleColorMap = {
   admin: { label: 'Administrator', color: 'danger', icon: 'bi bi-shield-check' },
@@ -339,94 +395,102 @@ const roleColorMap = {
   usher: { label: 'Usher', color: 'info', icon: 'bi bi-people' },
   finance: { color: 'success', label: 'Finance Officer', icon: 'bi bi-cash-coin' },
   pr_follow_up: { color: 'warning', label: 'PR/Follow-up', icon: 'bi bi-megaphone' },
-  department_leader: { color: 'dark', label: 'Department Leader', icon: 'bi bi-diagram-3' }
-}
+  department_leader: { color: 'dark', label: 'Department Leader', icon: 'bi bi-diagram-3' },
+};
 
 function roleColor(role) {
-  return roleColorMap[role]?.color || 'secondary'
+  return roleColorMap[role]?.color || 'secondary';
 }
 
 function roleIcon(role) {
-  return roleColorMap[role]?.icon || 'bi bi-person'
+  return roleColorMap[role]?.icon || 'bi bi-person';
 }
 
 function roleLabel(role) {
-  return roleColorMap[role]?.label || role
+  return roleColorMap[role]?.label || role;
 }
 
 const roleOptions = ref(
   Object.entries(roleColorMap).map(([value, meta]) => ({
     value,
     label: meta.label,
-    color: meta.color
+    color: meta.color,
   }))
-)
+);
 
-const departments = ref([])
-const users = ref([])
-const totalUsers = ref(0)
-const isLoadingUsers = ref(false)
-const tableError = ref('')
-const isLoadingDepartments = ref(false)
-const departmentError = ref('')
+const departments = ref([]);
+const users = ref([]);
+const totalUsers = ref(0);
+const isLoadingUsers = ref(false);
+const tableError = ref('');
+const isLoadingDepartments = ref(false);
+const departmentError = ref('');
 
-const filters = reactive({ search: '', role: '', status: '' })
-const currentPage = ref(1)
-const perPage = 25
+const filters = reactive({ search: '', role: '', status: '' });
+const currentPage = ref(1);
+const perPage = 25;
 
-const totalUsersDisplay = computed(() => totalUsers.value)
-const totalPages = computed(() => Math.max(1, Math.ceil(totalUsers.value / perPage)))
+const totalUsersDisplay = computed(() => totalUsers.value);
+const totalPages = computed(() => Math.max(1, Math.ceil(totalUsers.value / perPage)));
 
-const paginatedUsers = computed(() => users.value)
+const paginatedUsers = computed(() => users.value);
 
 // KPI Computed Properties
-const activeUsersCount = computed(() => users.value.filter(u => u.status === 'active').length)
-const inactiveUsersCount = computed(() => users.value.filter(u => u.status === 'inactive').length)
-const multiRoleUsersCount = computed(() => users.value.filter(u => u.roles && u.roles.length > 1).length)
-const usersWithDeptCount = computed(() => users.value.filter(u => u.departmentName).length)
+const activeUsersCount = computed(() => users.value.filter(u => u.status === 'active').length);
+const inactiveUsersCount = computed(() => users.value.filter(u => u.status === 'inactive').length);
+const multiRoleUsersCount = computed(
+  () => users.value.filter(u => u.roles && u.roles.length > 1).length
+);
+const usersWithDeptCount = computed(() => users.value.filter(u => u.departmentName).length);
 
 // Handle search with debounce
-let searchTimeout
-watch(() => filters.search, () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
-    currentPage.value = 1
-    fetchUsers()
-  }, 400)
-})
+let searchTimeout;
+watch(
+  () => filters.search,
+  () => {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+      currentPage.value = 1;
+      fetchUsers();
+    }, 400);
+  }
+);
 
-watch(() => [filters.role, filters.status], () => {
-  currentPage.value = 1
-  fetchUsers()
-})
+watch(
+  () => [filters.role, filters.status],
+  () => {
+    currentPage.value = 1;
+    fetchUsers();
+  }
+);
 
 watch(currentPage, () => {
-  fetchUsers()
-})
+  fetchUsers();
+});
 
 function applyFilters() {
-  currentPage.value = 1
+  currentPage.value = 1;
 }
 
 function resetFilters() {
-  filters.search = ''
-  filters.role = ''
-  filters.status = ''
-  currentPage.value = 1
-  fetchUsers()
+  filters.search = '';
+  filters.role = '';
+  filters.status = '';
+  currentPage.value = 1;
+  fetchUsers();
 }
 
 watch(
   () => [filters.role, filters.status],
   () => {
-    currentPage.value = 1
-    fetchUsers()
+    currentPage.value = 1;
+    fetchUsers();
   }
-)
+);
 
-const showModal = ref(false)
-const isEditing = ref(false)
-const saving = ref(false)
+const showModal = ref(false);
+const isEditing = ref(false);
+const saving = ref(false);
 const form = reactive({
   id: null,
   phone: '',
@@ -435,95 +499,108 @@ const form = reactive({
   role: '', // Legacy
   role_ids: [], // Multi-role support
   departmentId: '',
-  password: ''
-})
-const errors = reactive({ phone: '', name: '', role_ids: '', departmentId: '', password: '' })
+  password: '',
+});
+const errors = reactive({ phone: '', name: '', role_ids: '', departmentId: '', password: '' });
 
 const requiresDepartment = computed(() => {
   // If any selected role is usher or dept leader
-  const selectedRoleNames = form.role_ids.map(id => roleOptions.value.find(o => o.value === id)?.label?.toLowerCase() || '')
-  return selectedRoleNames.some(name => ['usher', 'department leader'].includes(name))
-})
+  const selectedRoleNames = form.role_ids.map(
+    id => roleOptions.value.find(o => o.value === id)?.label?.toLowerCase() || ''
+  );
+  return selectedRoleNames.some(name => ['usher', 'department leader'].includes(name));
+});
 
-const showDeactivateModal = ref(false)
-const userToDeactivate = ref(null)
-const deactivateReason = ref('')
+const showDeactivateModal = ref(false);
+const userToDeactivate = ref(null);
+const deactivateReason = ref('');
 
-const toast = useToast()
+const toast = useToast();
 
 onMounted(() => {
-  fetchUsers()
-  fetchDepartments()
-  fetchRoles()
-})
+  fetchUsers();
+  fetchDepartments();
+  fetchRoles();
+});
 
 async function fetchUsers() {
-  isLoadingUsers.value = true
-  tableError.value = ''
+  isLoadingUsers.value = true;
+  tableError.value = '';
   try {
     const params = {
       page: currentPage.value,
-      per_page: perPage
-    }
-    if (filters.search) params.search = filters.search
-    if (filters.role) params.role = filters.role
-    if (filters.status) params.is_active = filters.status === 'active'
+      per_page: perPage,
+    };
+    if (filters.search) params.search = filters.search;
+    if (filters.role) params.role = filters.role;
+    if (filters.status) params.is_active = filters.status === 'active';
 
-    const { data } = await usersApi.getAll(params)
-    users.value = (data.data || []).map(mapUser)
-    totalUsers.value = data.total ?? users.value.length
+    const { data } = await usersApi.getAll(params);
+    users.value = (data.data || []).map(mapUser);
+    totalUsers.value = data.total ?? users.value.length;
   } catch (error) {
-    const message = error.response?.data?.message || 'Unable to load users.'
-    tableError.value = message
-    toast.error(message)
+    const message = error.response?.data?.message || 'Unable to load users.';
+    tableError.value = message;
+    toast.error(message);
   } finally {
-    isLoadingUsers.value = false
+    isLoadingUsers.value = false;
   }
 }
 
 async function fetchDepartments() {
-  isLoadingDepartments.value = true
-  departmentError.value = ''
+  isLoadingDepartments.value = true;
+  departmentError.value = '';
   try {
-    const { data } = await departmentsApi.getAll()
-    departments.value = data.data || []
+    const { data } = await departmentsApi.getAll();
+    departments.value = data.data || [];
   } catch (error) {
-    departmentError.value = error.response?.data?.message || 'Failed to load departments.'
+    departmentError.value = error.response?.data?.message || 'Failed to load departments.';
   } finally {
-    isLoadingDepartments.value = false
+    isLoadingDepartments.value = false;
   }
 }
 
 async function fetchRoles() {
   try {
-    const { data } = await rolesApi.getAll()
+    const { data } = await rolesApi.getAll();
     if (Array.isArray(data.data)) {
-      roleOptions.value = data.data.map((role) => ({
+      roleOptions.value = data.data.map(role => ({
         value: role.id,
         label: role.name,
-        color: roleColorMap[role.id]?.color || 'secondary'
-      }))
+        color: roleColorMap[role.id]?.color || 'secondary',
+      }));
     }
   } catch (error) {
-    console.warn('Failed to load roles', error)
+    console.warn('Failed to load roles', error);
   }
 }
 
 function openAddModal() {
-  isEditing.value = false
-  Object.assign(form, { id: null, phone: '', name: '', email: '', role: '', role_ids: [], departmentId: '', password: '' })
-  clearErrors()
-  showModal.value = true
+  isEditing.value = false;
+  Object.assign(form, {
+    id: null,
+    phone: '',
+    name: '',
+    email: '',
+    role: '',
+    role_ids: [],
+    departmentId: '',
+    password: '',
+  });
+  clearErrors();
+  showModal.value = true;
 }
 
 function editUser(user) {
-  isEditing.value = true
-  const roleIds = user.roles?.map(r => r.id) || []
+  isEditing.value = true;
+  const roleIds = user.roles?.map(r => r.id) || [];
 
   // If no roles array, fallback to single role mapping
   if (roleIds.length === 0 && user.role) {
-    const roleOpt = roleOptions.value.find(o => o.value === user.role || o.label.toLowerCase() === user.role.toLowerCase())
-    if (roleOpt) roleIds.push(roleOpt.value)
+    const roleOpt = roleOptions.value.find(
+      o => o.value === user.role || o.label.toLowerCase() === user.role.toLowerCase()
+    );
+    if (roleOpt) roleIds.push(roleOpt.value);
   }
 
   Object.assign(form, {
@@ -534,31 +611,31 @@ function editUser(user) {
     role: user.role,
     role_ids: roleIds,
     departmentId: getDepartmentIdByName(user.departmentName),
-    password: ''
-  })
-  clearErrors()
-  showModal.value = true
+    password: '',
+  });
+  clearErrors();
+  showModal.value = true;
 }
 
 function toggleFormRole(roleId) {
-  const index = form.role_ids.indexOf(roleId)
+  const index = form.role_ids.indexOf(roleId);
   if (index > -1) {
-    form.role_ids.splice(index, 1)
+    form.role_ids.splice(index, 1);
   } else {
-    form.role_ids.push(roleId)
+    form.role_ids.push(roleId);
   }
 }
 
 function roleLabelByValue(val) {
-  return roleOptions.value.find(o => o.value === val)?.label || val
+  return roleOptions.value.find(o => o.value === val)?.label || val;
 }
 
 function closeModal() {
-  showModal.value = false
+  showModal.value = false;
 }
 
 function clearErrors() {
-  Object.assign(errors, { phone: '', name: '', role_ids: '', departmentId: '', password: '' })
+  Object.assign(errors, { phone: '', name: '', role_ids: '', departmentId: '', password: '' });
 }
 
 /**
@@ -568,131 +645,146 @@ function clearErrors() {
  * - Allows Ghana numbers (0XX) and international (+XXX)
  */
 function validatePhone(phone) {
-  const digits = (phone || '').replace(/\D/g, '')
+  const digits = (phone || '').replace(/\D/g, '');
 
   // Must have at least 9 digits
   if (digits.length < 9) {
-    return 'Phone number must be at least 9 digits'
+    return 'Phone number must be at least 9 digits';
   }
 
   // Check for excessive repeating digits (more than 5 same digits in a row)
   if (/(.)\1{5,}/.test(digits)) {
-    return 'Invalid phone number - too many repeating digits'
+    return 'Invalid phone number - too many repeating digits';
   }
 
   // Check for repeating patterns like 040404 or 123123
-  const lastEight = digits.slice(-8)
+  const lastEight = digits.slice(-8);
   // Check for 2-digit repeating pattern (e.g., 04040404)
   if (/^(\d{2})\1{3}$/.test(lastEight)) {
-    return 'Invalid phone number - repeating pattern detected'
+    return 'Invalid phone number - repeating pattern detected';
   }
   // Check for 4-digit repeating pattern (e.g., 12341234)
   if (/^(\d{4})\1$/.test(lastEight)) {
-    return 'Invalid phone number - repeating pattern detected'
+    return 'Invalid phone number - repeating pattern detected';
   }
 
   // Valid Ghana mobile prefixes
-  const ghanaPrefixes = ['20', '23', '24', '25', '26', '27', '28', '29', '50', '54', '55', '56', '57', '59']
+  const ghanaPrefixes = [
+    '20',
+    '23',
+    '24',
+    '25',
+    '26',
+    '27',
+    '28',
+    '29',
+    '50',
+    '54',
+    '55',
+    '56',
+    '57',
+    '59',
+  ];
 
   // Check if it's a Ghana number
-  let localNumber = digits
+  let localNumber = digits;
   if (digits.startsWith('233')) {
-    localNumber = digits.slice(3)
+    localNumber = digits.slice(3);
   } else if (digits.startsWith('0')) {
-    localNumber = digits.slice(1)
+    localNumber = digits.slice(1);
   }
 
   // If it looks like a Ghana number, validate the prefix
   if (localNumber.length === 9) {
-    const prefix = localNumber.slice(0, 2)
+    const prefix = localNumber.slice(0, 2);
     if (!ghanaPrefixes.includes(prefix)) {
       // Allow it as international number if not matching Ghana prefix
       if (!phone.startsWith('+') && !digits.startsWith('00')) {
-        return 'Invalid Ghana mobile number prefix'
+        return 'Invalid Ghana mobile number prefix';
       }
     }
   }
 
-  return null // Valid
+  return null; // Valid
 }
 
 function validateForm() {
-  let valid = true
-  clearErrors()
+  let valid = true;
+  clearErrors();
 
   // Phone validation
-  const phoneError = validatePhone(form.phone)
+  const phoneError = validatePhone(form.phone);
   if (phoneError) {
-    errors.phone = phoneError
-    valid = false
+    errors.phone = phoneError;
+    valid = false;
   }
 
   if (!form.name.trim()) {
-    errors.name = 'Name is required'
-    valid = false
+    errors.name = 'Name is required';
+    valid = false;
   }
   if (form.role_ids.length === 0) {
-    errors.role_ids = 'At least one role is required'
-    valid = false
+    errors.role_ids = 'At least one role is required';
+    valid = false;
   }
   if (requiresDepartment.value && !form.departmentId) {
-    errors.departmentId = 'Department required for this role'
-    valid = false
+    errors.departmentId = 'Department required for this role';
+    valid = false;
   }
   if (!isEditing.value && !form.password.trim()) {
-    errors.password = 'Password is required'
-    valid = false
+    errors.password = 'Password is required';
+    valid = false;
   }
-  return valid
+  return valid;
 }
 
 function normalizePhone(input) {
-  if (!input) return ''
+  if (!input) return '';
 
   // Remove all non-digit characters except +
-  const cleaned = input.replace(/[^\d+]/g, '')
+  const cleaned = input.replace(/[^\d+]/g, '');
 
   // If already starts with +, it's international - keep as is
   if (cleaned.startsWith('+')) {
-    return cleaned
+    return cleaned;
   }
 
-  const digits = cleaned.replace(/\D/g, '')
-  if (!digits) return ''
+  const digits = cleaned.replace(/\D/g, '');
+  if (!digits) return '';
 
   // If starts with 00, convert to + (international format)
   if (digits.startsWith('00')) {
-    return `+${digits.slice(2)}`
+    return `+${digits.slice(2)}`;
   }
 
   // If starts with 233 (Ghana), add +
   if (digits.startsWith('233')) {
-    return `+${digits}`
+    return `+${digits}`;
   }
 
   // If starts with 0, it's a local Ghana number - convert to +233
   if (digits.startsWith('0')) {
-    return `+233${digits.slice(1)}`
+    return `+233${digits.slice(1)}`;
   }
 
   // Otherwise assume it's Ghana without leading 0
-  return `+233${digits}`
+  return `+233${digits}`;
 }
 
 function stripCountryCode(phone) {
-  if (!phone) return ''
-  return phone.replace(/^\+?233/, '')
+  if (!phone) return '';
+  return phone.replace(/^\+?233/, '');
 }
 
 function getDepartmentIdByName(name) {
-  if (!name) return ''
-  const dept = departments.value.find((d) => d.name === name)
-  return dept?.id || ''
+  if (!name) return '';
+  const dept = departments.value.find(d => d.name === name);
+  return dept?.id || '';
 }
 
 function departmentNameById(id) {
-  if (!id) return null
-  return departments.value.find((d) => d.id === id)?.name || null
+  if (!id) return null;
+  return departments.value.find(d => d.id === id)?.name || null;
 }
 
 function mapUser(user) {
@@ -706,13 +798,14 @@ function mapUser(user) {
     departmentName: user.department?.name || (user.department ?? user.department_name ?? null),
     status: user.is_active === false ? 'inactive' : 'active',
     lastLogin: user.last_login ?? user.lastLogin ?? null,
-    avatar: user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`
-  }
+    avatar:
+      user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name || 'User')}`,
+  };
 }
 
 async function saveUser() {
-  if (!validateForm()) return
-  saving.value = true
+  if (!validateForm()) return;
+  saving.value = true;
 
   const basePayload = {
     phone: normalizePhone(form.phone),
@@ -720,74 +813,77 @@ async function saveUser() {
     email: form.email || null,
     role: form.role_ids[0], // Backwards compatibility: primary role
     role_ids: form.role_ids,
-    department_id: form.departmentId || null
-  }
+    department_id: form.departmentId || null,
+  };
 
   try {
     if (isEditing.value) {
-      const response = await usersApi.update(form.id, basePayload)
+      const response = await usersApi.update(form.id, basePayload);
       updateUserInList(form.id, {
         name: basePayload.name,
         email: basePayload.email,
         role: basePayload.role,
         roles: response.data?.data?.roles || users.value.find(u => u.id === form.id)?.roles || [],
-        departmentName: departmentNameById(form.departmentId) ||
-          users.value.find((u) => u.id === form.id)?.departmentName
-      })
-      toast.success(response.data?.message || 'User updated successfully')
+        departmentName:
+          departmentNameById(form.departmentId) ||
+          users.value.find(u => u.id === form.id)?.departmentName,
+      });
+      toast.success(response.data?.message || 'User updated successfully');
     } else {
-      const response = await usersApi.create({ ...basePayload, password: form.password })
+      const response = await usersApi.create({ ...basePayload, password: form.password });
       const createdUser = mapUser({
         ...response.data?.data,
-        department: departmentNameById(form.departmentId)
-      })
-      users.value = [createdUser, ...users.value]
-      totalUsers.value += 1
-      toast.success(response.data?.message || 'User created successfully')
+        department: departmentNameById(form.departmentId),
+      });
+      users.value = [createdUser, ...users.value];
+      totalUsers.value += 1;
+      toast.success(response.data?.message || 'User created successfully');
     }
-    closeModal()
+    closeModal();
   } catch (error) {
-    const message = error.response?.data?.message || 'Failed to save user'
-    toast.error(message)
+    const message = error.response?.data?.message || 'Failed to save user';
+    toast.error(message);
   } finally {
-    saving.value = false
+    saving.value = false;
   }
 }
 
 function updateUserInList(id, payload) {
-  const index = users.value.findIndex((u) => u.id === id)
+  const index = users.value.findIndex(u => u.id === id);
   if (index !== -1) {
-    users.value[index] = { ...users.value[index], ...payload }
+    users.value[index] = { ...users.value[index], ...payload };
   }
 }
 
 function confirmDeactivate(user) {
-  userToDeactivate.value = user
-  deactivateReason.value = ''
-  showDeactivateModal.value = true
+  userToDeactivate.value = user;
+  deactivateReason.value = '';
+  showDeactivateModal.value = true;
 }
 
 async function deactivateUser() {
-  if (!userToDeactivate.value) return
+  if (!userToDeactivate.value) return;
   try {
-    await usersApi.deactivate(userToDeactivate.value.id, { reason: deactivateReason.value || undefined })
-    updateUserInList(userToDeactivate.value.id, { status: 'inactive' })
-    toast.info(`${userToDeactivate.value.name} has been deactivated`)
-    showDeactivateModal.value = false
+    await usersApi.deactivate(userToDeactivate.value.id, {
+      reason: deactivateReason.value || undefined,
+    });
+    updateUserInList(userToDeactivate.value.id, { status: 'inactive' });
+    toast.info(`${userToDeactivate.value.name} has been deactivated`);
+    showDeactivateModal.value = false;
   } catch (error) {
-    const message = error.response?.data?.message || 'Failed to deactivate user'
-    toast.error(message)
+    const message = error.response?.data?.message || 'Failed to deactivate user';
+    toast.error(message);
   }
 }
 
 async function reactivateUser(user) {
   try {
-    await usersApi.reactivate(user.id)
-    updateUserInList(user.id, { status: 'active' })
-    toast.success(`${user.name} has been reactivated`)
+    await usersApi.reactivate(user.id);
+    updateUserInList(user.id, { status: 'active' });
+    toast.success(`${user.name} has been reactivated`);
   } catch (error) {
-    const message = error.response?.data?.message || 'Failed to reactivate user'
-    toast.error(message)
+    const message = error.response?.data?.message || 'Failed to reactivate user';
+    toast.error(message);
   }
 }
 
@@ -798,11 +894,11 @@ function getRandomColor(name) {
     'avatar-green',
     'avatar-orange',
     'avatar-pink',
-    'avatar-red'
-  ]
+    'avatar-red',
+  ];
   // Generate consistent color based on name
-  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0)
-  return colors[hash % colors.length]
+  const hash = name.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  return colors[hash % colors.length];
 }
 
 function exportUsers() {
@@ -810,13 +906,17 @@ function exportUsers() {
     { key: 'name', header: 'Name' },
     { key: 'phone', header: 'Phone' },
     { key: 'email', header: 'Email' },
-    { key: 'role', header: 'Role', transform: (v) => roleLabel(v) },
+    { key: 'role', header: 'Role', transform: v => roleLabel(v) },
     { key: 'departmentName', header: 'Department' },
-    { key: 'status', header: 'Status', transform: (v) => v ? v.charAt(0).toUpperCase() + v.slice(1) : v },
-    { key: 'lastLogin', header: 'Last Login' }
-  ]
-  exportToExcel(users.value, columns, `Users_Report_${new Date().toISOString().split('T')[0]}`)
-  toast.success('Users exported successfully')
+    {
+      key: 'status',
+      header: 'Status',
+      transform: v => (v ? v.charAt(0).toUpperCase() + v.slice(1) : v),
+    },
+    { key: 'lastLogin', header: 'Last Login' },
+  ];
+  exportToExcel(users.value, columns, `Users_Report_${new Date().toISOString().split('T')[0]}`);
+  toast.success('Users exported successfully');
 }
 </script>
 
@@ -1479,6 +1579,7 @@ function exportUsers() {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -1578,6 +1679,7 @@ function exportUsers() {
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }

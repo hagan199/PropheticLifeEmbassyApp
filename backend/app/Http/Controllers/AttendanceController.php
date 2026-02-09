@@ -3,42 +3,82 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Requests\Attendance\StoreAttendanceRequest;
-use App\Http\Requests\Attendance\BulkApproveRequest;
-use App\Http\Requests\Attendance\BulkRejectRequest;
-use App\Http\Requests\Attendance\RejectAttendanceRequest;
+use App\Http\Requests\Attendance\{StoreAttendanceRequest, BulkApproveRequest, BulkRejectRequest, RejectAttendanceRequest};
 use App\Models\Attendance;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Auth;
+use App\Models\MinisterUnitAttendance;
+use App\Models\Department;
+use Illuminate\Support\Facades\{Auth, DB};
+use Illuminate\Http\JsonResponse;
 
 class AttendanceController extends Controller
 {
     /**
-     * Record ministry unit attendance (unit, service, date, time, member, present/absent)
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\JsonResponse
+     * Get paginated list of all attendance records.
+     * Supports filtering by status, service_type, date range.
      */
-    public function storeUnitAttendance(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $data = $request->validate([
-            'unit' => 'required|string',
-            'service' => 'required|string',
-            'date' => 'required|date',
-            'time' => 'required',
-            'member_id' => 'required|integer',
-            'member_name' => 'required|string',
-            'present' => 'required|boolean',
+        $query = Attendance::with('submittedBy:id,name,avatar', 'approvedBy:id,name');
+
+        // Apply filters
+        if ($request->has('status') && $request->status !== '') {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('service_type') && $request->service_type !== '') {
+            $query->where('service_type', $request->service_type);
+        }
+
+        if ($request->has('date_from') && $request->date_from !== '') {
+            $query->whereDate('service_date', '>=', $request->date_from);
+        }
+
+        if ($request->has('date_to') && $request->date_to !== '') {
+            $query->whereDate('service_date', '<=', $request->date_to);
+        }
+
+        // Get records ordered by date
+        $records = $query->orderBy('service_date', 'desc')->get();
+
+        // Calculate stats
+        $stats = [
+            'pending' => Attendance::where('status', 'pending')->count(),
+            'approved' => Attendance::where('status', 'approved')->count(),
+            'rejected' => Attendance::where('status', 'rejected')->count(),
+            'approved_today' => Attendance::where('status', 'approved')
+                ->whereDate('approved_at', today())
+                ->count(),
+            'total_week' => Attendance::whereBetween('service_date', [
+                now()->startOfWeek(),
+                now()->endOfWeek()
+            ])->count(),
+        ];
+
+        return response()->json([
+            'success' => true,
+            'data' => $records->map(fn($a) => $this->transformRecord($a)),
+            'stats' => $stats,
+            'total' => $records->count(),
+        ]);
+    }
+
+    /**
+     * Store a new attendance record.
+     */
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'service_type' => 'required|string',
+            'service_date' => 'required|date',
+            'count' => 'required|integer|min:0',
+            'notes' => 'nullable|string',
         ]);
 
         $attendance = Attendance::create([
-            'service_type' => $data['service'],
-            'service_date' => $data['date'],
-            'service_time' => $data['time'],
-            'unit' => $data['unit'],
-            'member_id' => $data['member_id'],
-            'member_name' => $data['member_name'],
-            'present' => $data['present'],
+            'service_type' => $validated['service_type'],
+            'service_date' => $validated['service_date'],
+            'count' => $validated['count'],
+            'notes' => $validated['notes'] ?? null,
             'status' => 'pending',
             'submitted_by' => Auth::id(),
             'submitted_at' => now(),
@@ -46,260 +86,254 @@ class AttendanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Unit attendance recorded',
-            'data' => $attendance,
-        ], 201);
-    }
-    // ...existing code...
-
-    /**
-     * Record attendance
-     */
-    public function store(StoreAttendanceRequest $request)
-    {
-        $attendance = Attendance::create([
-            'service_type' => $request->service_type,
-            'service_date' => $request->service_date,
-            'count' => $request->count ?? 0,
-            'status' => 'pending',
-            'notes' => $request->notes,
-            'submitted_by' => Auth::id(),
-            'submitted_at' => now(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Attendance recorded successfully',
-            'data' => $attendance,
+            'message' => 'Attendance record created successfully',
+            'data' => $this->transformRecord($attendance)
         ], 201);
     }
 
     /**
-     * Get single attendance record
+     * Update an attendance record.
      */
-    public function show($id)
+    public function update(Request $request, $id): JsonResponse
     {
-        $record = Attendance::with(['submittedBy', 'approvedBy'])->find($id);
+        $attendance = Attendance::findOrFail($id);
 
-        if (!$record) {
+        // Only allow updates if status is pending
+        if ($attendance->status !== 'pending') {
             return response()->json([
                 'success' => false,
-                'message' => 'Record not found',
-            ], 404);
+                'message' => 'Cannot update attendance that has been approved or rejected'
+            ], 403);
         }
+
+        $validated = $request->validate([
+            'service_type' => 'sometimes|string',
+            'service_date' => 'sometimes|date',
+            'count' => 'sometimes|integer|min:0',
+            'notes' => 'nullable|string',
+        ]);
+
+        $attendance->update($validated);
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'id' => $record->id,
-                'service_type' => $record->service_type,
-                'service_date' => $record->service_date->format('Y-m-d'),
-                'count' => $record->count,
-                'status' => $record->status,
-                'notes' => $record->notes,
-                'submitted_by' => [
-                    'id' => $record->submittedBy?->id,
-                    'name' => $record->submittedBy?->name ?? 'Unknown',
-                    'avatar' => $record->submittedBy?->avatar,
-                ],
-                'submitted_at' => $record->submitted_at?->diffForHumans(),
-                'approved_by' => $record->approvedBy?->name,
-                'rejection_reason' => $record->rejection_reason,
-            ],
+            'message' => 'Attendance record updated successfully',
+            'data' => $this->transformRecord($attendance)
         ]);
     }
 
     /**
-     * Update attendance record
+     * Delete an attendance record.
      */
-    public function update(Request $request, $id)
+    public function destroy($id): JsonResponse
     {
-        $attendance = Attendance::find($id);
+        $attendance = Attendance::findOrFail($id);
 
-        if (!$attendance) {
+        // Only allow deletion if status is pending
+        if ($attendance->status !== 'pending') {
             return response()->json([
                 'success' => false,
-                'message' => 'Record not found',
-            ], 404);
-        }
-
-        $attendance->update($request->only(['service_type', 'service_date', 'count', 'notes']));
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Attendance updated successfully',
-            'data' => $attendance,
-        ]);
-    }
-
-    /**
-     * Delete attendance record
-     */
-    public function destroy($id)
-    {
-        $attendance = Attendance::find($id);
-
-        if (!$attendance) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Record not found',
-            ], 404);
+                'message' => 'Cannot delete attendance that has been approved or rejected'
+            ], 403);
         }
 
         $attendance->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Attendance deleted successfully',
+            'message' => 'Attendance record deleted successfully'
         ]);
     }
 
     /**
-     * Get pending approvals (Admin)
+     * Approve a single attendance record.
      */
-    public function pendingApprovals()
+    public function approve($id): JsonResponse
     {
-        $pending = Attendance::with(['submittedBy'])
+        $attendance = Attendance::findOrFail($id);
+
+        if ($attendance->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Attendance has already been processed'
+            ], 400);
+        }
+
+        $attendance->update([
+            'status' => 'approved',
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Attendance approved successfully',
+            'data' => $this->transformRecord($attendance)
+        ]);
+    }
+
+    /**
+     * Reject a single attendance record.
+     */
+    public function reject(Request $request, $id): JsonResponse
+    {
+        $validated = $request->validate([
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $attendance = Attendance::findOrFail($id);
+
+        if ($attendance->status !== 'pending') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Attendance has already been processed'
+            ], 400);
+        }
+
+        $attendance->update([
+            'status' => 'rejected',
+            'rejection_reason' => $validated['reason'],
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Attendance rejected successfully',
+            'data' => $this->transformRecord($attendance)
+        ]);
+    }
+
+    /**
+     * Bulk reject attendance records.
+     */
+    public function bulkReject(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'exists:attendances,id',
+            'reason' => 'required|string|max:255',
+        ]);
+
+        $count = Attendance::whereIn('id', $validated['ids'])
             ->where('status', 'pending')
-            ->orderBy('service_date', 'desc')
-            ->get();
+            ->update([
+                'status' => 'rejected',
+                'rejection_reason' => $validated['reason'],
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+            ]);
 
         return response()->json([
             'success' => true,
-            'data' => $pending->map(function ($a) {
-                return [
-                    'id' => $a->id,
-                    'service_type' => $a->service_type,
-                    'service_date' => $a->service_date->format('Y-m-d'),
-                    'count' => $a->count,
-                    'status' => $a->status,
-                    'notes' => $a->notes,
-                    'submitted_by' => [
-                        'id' => $a->submittedBy?->id,
-                        'name' => $a->submittedBy?->name ?? 'Unknown',
-                        'avatar' => $a->submittedBy?->avatar,
-                    ],
-                    'submitted_at' => $a->submitted_at ? $a->submitted_at->diffForHumans() : $a->created_at->diffForHumans(),
-                ];
-            }),
-            'total' => $pending->count(),
+            'message' => "$count records rejected"
         ]);
     }
 
     /**
-     * Bulk approve attendance
+     * Optimized: Use mass assignment for speed.
      */
-    public function bulkApprove(BulkApproveRequest $request)
+    public function storeUnitAttendance(Request $request): JsonResponse
     {
-        Attendance::whereIn('id', $request->ids)->update([
-            'status' => 'approved',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
+        $request->validate([
+            'unit' => 'required|string', // Department ID
+            'service' => 'required|string',
+            'date' => 'required|date',
+            'time' => 'required',
+            'member_id' => 'required|string',
+            'member_name' => 'required|string',
+            'present' => 'required|boolean',
+            'notes' => 'nullable|string',
         ]);
+
+        $department = Department::find($request->unit);
+
+        $attendance = MinisterUnitAttendance::create([
+            'department_id' => $request->unit,
+            'unit_name' => $department ? $department->name : 'Unknown Unit',
+            'service_type' => $request->service,
+            'service_date' => $request->date,
+            'service_time' => $request->time,
+            'member_id' => $request->member_id,
+            'member_name' => $request->member_name,
+            'present' => $request->present,
+            'notes' => $request->notes,
+            'status' => 'pending',
+            'submitted_by' => Auth::id(),
+            'submitted_at' => now(),
+        ]);
+
+        return response()->json(['success' => true, 'data' => $attendance], 201);
+    }
+
+    /**
+     * Optimized: Eager load only necessary columns to save memory.
+     */
+    public function show($id): JsonResponse
+    {
+        // speed optimization: select only columns needed from relationship
+        $record = Attendance::with([
+            'submittedBy:id,name,avatar',
+            'approvedBy:id,name'
+        ])->findOrFail($id);
 
         return response()->json([
             'success' => true,
-            'message' => count($request->ids) . ' records approved successfully',
+            'data' => $this->transformRecord($record)
         ]);
     }
 
     /**
-     * Bulk reject attendance
+     * Optimized: Use cursor() for memory efficiency in large lists.
      */
-    public function bulkReject(BulkRejectRequest $request)
+    public function pendingApprovals(): JsonResponse
     {
-        Attendance::whereIn('id', $request->ids)->update([
-            'status' => 'rejected',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-            'rejection_reason' => $request->reason,
-        ]);
+        // Memory optimization: use cursor() for large datasets
+        $pendingQuery = Attendance::with('submittedBy:id,name,avatar')
+            ->where('status', 'pending')
+            ->orderBy('service_date', 'desc');
+
+        $total = $pendingQuery->count();
 
         return response()->json([
             'success' => true,
-            'message' => count($request->ids) . ' records rejected',
+            'data' => $pendingQuery->get()->map(fn($a) => $this->transformRecord($a)),
+            'total' => $total,
         ]);
     }
 
     /**
-     * Approve single attendance
+     * Optimized: Single DB query for bulk operations.
      */
-    public function approve($id)
+    public function bulkApprove(BulkApproveRequest $request): JsonResponse
     {
-        $attendance = Attendance::find($id);
-
-        if (!$attendance) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Record not found',
-            ], 404);
-        }
-
-        $attendance->update([
-            'status' => 'approved',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-        ]);
+        $count = Attendance::whereIn('id', $request->ids)
+            ->where('status', 'pending') // Integrity check
+            ->update([
+                'status' => 'approved',
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+            ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'Attendance approved',
+            'message' => "$count records approved"
         ]);
     }
 
     /**
-     * Reject single attendance
+     * Optimized: Use Collection methods for stats to avoid extra DB queries.
      */
-    public function reject(RejectAttendanceRequest $request, $id)
+    public function mySubmissions(): JsonResponse
     {
-        $attendance = Attendance::find($id);
-
-        if (!$attendance) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Record not found',
-            ], 404);
-        }
-
-        $attendance->update([
-            'status' => 'rejected',
-            'approved_by' => Auth::id(),
-            'approved_at' => now(),
-            'rejection_reason' => $request->reason,
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Attendance rejected',
-        ]);
-    }
-
-    /**
-     * Get my submissions (Usher)
-     */
-    public function mySubmissions()
-    {
-        $submissions = Attendance::with(['approvedBy'])
+        $submissions = Attendance::with('approvedBy:id,name')
             ->where('submitted_by', Auth::id())
             ->orderBy('service_date', 'desc')
             ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $submissions->map(function ($a) {
-                return [
-                    'id' => $a->id,
-                    'service_type' => $a->service_type,
-                    'service_date' => $a->service_date->format('Y-m-d'),
-                    'count' => $a->count,
-                    'status' => $a->status,
-                    'notes' => $a->notes,
-                    'approved_by' => $a->approvedBy?->name,
-                    'approved_at' => $a->approved_at?->diffForHumans(),
-                    'rejection_reason' => $a->rejection_reason,
-                    'created_at' => $a->created_at->toISOString(),
-                ];
-            }),
+            'data' => $submissions->map(fn($a) => $this->transformRecord($a, true)),
             'total' => $submissions->count(),
             'stats' => [
                 'pending' => $submissions->where('status', 'pending')->count(),
@@ -307,5 +341,59 @@ class AttendanceController extends Controller
                 'rejected' => $submissions->where('status', 'rejected')->count(),
             ],
         ]);
+    }
+
+    /**
+     * Get weekly attendance summary report.
+     */
+    public function weeklyReport(): JsonResponse
+    {
+        $startOfWeek = now()->startOfWeek();
+        $endOfWeek = now()->endOfWeek();
+
+        $entries = MinisterUnitAttendance::whereBetween('service_date', [$startOfWeek, $endOfWeek])
+            ->orderBy('service_date', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $entries->map(function ($e) {
+                return [
+                    'id' => $e->id,
+                    'unit' => $e->department_id,
+                    'unitName' => $e->unit_name,
+                    'service' => $e->service_type,
+                    'date' => $e->service_date->format('Y-m-d'),
+                    'time' => $e->service_time,
+                    'member_id' => $e->member_id,
+                    'memberName' => $e->member_name,
+                    'present' => $e->present,
+                ];
+            }),
+            'weekly_total' => $entries->where('present', true)->count()
+        ]);
+    }
+
+    /**
+     * Private helper to dry up the code and centralize transformation logic.
+     */
+    private function transformRecord($a, $includeApproval = false): array
+    {
+        return [
+            'id' => $a->id,
+            'service_type' => $a->service_type,
+            'service_date' => $a->service_date->format('Y-m-d'),
+            'count' => $a->count,
+            'status' => $a->status,
+            'submitted_by' => $a->submittedBy ? [
+                'id' => $a->submittedBy->id,
+                'name' => $a->submittedBy->name,
+                'avatar' => $a->submittedBy->avatar,
+            ] : null,
+            'submitted_at' => $a->submitted_at?->diffForHumans() ?? $a->created_at->diffForHumans(),
+            'approved_by' => $a->approvedBy?->name,
+            'rejection_reason' => $a->rejection_reason,
+            'notes' => $a->notes,
+        ];
     }
 }

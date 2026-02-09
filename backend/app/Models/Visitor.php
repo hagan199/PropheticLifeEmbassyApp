@@ -15,6 +15,8 @@ class Visitor extends Model
         'phone',
         'email',
         'category',
+        'service_type',
+        'occupation',
         'source',
         'source_detail',
         'ministry_interest',

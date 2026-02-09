@@ -1,13 +1,5 @@
 <template>
   <div class="page-wrap">
-    <!-- Notification -->
-    <transition name="alert-slide">
-      <CAlert v-if="notification.show" :color="notification.type" dismissible @close="notification.show = false" class="notification-alert">
-        <i :class="notificationIcon" class="me-2"></i>
-        {{ notification.message }}
-      </CAlert>
-    </transition>
-
     <!-- Page Header -->
     <div class="page-header">
       <h2 class="title">My Profile</h2>
@@ -27,9 +19,7 @@
               <span class="online-status"></span>
             </div>
             <h4 class="profile-name">{{ auth.user?.name || 'User' }}</h4>
-            <p class="profile-phone">
-              <i class="bi bi-telephone me-2"></i>{{ auth.user?.phone }}
-            </p>
+            <p class="profile-phone"><i class="bi bi-telephone me-2"></i>{{ auth.user?.phone }}</p>
             <span class="role-badge" :class="roleColor">
               <i class="bi bi-shield-check me-1"></i>{{ roleLabel }}
             </span>
@@ -61,45 +51,26 @@
                   <label class="form-label-modern">
                     <i class="bi bi-person me-2"></i>Full Name
                   </label>
-                  <input
-                    v-model="form.name"
-                    class="form-input-modern"
-                    :class="{ 'disabled': !isEditing }"
-                    :disabled="!isEditing"
-                  />
+                  <input v-model="form.name" class="form-input-modern" :class="{ disabled: !isEditing }"
+                    :disabled="!isEditing" />
                 </div>
                 <div class="form-group">
                   <label class="form-label-modern">
                     <i class="bi bi-phone me-2"></i>Phone Number
                   </label>
-                  <input
-                    v-model="form.phone"
-                    class="form-input-modern disabled"
-                    disabled
-                  />
+                  <input v-model="form.phone" class="form-input-modern disabled" disabled />
                   <small class="form-hint">Phone number cannot be changed</small>
                 </div>
                 <div class="form-group">
                   <label class="form-label-modern">
                     <i class="bi bi-envelope me-2"></i>Email Address
                   </label>
-                  <input
-                    v-model="form.email"
-                    type="email"
-                    class="form-input-modern"
-                    :class="{ 'disabled': !isEditing }"
-                    :disabled="!isEditing"
-                  />
+                  <input v-model="form.email" type="email" class="form-input-modern" :class="{ disabled: !isEditing }"
+                    :disabled="!isEditing" />
                 </div>
                 <div class="form-group">
-                  <label class="form-label-modern">
-                    <i class="bi bi-shield me-2"></i>Role
-                  </label>
-                  <input
-                    :value="roleLabel"
-                    class="form-input-modern disabled"
-                    disabled
-                  />
+                  <label class="form-label-modern"> <i class="bi bi-shield me-2"></i>Role </label>
+                  <input :value="roleLabel" class="form-input-modern disabled" disabled />
                 </div>
               </div>
               <div class="form-actions">
@@ -139,37 +110,22 @@
                   <label class="form-label-modern">
                     <i class="bi bi-lock me-2"></i>Current Password
                   </label>
-                  <input
-                    v-model="passwordForm.current"
-                    type="password"
-                    class="form-input-modern"
-                    autocomplete="current-password"
-                    placeholder="Enter current password"
-                  />
+                  <input v-model="passwordForm.current" type="password" class="form-input-modern"
+                    autocomplete="current-password" placeholder="Enter current password" />
                 </div>
                 <div class="form-group">
                   <label class="form-label-modern">
                     <i class="bi bi-lock-fill me-2"></i>New Password
                   </label>
-                  <input
-                    v-model="passwordForm.new"
-                    type="password"
-                    class="form-input-modern"
-                    autocomplete="new-password"
-                    placeholder="Enter new password"
-                  />
+                  <input v-model="passwordForm.new" type="password" class="form-input-modern"
+                    autocomplete="new-password" placeholder="Enter new password" />
                 </div>
                 <div class="form-group">
                   <label class="form-label-modern">
                     <i class="bi bi-check-circle me-2"></i>Confirm Password
                   </label>
-                  <input
-                    v-model="passwordForm.confirm"
-                    type="password"
-                    class="form-input-modern"
-                    autocomplete="new-password"
-                    placeholder="Confirm new password"
-                  />
+                  <input v-model="passwordForm.confirm" type="password" class="form-input-modern"
+                    autocomplete="new-password" placeholder="Confirm new password" />
                 </div>
               </div>
               <div class="form-actions">
@@ -188,30 +144,31 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
-import { CRow, CCol, CAlert } from '@coreui/vue'
-import Breadcrumbs from '../components/Breadcrumbs.vue'
-import { useAuthStore } from '../store/auth'
-import { authApi } from '../api/auth'
+import { ref, reactive, computed, onMounted } from 'vue';
+import { CRow, CCol } from '@coreui/vue';
+import Breadcrumbs from '../components/Breadcrumbs.vue';
+import { useToast } from '../composables/useToast';
+import { useAuthStore } from '../store/auth';
+import { authApi } from '../api/auth';
 
-const auth = useAuthStore()
+const auth = useAuthStore();
 
-const isEditing = ref(false)
-const saving = ref(false)
-const changingPassword = ref(false)
-const notification = reactive({ show: false, type: 'success', message: '' })
+const isEditing = ref(false);
+const saving = ref(false);
+const changingPassword = ref(false);
+const toast = useToast();
 
 const form = reactive({
   name: '',
   phone: '',
-  email: ''
-})
+  email: '',
+});
 
 const passwordForm = reactive({
   current: '',
   new: '',
-  confirm: ''
-})
+  confirm: '',
+});
 
 const roleColorMap = {
   admin: { label: 'Administrator', color: 'danger' },
@@ -219,116 +176,104 @@ const roleColorMap = {
   usher: { label: 'Usher', color: 'info' },
   finance: { label: 'Finance Officer', color: 'success' },
   pr_follow_up: { label: 'PR / Follow-up', color: 'warning' },
-  department_leader: { label: 'Department Leader', color: 'secondary' }
-}
+  department_leader: { label: 'Department Leader', color: 'secondary' },
+};
 
 const initials = computed(() => {
-  const name = auth.user?.name || 'U'
-  return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-})
+  const name = auth.user?.name || 'U';
+  return name
+    .split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+});
 
 const roleLabel = computed(() => {
-  return roleColorMap[auth.user?.role]?.label || auth.user?.role || 'User'
-})
+  return roleColorMap[auth.user?.role]?.label || auth.user?.role || 'User';
+});
 
 const roleColor = computed(() => {
-  return roleColorMap[auth.user?.role]?.color || 'secondary'
-})
-
-const notificationIcon = computed(() => {
-  const icons = {
-    success: 'bi bi-check-circle-fill',
-    danger: 'bi bi-exclamation-circle-fill',
-    warning: 'bi bi-exclamation-triangle-fill',
-    info: 'bi bi-info-circle-fill'
-  }
-  return icons[notification.type] || icons.info
-})
+  return roleColorMap[auth.user?.role]?.color || 'secondary';
+});
 
 const memberSince = computed(() => {
-  if (!auth.user?.created_at) return 'N/A'
+  if (!auth.user?.created_at) return 'N/A';
   return new Date(auth.user.created_at).toLocaleDateString(undefined, {
     year: 'numeric',
-    month: 'long'
-  })
-})
+    month: 'long',
+  });
+});
 
 onMounted(() => {
-  loadProfile()
-})
+  loadProfile();
+});
 
 function loadProfile() {
-  form.name = auth.user?.name || ''
-  form.phone = auth.user?.phone || ''
-  form.email = auth.user?.email || ''
+  form.name = auth.user?.name || '';
+  form.phone = auth.user?.phone || '';
+  form.email = auth.user?.email || '';
 }
 
 function cancelEdit() {
-  isEditing.value = false
-  loadProfile()
+  isEditing.value = false;
+  loadProfile();
 }
 
 async function updateProfile() {
-  saving.value = true
+  saving.value = true;
   try {
     const response = await authApi.updateProfile({
       name: form.name.trim(),
-      email: form.email || null
-    })
+      email: form.email || null,
+    });
 
     if (response.data?.data?.user) {
-      auth.user = response.data.data.user
-      localStorage.setItem('auth_user', JSON.stringify(auth.user))
+      auth.user = response.data.data.user;
+      localStorage.setItem('auth_user', JSON.stringify(auth.user));
     } else {
-      auth.user.name = form.name
-      auth.user.email = form.email
-      localStorage.setItem('auth_user', JSON.stringify(auth.user))
+      auth.user.name = form.name;
+      auth.user.email = form.email;
+      localStorage.setItem('auth_user', JSON.stringify(auth.user));
     }
 
-    showNotification('success', response.data?.message || 'Profile updated successfully')
-    isEditing.value = false
+    toast.success(response.data?.message || 'Profile updated successfully');
+    isEditing.value = false;
   } catch (error) {
-    showNotification('danger', error.response?.data?.message || 'Failed to update profile')
+    toast.error(error.response?.data?.message || 'Failed to update profile');
   } finally {
-    saving.value = false
+    saving.value = false;
   }
 }
 
 async function changePassword() {
   if (!passwordForm.current || !passwordForm.new || !passwordForm.confirm) {
-    showNotification('warning', 'Please fill in all password fields')
-    return
+    toast.warning('Please fill in all password fields');
+    return;
   }
 
   if (passwordForm.new !== passwordForm.confirm) {
-    showNotification('danger', 'New passwords do not match')
-    return
+    toast.error('New passwords do not match');
+    return;
   }
 
   if (passwordForm.new.length < 8) {
-    showNotification('danger', 'Password must be at least 8 characters')
-    return
+    toast.error('Password must be at least 8 characters');
+    return;
   }
 
-  changingPassword.value = true
+  changingPassword.value = true;
   try {
-    await authApi.changePassword(passwordForm.current, passwordForm.new, passwordForm.confirm)
-    showNotification('success', 'Password changed successfully')
-    passwordForm.current = ''
-    passwordForm.new = ''
-    passwordForm.confirm = ''
+    await authApi.changePassword(passwordForm.current, passwordForm.new, passwordForm.confirm);
+    toast.success('Password changed successfully');
+    passwordForm.current = '';
+    passwordForm.new = '';
+    passwordForm.confirm = '';
   } catch (error) {
-    showNotification('danger', error.response?.data?.message || 'Failed to change password')
+    toast.error(error.response?.data?.message || 'Failed to change password');
   } finally {
-    changingPassword.value = false
+    changingPassword.value = false;
   }
-}
-
-function showNotification(type, message) {
-  notification.type = type
-  notification.message = message
-  notification.show = true
-  setTimeout(() => { notification.show = false }, 4000)
 }
 </script>
 
@@ -622,29 +567,6 @@ function showNotification(type, message) {
   transform: none;
 }
 
-/* Notification Alert */
-.notification-alert {
-  position: fixed;
-  top: 80px;
-  right: 1.5rem;
-  left: auto;
-  z-index: 1050;
-  max-width: 400px;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
-}
-
-.alert-slide-enter-active,
-.alert-slide-leave-active {
-  transition: all 0.3s ease;
-}
-
-.alert-slide-enter-from,
-.alert-slide-leave-to {
-  opacity: 0;
-  transform: translateX(100px);
-}
-
 /* Responsive */
 @media (max-width: 991.98px) {
   .page-wrap {
@@ -692,12 +614,6 @@ function showNotification(type, message) {
   .btn-warning-modern {
     width: 100%;
   }
-
-  .notification-alert {
-    right: 1rem;
-    left: 1rem;
-    max-width: none;
-  }
 }
 
 @media (max-width: 575.98px) {
@@ -725,10 +641,6 @@ function showNotification(type, message) {
 
   .info-card-header h5 {
     font-size: 1rem;
-  }
-
-  .notification-alert {
-    top: 70px;
   }
 }
 

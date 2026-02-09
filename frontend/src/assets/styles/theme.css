@@ -1,0 +1,519 @@
+/**
+ * Material Design 3 Theme System
+ * Prophetic Life Embassy - Premium Admin Theme
+ * 
+ * This file defines the complete design token system following
+ * Material Design 3 guidelines with premium glassmorphism effects.
+ */
+
+:root {
+  /* ========================================
+     COLOR SYSTEM - Material Design 3
+     ======================================== */
+
+  /* Primary Brand Colors */
+  --md-primary: #6366f1;
+  --md-primary-light: #818cf8;
+  --md-primary-dark: #4f46e5;
+  --md-primary-container: #e0e7ff;
+  --md-on-primary: #ffffff;
+  --md-on-primary-container: #3730a3;
+
+  /* Secondary Colors */
+  --md-secondary: #7c3aed;
+  --md-secondary-light: #a78bfa;
+  --md-secondary-dark: #6d28d9;
+  --md-secondary-container: #ede9fe;
+  --md-on-secondary: #ffffff;
+  --md-on-secondary-container: #5b21b6;
+
+  /* Tertiary/Accent Colors */
+  --md-tertiary: #06b6d4;
+  --md-tertiary-light: #22d3ee;
+  --md-tertiary-dark: #0891b2;
+  --md-tertiary-container: #cffafe;
+  --md-on-tertiary: #ffffff;
+
+  /* Semantic Colors */
+  --md-success: #10b981;
+  --md-success-light: #34d399;
+  --md-success-container: #d1fae5;
+  --md-on-success: #ffffff;
+
+  --md-warning: #f59e0b;
+  --md-warning-light: #fbbf24;
+  --md-warning-container: #fef3c7;
+  --md-on-warning: #1f2937;
+
+  --md-error: #ef4444;
+  --md-error-light: #f87171;
+  --md-error-container: #fee2e2;
+  --md-on-error: #ffffff;
+
+  --md-info: #3b82f6;
+  --md-info-light: #60a5fa;
+  --md-info-container: #dbeafe;
+  --md-on-info: #ffffff;
+
+  /* Surface Colors - Light Theme */
+  --md-background: #f8fafc;
+  --md-surface: #ffffff;
+  --md-surface-dim: #f1f5f9;
+  --md-surface-bright: #ffffff;
+  --md-surface-container-lowest: #ffffff;
+  --md-surface-container-low: #f8fafc;
+  --md-surface-container: #f1f5f9;
+  --md-surface-container-high: #e2e8f0;
+  --md-surface-container-highest: #cbd5e1;
+
+  /* Text Colors */
+  --md-on-surface: #0f172a;
+  --md-on-surface-variant: #475569;
+  --md-on-surface-muted: #94a3b8;
+  --md-on-surface-disabled: #cbd5e1;
+
+  /* Outline Colors */
+  --md-outline: #cbd5e1;
+  --md-outline-variant: #e2e8f0;
+
+  /* Inverse Colors */
+  --md-inverse-surface: #1e293b;
+  --md-inverse-on-surface: #f1f5f9;
+  --md-inverse-primary: #a5b4fc;
+
+  /* Scrim */
+  --md-scrim: rgba(0, 0, 0, 0.32);
+
+  /* ========================================
+     ELEVATION SYSTEM - Shadows
+     ======================================== */
+
+  --md-elevation-0: none;
+  --md-elevation-1: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --md-elevation-2: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --md-elevation-3: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --md-elevation-4: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+  --md-elevation-5: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  --md-elevation-6: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+
+  /* Colored Shadows for Cards */
+  --md-shadow-primary: 0 10px 40px -10px rgba(99, 102, 241, 0.4);
+  --md-shadow-success: 0 10px 40px -10px rgba(16, 185, 129, 0.4);
+  --md-shadow-warning: 0 10px 40px -10px rgba(245, 158, 11, 0.4);
+  --md-shadow-error: 0 10px 40px -10px rgba(239, 68, 68, 0.4);
+
+  /* ========================================
+     TYPOGRAPHY SYSTEM - Material Type Scale
+     ======================================== */
+
+  --md-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --md-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Display */
+  --md-display-large: 600 3.5625rem/1.12 var(--md-font-family);
+  --md-display-medium: 600 2.8125rem/1.16 var(--md-font-family);
+  --md-display-small: 600 2.25rem/1.22 var(--md-font-family);
+
+  /* Headline */
+  --md-headline-large: 600 2rem/1.25 var(--md-font-family);
+  --md-headline-medium: 600 1.75rem/1.29 var(--md-font-family);
+  --md-headline-small: 600 1.5rem/1.33 var(--md-font-family);
+
+  /* Title */
+  --md-title-large: 500 1.375rem/1.27 var(--md-font-family);
+  --md-title-medium: 500 1rem/1.5 var(--md-font-family);
+  --md-title-small: 500 0.875rem/1.43 var(--md-font-family);
+
+  /* Label */
+  --md-label-large: 500 0.875rem/1.43 var(--md-font-family);
+  --md-label-medium: 500 0.75rem/1.33 var(--md-font-family);
+  --md-label-small: 500 0.6875rem/1.45 var(--md-font-family);
+
+  /* Body */
+  --md-body-large: 400 1rem/1.5 var(--md-font-family);
+  --md-body-medium: 400 0.875rem/1.43 var(--md-font-family);
+  --md-body-small: 400 0.75rem/1.33 var(--md-font-family);
+
+  /* ========================================
+     SPACING SYSTEM - 4px Grid
+     ======================================== */
+
+  --md-space-0: 0;
+  --md-space-1: 0.25rem;
+  /* 4px */
+  --md-space-2: 0.5rem;
+  /* 8px */
+  --md-space-3: 0.75rem;
+  /* 12px */
+  --md-space-4: 1rem;
+  /* 16px */
+  --md-space-5: 1.25rem;
+  /* 20px */
+  --md-space-6: 1.5rem;
+  /* 24px */
+  --md-space-8: 2rem;
+  /* 32px */
+  --md-space-10: 2.5rem;
+  /* 40px */
+  --md-space-12: 3rem;
+  /* 48px */
+  --md-space-16: 4rem;
+  /* 64px */
+  --md-space-20: 5rem;
+  /* 80px */
+  --md-space-24: 6rem;
+  /* 96px */
+
+  /* ========================================
+     SHAPE SYSTEM - Border Radius
+     ======================================== */
+
+  --md-shape-none: 0;
+  --md-shape-xs: 0.25rem;
+  /* 4px */
+  --md-shape-sm: 0.5rem;
+  /* 8px */
+  --md-shape-md: 0.75rem;
+  /* 12px */
+  --md-shape-lg: 1rem;
+  /* 16px */
+  --md-shape-xl: 1.25rem;
+  /* 20px */
+  --md-shape-2xl: 1.5rem;
+  /* 24px */
+  --md-shape-3xl: 1.75rem;
+  /* 28px */
+  --md-shape-full: 9999px;
+
+  /* ========================================
+     MOTION SYSTEM - Animations
+     ======================================== */
+
+  /* Durations */
+  --md-motion-duration-short1: 50ms;
+  --md-motion-duration-short2: 100ms;
+  --md-motion-duration-short3: 150ms;
+  --md-motion-duration-short4: 200ms;
+  --md-motion-duration-medium1: 250ms;
+  --md-motion-duration-medium2: 300ms;
+  --md-motion-duration-medium3: 350ms;
+  --md-motion-duration-medium4: 400ms;
+  --md-motion-duration-long1: 450ms;
+  --md-motion-duration-long2: 500ms;
+  --md-motion-duration-long3: 550ms;
+  --md-motion-duration-long4: 600ms;
+
+  /* Easings */
+  --md-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --md-motion-easing-emphasized: cubic-bezier(0.2, 0, 0, 1);
+  --md-motion-easing-emphasized-decelerate: cubic-bezier(0.05, 0.7, 0.1, 1);
+  --md-motion-easing-emphasized-accelerate: cubic-bezier(0.3, 0, 0.8, 0.15);
+  --md-motion-easing-legacy: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ========================================
+     LAYOUT - Sidebar & Content
+     ======================================== */
+
+  --md-sidebar-width: 280px;
+  --md-sidebar-collapsed-width: 72px;
+  --md-navbar-height: 64px;
+  --md-mobile-navbar-height: 56px;
+  --md-bottom-nav-height: 80px;
+
+  /* ========================================
+     Z-INDEX SCALE
+     ======================================== */
+
+  --md-z-dropdown: 1000;
+  --md-z-sticky: 1020;
+  --md-z-fixed: 1030;
+  --md-z-modal-backdrop: 1040;
+  --md-z-modal: 1050;
+  --md-z-popover: 1060;
+  --md-z-tooltip: 1070;
+  --md-z-toast: 1080;
+
+  /* ========================================
+     GLASSMORPHISM EFFECTS
+     ======================================== */
+
+  --md-glass-background: rgba(255, 255, 255, 0.9);
+  --md-glass-border: rgba(255, 255, 255, 0.5);
+  --md-glass-blur: blur(10px);
+  --md-glass-saturate: saturate(120%);
+  --md-hardware-accelerate: translateZ(0);
+}
+
+/* ========================================
+   DARK THEME
+   ======================================== */
+
+[data-theme='dark'],
+.theme-dark {
+  /* Surface Colors - Dark Theme */
+  --md-background: #0f172a;
+  --md-surface: #1e293b;
+  --md-surface-dim: #0f172a;
+  --md-surface-bright: #334155;
+  --md-surface-container-lowest: #0c111d;
+  --md-surface-container-low: #1e293b;
+  --md-surface-container: #334155;
+  --md-surface-container-high: #475569;
+  --md-surface-container-highest: #64748b;
+
+  /* Text Colors - Dark */
+  --md-on-surface: #f1f5f9;
+  --md-on-surface-variant: #cbd5e1;
+  --md-on-surface-muted: #94a3b8;
+  --md-on-surface-disabled: #475569;
+
+  /* Outline Colors - Dark */
+  --md-outline: #475569;
+  --md-outline-variant: #334155;
+
+  /* Inverse Colors - Dark */
+  --md-inverse-surface: #e2e8f0;
+  --md-inverse-on-surface: #1e293b;
+  --md-inverse-primary: #4f46e5;
+
+  /* Glassmorphism - Dark */
+  --md-glass-background: rgba(30, 41, 59, 0.8);
+  --md-glass-border: rgba(71, 85, 105, 0.4);
+}
+
+/* ========================================
+   GRADIENT PRESETS
+   ======================================== */
+
+:root {
+  --md-gradient-primary: linear-gradient(135deg, var(--md-primary) 0%, var(--md-secondary) 100%);
+  --md-gradient-success: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+  --md-gradient-warning: linear-gradient(135deg, #f59e0b 0%, #ef4444 100%);
+  --md-gradient-info: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  --md-gradient-surface: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  /* Premium Gradients */
+  --md-gradient-aurora: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  --md-gradient-ocean: linear-gradient(135deg, #0ea5e9 0%, #6366f1 50%, #8b5cf6 100%);
+  --md-gradient-sunset: linear-gradient(135deg, #f97316 0%, #ef4444 50%, #ec4899 100%);
+  --md-gradient-forest: linear-gradient(135deg, #059669 0%, #10b981 50%, #14b8a6 100%);
+}
+
+/* ========================================
+   BASE STYLES RESET
+   ======================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+body {
+  font: var(--md-body-large);
+  font-family: var(--md-font-family);
+  color: var(--md-on-surface);
+  background: var(--md-background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ========================================
+   SCROLLBAR STYLING
+   ======================================== */
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--md-surface-container);
+  border-radius: var(--md-shape-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--md-outline);
+  border-radius: var(--md-shape-full);
+  transition: background var(--md-motion-duration-short3) var(--md-motion-easing-standard);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--md-on-surface-muted);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--md-outline) var(--md-surface-container);
+}
+
+/* ========================================
+   SELECTION STYLING
+   ======================================== */
+
+::selection {
+  background: var(--md-primary-container);
+  color: var(--md-on-primary-container);
+}
+
+/* ========================================
+   FOCUS STYLING
+   ======================================== */
+
+:focus-visible {
+  outline: 2px solid var(--md-primary);
+  outline-offset: 2px;
+  border-radius: var(--md-shape-xs);
+}
+
+/* ========================================
+   TYPOGRAPHY CLASSES
+   ======================================== */
+
+.md-display-large {
+  font: var(--md-display-large);
+}
+
+.md-display-medium {
+  font: var(--md-display-medium);
+}
+
+.md-display-small {
+  font: var(--md-display-small);
+}
+
+.md-headline-large {
+  font: var(--md-headline-large);
+}
+
+.md-headline-medium {
+  font: var(--md-headline-medium);
+}
+
+.md-headline-small {
+  font: var(--md-headline-small);
+}
+
+.md-title-large {
+  font: var(--md-title-large);
+}
+
+.md-title-medium {
+  font: var(--md-title-medium);
+}
+
+.md-title-small {
+  font: var(--md-title-small);
+}
+
+.md-label-large {
+  font: var(--md-label-large);
+}
+
+.md-label-medium {
+  font: var(--md-label-medium);
+}
+
+.md-label-small {
+  font: var(--md-label-small);
+}
+
+.md-body-large {
+  font: var(--md-body-large);
+}
+
+.md-body-medium {
+  font: var(--md-body-medium);
+}
+
+.md-body-small {
+  font: var(--md-body-small);
+}
+
+/* ========================================
+   COLOR UTILITY CLASSES
+   ======================================== */
+
+.md-primary {
+  color: var(--md-primary);
+}
+
+.md-secondary {
+  color: var(--md-secondary);
+}
+
+.md-tertiary {
+  color: var(--md-tertiary);
+}
+
+.md-success {
+  color: var(--md-success);
+}
+
+.md-warning {
+  color: var(--md-warning);
+}
+
+.md-error {
+  color: var(--md-error);
+}
+
+.md-info {
+  color: var(--md-info);
+}
+
+.md-on-surface {
+  color: var(--md-on-surface);
+}
+
+.md-on-surface-variant {
+  color: var(--md-on-surface-variant);
+}
+
+.md-muted {
+  color: var(--md-on-surface-muted);
+}
+
+.md-bg-primary {
+  background: var(--md-primary);
+  color: var(--md-on-primary);
+}
+
+.md-bg-secondary {
+  background: var(--md-secondary);
+  color: var(--md-on-secondary);
+}
+
+.md-bg-success {
+  background: var(--md-success);
+  color: var(--md-on-success);
+}
+
+.md-bg-warning {
+  background: var(--md-warning);
+  color: var(--md-on-warning);
+}
+
+.md-bg-error {
+  background: var(--md-error);
+  color: var(--md-on-error);
+}
+
+.md-bg-surface {
+  background: var(--md-surface);
+}
+
+.md-bg-surface-container {
+  background: var(--md-surface-container);
+}

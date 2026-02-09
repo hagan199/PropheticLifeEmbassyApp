@@ -7,10 +7,10 @@
         <div class="text-muted">View all your notifications and alerts</div>
       </div>
       <div class="d-flex gap-2">
-        <CButton color="light" @click="markAllRead" :disabled="unreadCount === 0">
+        <CButton color="light" :disabled="unreadCount === 0" @click="markAllRead">
           <i class="bi bi-check-all me-1"></i> Mark All Read
         </CButton>
-        <CButton color="danger" variant="outline" @click="clearAll" :disabled="notifications.length === 0">
+        <CButton color="danger" variant="outline" :disabled="notifications.length === 0" @click="clearAll">
           <i class="bi bi-trash me-1"></i> Clear All
         </CButton>
       </div>
@@ -41,13 +41,9 @@
     <CCard>
       <CCardBody class="p-0">
         <CListGroup flush>
-          <CListGroupItem 
-            v-for="n in filteredNotifications" 
-            :key="n.id"
-            class="d-flex align-items-start py-3 px-4"
-            :class="{ 'bg-light': !n.read }"
-            style="cursor: pointer;"
-            @click="handleNotification(n)">
+          <CListGroupItem
+v-for="n in filteredNotifications" :key="n.id" class="d-flex align-items-start py-3 px-4"
+            :class="{ 'bg-light': !n.read }" style="cursor: pointer" @click="handleNotification(n)">
             <div class="me-3">
               <div class="notification-icon" :style="{ backgroundColor: getNotificationBgColor(n.type) }">
                 <i :class="getNotificationIcon(n.type)" :style="{ color: getNotificationColor(n.type) }"></i>
@@ -64,7 +60,7 @@
                   <CBadge v-if="!n.read" color="primary" shape="rounded-pill" class="mt-1">New</CBadge>
                 </div>
               </div>
-              <div class="mt-2" v-if="n.link">
+              <div v-if="n.link" class="mt-2">
                 <CButton color="primary" size="sm" variant="outline" @click.stop="$router.push(n.link)">
                   View Details <i class="bi bi-arrow-right ms-1"></i>
                 </CButton>
@@ -87,51 +83,85 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { 
-  CCard, CCardBody, CListGroup, CListGroupItem, CButton, CButtonGroup, CBadge 
-} from '@coreui/vue'
-import Breadcrumbs from '../components/Breadcrumbs.vue'
-import { dashboardApi } from '../api/dashboard'
+import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import {
+  CCard,
+  CCardBody,
+  CListGroup,
+  CListGroupItem,
+  CButton,
+  CButtonGroup,
+  CBadge,
+} from '@coreui/vue';
+import Breadcrumbs from '../components/Breadcrumbs.vue';
+import { dashboardApi } from '../api/dashboard';
 
-const router = useRouter()
-const filter = ref('all')
-const notifications = ref([])
+const router = useRouter();
+const filter = ref('all');
+const notifications = ref([]);
 
-const unreadCount = computed(() => notifications.value.filter(n => !n.read).length)
+const unreadCount = computed(() => notifications.value.filter(n => !n.read).length);
 
 const filteredNotifications = computed(() => {
-  if (filter.value === 'all') return notifications.value
-  if (filter.value === 'unread') return notifications.value.filter(n => !n.read)
-  return notifications.value.filter(n => n.type === filter.value)
-})
+  if (filter.value === 'all') return notifications.value;
+  if (filter.value === 'unread') return notifications.value.filter(n => !n.read);
+  return notifications.value.filter(n => n.type === filter.value);
+});
 
 async function fetchNotifications() {
   try {
-    const response = await dashboardApi.getStats()
+    const response = await dashboardApi.stats();
     if (response.data.success && response.data.data.quick_actions) {
       // Create notifications from quick actions
-      const quickActions = response.data.data.quick_actions.filter(a => a.count > 0)
+      const quickActions = response.data.data.quick_actions.filter(a => a.count > 0);
       notifications.value = quickActions.map((action, idx) => ({
         id: idx + 1,
-        type: action.label.includes('Approval') ? 'approval' : action.label.includes('Visitor') ? 'visitor' : 'expense',
+        type: action.label.includes('Approval')
+          ? 'approval'
+          : action.label.includes('Visitor')
+            ? 'visitor'
+            : 'expense',
         title: action.label,
         message: `${action.count} items require your attention`,
         time: 'Just now',
         read: false,
-        link: action.link
-      }))
+        link: action.link,
+      }));
 
       // Add some sample notifications for demonstration
       notifications.value.push(
-        { id: 100, type: 'approval', title: 'Attendance Submitted', message: 'New attendance record submitted for Sunday Service', time: '2 hours ago', read: true, link: '/attendance-approvals' },
-        { id: 101, type: 'visitor', title: 'New Visitor Registered', message: 'A new visitor was registered at Sunday Service', time: '5 hours ago', read: true, link: '/visitors' },
-        { id: 102, type: 'expense', title: 'Expense Approved', message: 'Your expense request for office supplies was approved', time: '1 day ago', read: true, link: '/expense' }
-      )
+        {
+          id: 100,
+          type: 'approval',
+          title: 'Attendance Submitted',
+          message: 'New attendance record submitted for Sunday Service',
+          time: '2 hours ago',
+          read: true,
+          link: '/attendance-approvals',
+        },
+        {
+          id: 101,
+          type: 'visitor',
+          title: 'New Visitor Registered',
+          message: 'A new visitor was registered at Sunday Service',
+          time: '5 hours ago',
+          read: true,
+          link: '/visitors',
+        },
+        {
+          id: 102,
+          type: 'expense',
+          title: 'Expense Approved',
+          message: 'Your expense request for office supplies was approved',
+          time: '1 day ago',
+          read: true,
+          link: '/expense',
+        }
+      );
     }
   } catch (error) {
-    console.error('Failed to fetch notifications:', error)
+    console.error('Failed to fetch notifications:', error);
   }
 }
 
@@ -140,9 +170,9 @@ function getNotificationIcon(type) {
     approval: 'bi bi-clipboard-check',
     visitor: 'bi bi-person-plus',
     expense: 'bi bi-receipt',
-    default: 'bi bi-bell'
-  }
-  return icons[type] || icons.default
+    default: 'bi bi-bell',
+  };
+  return icons[type] || icons.default;
 }
 
 function getNotificationColor(type) {
@@ -150,9 +180,9 @@ function getNotificationColor(type) {
     approval: '#f9a825',
     visitor: '#4caf50',
     expense: '#2196f3',
-    default: '#9e9e9e'
-  }
-  return colors[type] || colors.default
+    default: '#9e9e9e',
+  };
+  return colors[type] || colors.default;
 }
 
 function getNotificationBgColor(type) {
@@ -160,33 +190,33 @@ function getNotificationBgColor(type) {
     approval: 'rgba(249, 168, 37, 0.15)',
     visitor: 'rgba(76, 175, 80, 0.15)',
     expense: 'rgba(33, 150, 243, 0.15)',
-    default: 'rgba(158, 158, 158, 0.15)'
-  }
-  return colors[type] || colors.default
+    default: 'rgba(158, 158, 158, 0.15)',
+  };
+  return colors[type] || colors.default;
 }
 
 function handleNotification(n) {
-  n.read = true
+  n.read = true;
   if (n.link) {
-    router.push(n.link)
+    router.push(n.link);
   }
 }
 
 function markAllRead() {
-  notifications.value.forEach(n => n.read = true)
+  notifications.value.forEach(n => (n.read = true));
 }
 
 function clearAll() {
-  notifications.value = []
+  notifications.value = [];
 }
 
 function deleteNotification(id) {
-  notifications.value = notifications.value.filter(n => n.id !== id)
+  notifications.value = notifications.value.filter(n => n.id !== id);
 }
 
 onMounted(() => {
-  fetchNotifications()
-})
+  fetchNotifications();
+});
 </script>
 
 <style scoped>

@@ -1,388 +1,322 @@
 <template>
-  <div class="page-wrap">
-    <div class="page-header d-flex justify-content-between align-items-center">
-      <div>
-        <h2 class="title">Departments</h2>
-        <Breadcrumbs />
-        <div class="text-muted">Organize ministry units and members</div>
-      </div>
-      <div class="d-flex gap-2">
-        <CButton color="light" @click="exportDepartments">
-          <i class="bi bi-file-earmark-excel me-1"></i> Export
-        </CButton>
-        <CButton color="primary" @click="showCreateModal = true">Add</CButton>
+  <div class="page-container">
+    <div class="page-wrap animate-fade-in">
+      <PageHeader title="Departments" subtitle="Organize ministry units and members">
+        <!-- @ts-ignore -->
+        <template #actions>
+          <div class="d-flex gap-2">
+            <button class="md-btn md-btn-outlined ripple" @click="exportDepartments">
+              <i class="bi bi-file-earmark-excel me-2"></i> Export
+            </button>
+            <button class="md-btn md-btn-filled ripple" @click="openDeptModal()">
+              <i class="bi bi-plus-lg me-2"></i> Add Department
+            </button>
+          </div>
+        </template>
+      </PageHeader>
+
+      <div class="md-content-grid">
+        <div class="md-col-12">
+          <MaterialCard title="Ministry Units" class="ministry-units-card shadow-sm">
+            <div v-if="loading" class="d-flex flex-column align-items-center py-5">
+              <div class="md-progress-circular mb-3">
+                <svg viewBox="0 0 50 50">
+                  <circle cx="25" cy="25" r="20"></circle>
+                </svg>
+              </div>
+              <span class="text-muted">Loading units...</span>
+            </div>
+
+            <div v-else-if="depts.length === 0" class="text-center py-5 animate-up">
+              <div class="empty-state-icon mx-auto mb-3">
+                <i class="bi bi-folder-x"></i>
+              </div>
+              <h3 class="md-title-medium">No departments found</h3>
+              <p class="text-muted">Get started by creating your first ministry unit.</p>
+            </div>
+
+            <div v-else class="dept-list-container">
+              <TransitionGroup name="list-complete" tag="div" class="dept-grid">
+                <div v-for="d in paginatedDepartments" :key="d.id" class="dept-card list-complete-item" tabindex="0"
+                  @click="viewDepartment(d)">
+                  <div class="d-flex align-items-center flex-grow-1 gap-3">
+                    <div class="md-avatar md-avatar-lg shadow-sm" :class="getRandomColor(d.name)">
+                      <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                      <h4 class="md-title-medium mb-1 fw-bold text-dark">{{ d.name }}</h4>
+                      <div class="d-flex align-items-center gap-2">
+                        <span class="badge rounded-pill bg-primary-subtle text-primary">
+                          <i class="bi bi-person me-1"></i> {{ d.member_count || 0 }} Members
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="dept-actions">
+                    <button class="md-btn md-btn-icon md-btn-text" title="Edit" @click.stop="openDeptModal(d)">
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button class="md-btn md-btn-icon md-btn-text text-danger" title="Delete"
+                      @click.stop="confirmDeleteRequest(d)">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                    <i class="bi bi-chevron-right text-muted ms-2"></i>
+                  </div>
+                </div>
+              </TransitionGroup>
+
+              <div v-if="totalPages > 1" class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+                <span class="text-muted small">Page {{ currentPage }} of {{ totalPages }}</span>
+                <div class="d-flex gap-2">
+                  <button class="md-btn md-btn-outlined md-btn-sm" :disabled="currentPage === 1" @click="currentPage--">
+                    Prev
+                  </button>
+                  <button class="md-btn md-btn-outlined md-btn-sm" :disabled="currentPage === totalPages"
+                    @click="currentPage++">
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          </MaterialCard>
+        </div>
       </div>
     </div>
 
-    <CRow class="g-4">
-      <CCol md="6">
-        <CCard>
-          <CCardHeader class="fw-semibold">Ministry Units</CCardHeader>
-          <CCardBody>
-            <CListGroup>
-              <CListGroupItem 
-                v-for="d in depts" 
-                :key="d.id" 
-                class="d-flex justify-content-between align-items-center dept-item"
-                @click="viewDepartment(d)"
-                style="cursor: pointer;">
-                <div class="d-flex align-items-center">
-                  <i class="bi bi-people-fill me-2 text-primary"></i>
-                  {{ d.name }}
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                  <CBadge color="secondary">{{ d.member_count || d.members }} members</CBadge>
-                  <CButton color="light" size="sm" @click.stop="editDepartment(d)">
-                    <i class="bi bi-pencil"></i>
-                  </CButton>
-                  <CButton color="danger" size="sm" variant="ghost" @click.stop="deleteDepartment(d)">
-                    <i class="bi bi-trash"></i>
-                  </CButton>
-                </div>
-              </CListGroupItem>
-              <CListGroupItem v-if="depts.length === 0" class="text-center text-muted py-4">
-                <i class="bi bi-folder-x fs-3 d-block mb-2"></i>
-                No departments found
-              </CListGroupItem>
-            </CListGroup>
-          </CCardBody>
-        </CCard>
-      </CCol>
-      <CCol md="6">
-        <CCard>
-          <CCardHeader class="fw-semibold">Create Department</CCardHeader>
-          <CCardBody>
-            <CForm @submit.prevent="create">
-              <CFormLabel>Name</CFormLabel>
-              <CFormInput v-model="name" placeholder="Enter department name" />
-              <CFormLabel class="mt-3">Description</CFormLabel>
-              <CFormTextarea v-model="description" placeholder="Department description" rows="3" />
-              <div class="mt-3 d-flex justify-content-end">
-                <CButton color="success" type="submit">Save</CButton>
-              </div>
-            </CForm>
-          </CCardBody>
-        </CCard>
-      </CCol>
-    </CRow>
-
-    <!-- View Department Members Modal -->
-    <CModal :visible="showMembersModal" @close="showMembersModal = false" size="lg">
-      <CModalHeader>
-        <CModalTitle>
-          <i class="bi bi-people me-2"></i>{{ selectedDept?.name }} - Members
-        </CModalTitle>
-      </CModalHeader>
-      <CModalBody>
-        <div class="d-flex justify-content-between align-items-center mb-3">
-          <CFormInput 
-            v-model="memberSearch" 
-            placeholder="Search members..." 
-            class="w-50"
-          />
-          <CButton color="primary" size="sm" @click="showAddMemberModal = true">
-            <i class="bi bi-person-plus me-1"></i> Add Member
-          </CButton>
+    <Teleport to="body">
+      <CModal :visible="showEditModal" alignment="center" @close="showEditModal = false">
+        <div
+          class="modal-header-custom border-bottom p-3"
+          :class="deptForm.id ? 'bg-info-container' : 'bg-primary-container'"
+        >
+          <h5 class="fw-bold mb-0">{{ deptForm.id ? 'Update' : 'New' }} Department</h5>
+          <button class="btn-close" @click="showEditModal = false"></button>
         </div>
-        <CTable hover responsive>
-          <CTableHead>
-            <CTableRow>
-              <CTableHeaderCell>#</CTableHeaderCell>
-              <CTableHeaderCell>Name</CTableHeaderCell>
-              <CTableHeaderCell>Phone</CTableHeaderCell>
-              <CTableHeaderCell>Role</CTableHeaderCell>
-              <CTableHeaderCell>Actions</CTableHeaderCell>
-            </CTableRow>
-          </CTableHead>
-          <CTableBody>
-            <CTableRow v-for="(member, idx) in filteredMembers" :key="member.id">
-              <CTableDataCell>{{ idx + 1 }}</CTableDataCell>
-              <CTableDataCell>
-                <div class="d-flex align-items-center">
-                  <CAvatar size="sm" color="primary" class="me-2">
-                    {{ member.name?.charAt(0) }}
-                  </CAvatar>
-                  {{ member.name }}
-                </div>
-              </CTableDataCell>
-              <CTableDataCell>{{ member.phone }}</CTableDataCell>
-              <CTableDataCell>
-                <CBadge :color="member.role === 'Leader' ? 'success' : member.role === 'Assistant' ? 'info' : 'secondary'">
-                  {{ member.role }}
-                </CBadge>
-              </CTableDataCell>
-              <CTableDataCell>
-                <CButton color="danger" size="sm" variant="ghost" @click="removeMember(member)">
-                  <i class="bi bi-person-x"></i>
-                </CButton>
-              </CTableDataCell>
-            </CTableRow>
-            <CTableRow v-if="filteredMembers.length === 0">
-              <CTableDataCell colspan="5" class="text-center text-muted py-4">
-                <i class="bi bi-person-x fs-3 d-block mb-2"></i>
-                No members found
-              </CTableDataCell>
-            </CTableRow>
-          </CTableBody>
-        </CTable>
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="showMembersModal = false">Close</CButton>
-      </CModalFooter>
-    </CModal>
+        <div class="modal-body p-4">
+          <form @submit.prevent="handleDeptSubmit">
+            <div class="md-input-wrapper mb-4">
+              <input v-model="deptForm.name" type="text" class="md-input" placeholder=" " required />
+              <label class="md-label-floating">Department Name</label>
+            </div>
+            <div class="md-input-wrapper mb-4">
+              <textarea v-model="deptForm.description" class="md-input" placeholder=" " rows="3"></textarea>
+              <label class="md-label-floating">Description</label>
+            </div>
+            <button type="submit" class="md-btn md-btn-filled w-100 ripple" :disabled="isSubmitting">
+              <span v-if="isSubmitting" class="spinner-border spinner-border-sm me-2"></span>
+              {{ isSubmitting ? 'Saving...' : deptForm.id ? 'Save Changes' : 'Create Department' }}
+            </button>
+          </form>
+        </div>
+      </CModal>
+    </Teleport>
 
-    <!-- Edit Department Modal -->
-    <CModal :visible="showEditModal" @close="showEditModal = false">
-      <CModalHeader>
-        <CModalTitle>Edit Department</CModalTitle>
-      </CModalHeader>
-      <CModalBody>
-        <CFormLabel>Name</CFormLabel>
-        <CFormInput v-model="editForm.name" />
-        <CFormLabel class="mt-3">Description</CFormLabel>
-        <CFormTextarea v-model="editForm.description" rows="3" />
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="showEditModal = false">Cancel</CButton>
-        <CButton color="primary" @click="saveEdit">Save Changes</CButton>
-      </CModalFooter>
-    </CModal>
-
-    <!-- Add Member Modal -->
-    <CModal :visible="showAddMemberModal" @close="showAddMemberModal = false">
-      <CModalHeader>
-        <CModalTitle>Add Member to {{ selectedDept?.name }}</CModalTitle>
-      </CModalHeader>
-      <CModalBody>
-        <CFormLabel>Select Member</CFormLabel>
-        <CFormSelect v-model="newMemberId">
-          <option value="">Choose a member...</option>
-          <option v-for="user in availableUsers" :key="user.id" :value="user.id">
-            {{ user.name }}
-          </option>
-        </CFormSelect>
-        <CFormLabel class="mt-3">Role in Department</CFormLabel>
-        <CFormSelect v-model="newMemberRole">
-          <option value="Member">Member</option>
-          <option value="Assistant">Assistant</option>
-          <option value="Leader">Leader</option>
-        </CFormSelect>
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="showAddMemberModal = false">Cancel</CButton>
-        <CButton color="primary" @click="addMember">Add Member</CButton>
-      </CModalFooter>
-    </CModal>
+    <Teleport to="body">
+      <CModal :visible="confirmModal.show" alignment="center" @close="confirmModal.show = false">
+        <div class="p-4 text-center">
+          <div class="md-avatar md-avatar-xl bg-error-container text-error mx-auto mb-3">
+            <i class="bi bi-exclamation-triangle"></i>
+          </div>
+          <h4 class="fw-bold mb-2">{{ confirmModal.title }}</h4>
+          <p class="text-muted mb-4">{{ confirmModal.message }}</p>
+          <div class="d-flex gap-2 justify-content-center">
+            <button class="md-btn md-btn-text" @click="confirmModal.show = false">Cancel</button>
+            <button
+              class="md-btn md-btn-filled bg-danger text-white border-0"
+              :disabled="isDeleting"
+              @click="confirmModal.onConfirm"
+            >
+              {{ isDeleting ? 'Processing...' : 'Confirm Delete' }}
+            </button>
+          </div>
+        </div>
+      </CModal>
+    </Teleport>
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue'
-import { 
-  CRow, CCol, CCard, CCardBody, CCardHeader, CForm, CFormLabel, CFormInput, CFormTextarea, CFormSelect,
-  CButton, CBadge, CListGroup, CListGroupItem, CModal, CModalHeader, CModalTitle, CModalBody, CModalFooter,
-  CTable, CTableHead, CTableBody, CTableRow, CTableHeaderCell, CTableDataCell, CAvatar
-} from '@coreui/vue'
-import Breadcrumbs from '../components/Breadcrumbs.vue'
-import { exportToExcel } from '../utils/export.js'
-import { departmentsApi } from '../api/departments'
-import { usersApi } from '../api/users'
+<script setup lang="ts">
+import { ref, computed, onMounted, reactive } from 'vue';
+import { CModal } from '@coreui/vue';
+import PageHeader from '../components/shared/PageHeader.vue';
+import MaterialCard from '../components/material/MaterialCard.vue';
+import { exportToExcel } from '../utils/export.js';
+import { departmentsApi } from '../api/departments';
+import { useToast } from '../composables/useToast';
 
-const depts = ref([])
-const name = ref('')
-const description = ref('')
-const loading = ref(false)
+// Types
+interface Department {
+  id: number;
+  name: string;
+  description?: string;
+}
 
-// Modals
-const showMembersModal = ref(false)
-const showEditModal = ref(false)
-const showAddMemberModal = ref(false)
-const showCreateModal = ref(false)
+interface DeptForm {
+  id: number | null;
+  name: string;
+  description: string;
+}
 
-// Selected department
-const selectedDept = ref(null)
-const deptMembers = ref([])
-const memberSearch = ref('')
+interface ConfirmModal {
+  show: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+}
 
-// Edit form
-const editForm = ref({ id: '', name: '', description: '' })
+const toast = useToast();
 
-// Add member
-const availableUsers = ref([])
-const newMemberId = ref('')
-const newMemberRole = ref('Member')
+// Unified States
+const depts = ref<Department[]>([]);
+const loading = ref<boolean>(false);
+const currentPage = ref<number>(1);
+const pageSize = 6;
+const isSubmitting = ref<boolean>(false);
+const isDeleting = ref<boolean>(false);
 
-const filteredMembers = computed(() => {
-  if (!memberSearch.value) return deptMembers.value
-  const search = memberSearch.value.toLowerCase()
-  return deptMembers.value.filter(m => 
-    m.name?.toLowerCase().includes(search) || 
-    m.phone?.includes(search)
-  )
-})
+// Modal Logic
+const showEditModal = ref<boolean>(false);
+const _showMembersModal = ref<boolean>(false);
+const confirmModal = reactive<ConfirmModal>({ show: false, title: '', message: '', onConfirm: () => { } });
+const deptForm = reactive<DeptForm>({ id: null, name: '', description: '' });
+const selectedDept = ref<Department | null>(null);
+const _deptMembers = ref<any[]>([]);
 
-async function fetchDepartments() {
-  loading.value = true
+// Computed Pagination
+const paginatedDepartments = computed<Department[]>(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return depts.value.slice(start, start + pageSize);
+});
+const totalPages = computed<number>(() => Math.ceil(depts.value.length / pageSize));
+
+// API Methods
+async function fetchDepartments(): Promise<void> {
+  loading.value = true;
   try {
-    const response = await departmentsApi.getAll()
-    if (response.data.success) {
-      depts.value = response.data.data
-    }
-  } catch (error) {
-    console.error('Failed to fetch departments:', error)
-    // Fallback to sample data
-    depts.value = [
-      { id: 1, name: 'Media', member_count: 12 },
-      { id: 2, name: 'Prayer Team', member_count: 18 },
-      { id: 3, name: 'Welfare', member_count: 9 }
-    ]
+    const res = await departmentsApi.getAll();
+    if (res.data.success) depts.value = res.data.data;
+  } catch (e) {
+    toast.error('Failed to load departments');
   } finally {
-    loading.value = false
+    loading.value = false;
   }
 }
 
-async function fetchUsers() {
+const openDeptModal = (dept: Department | null = null): void => {
+  if (dept) {
+    Object.assign(deptForm, { id: dept.id, name: dept.name, description: dept.description || '' });
+  } else {
+    Object.assign(deptForm, { id: null, name: '', description: '' });
+  }
+  showEditModal.value = true;
+};
+
+async function handleDeptSubmit(): Promise<void> {
+  isSubmitting.value = true;
   try {
-    const response = await usersApi.getAll()
-    if (response.data.success) {
-      availableUsers.value = response.data.data
+    const payload = { name: deptForm.name, description: deptForm.description };
+    if (deptForm.id) {
+      await departmentsApi.update(deptForm.id, payload);
+      toast.success('Department updated');
+    } else {
+      const res = await departmentsApi.create(payload);
+      depts.value.unshift(res.data.data);
+      toast.success('Department created');
     }
-  } catch (error) {
-    console.error('Failed to fetch users:', error)
+    showEditModal.value = false;
+    fetchDepartments();
+  } catch (e) {
+    toast.error('Operation failed');
+  } finally {
+    isSubmitting.value = false;
   }
 }
 
-async function viewDepartment(dept) {
-  selectedDept.value = dept
-  showMembersModal.value = true
-  try {
-    const response = await departmentsApi.getMembers(dept.id)
-    if (response.data.success) {
-      deptMembers.value = response.data.data
+function confirmDeleteRequest(dept: Department): void {
+  confirmModal.title = 'Delete Department?';
+  confirmModal.message = `Remove ${dept.name}? This cannot be undone.`;
+  confirmModal.onConfirm = async () => {
+    isDeleting.value = true;
+    try {
+      await departmentsApi.delete(dept.id);
+      depts.value = depts.value.filter(d => d.id !== dept.id);
+      toast.success('Deleted');
+      confirmModal.show = false;
+    } finally {
+      isDeleting.value = false;
     }
-  } catch (error) {
-    console.error('Failed to fetch members:', error)
-    // Fallback sample members
-    deptMembers.value = [
-      { id: 1, name: 'Emmanuel Agyei', phone: '+233241111111', role: 'Leader' },
-      { id: 2, name: 'Grace Addo', phone: '+233241111112', role: 'Assistant' },
-      { id: 3, name: 'Peter Asare', phone: '+233241111117', role: 'Member' },
-    ]
-  }
+  };
+  confirmModal.show = true;
 }
 
-function editDepartment(dept) {
-  editForm.value = { id: dept.id, name: dept.name, description: dept.description || '' }
-  showEditModal.value = true
+function viewDepartment(dept: Department): void {
+  selectedDept.value = dept;
+  // TODO: Implement department view - perhaps show members or navigate to department page
+  // For now, just log or show a placeholder
+  console.log('Viewing department:', dept);
+  // You could open a modal or navigate
+  // showMembersModal.value = true;
+  // fetchDeptMembers(dept.id);
 }
 
-async function saveEdit() {
-  try {
-    await departmentsApi.update(editForm.value.id, {
-      name: editForm.value.name,
-      description: editForm.value.description
-    })
-    const idx = depts.value.findIndex(d => d.id === editForm.value.id)
-    if (idx !== -1) {
-      depts.value[idx].name = editForm.value.name
-      depts.value[idx].description = editForm.value.description
-    }
-    showEditModal.value = false
-  } catch (error) {
-    console.error('Failed to update department:', error)
-  }
+// Helpers
+const getRandomColor = (s: string): string => {
+  const variants = [
+    'bg-primary-subtle text-primary',
+    'bg-success-subtle text-success',
+    'bg-info-subtle text-info',
+  ];
+  return variants[s.length % variants.length];
+};
+
+function exportDepartments(): void {
+  exportToExcel(depts.value, [{ key: 'name', header: 'Name' }], 'Departments');
 }
 
-async function deleteDepartment(dept) {
-  if (!confirm(`Are you sure you want to delete "${dept.name}"?`)) return
-  try {
-    await departmentsApi.delete(dept.id)
-    depts.value = depts.value.filter(d => d.id !== dept.id)
-  } catch (error) {
-    console.error('Failed to delete department:', error)
-  }
-}
-
-async function create() {
-  if (!name.value.trim()) return
-  try {
-    const response = await departmentsApi.create({ 
-      name: name.value.trim(),
-      description: description.value.trim()
-    })
-    if (response.data.success) {
-      depts.value.push(response.data.data)
-    }
-    name.value = ''
-    description.value = ''
-  } catch (error) {
-    console.error('Failed to create department:', error)
-    // Fallback local add
-    const id = depts.value.length ? Math.max(...depts.value.map(d => d.id)) + 1 : 1
-    depts.value.push({ id, name: name.value.trim(), member_count: 0 })
-    name.value = ''
-    description.value = ''
-  }
-}
-
-async function addMember() {
-  if (!newMemberId.value) return
-  try {
-    await departmentsApi.addMember(selectedDept.value.id, {
-      user_id: newMemberId.value,
-      role: newMemberRole.value
-    })
-    const user = availableUsers.value.find(u => u.id === newMemberId.value)
-    if (user) {
-      deptMembers.value.push({
-        id: user.id,
-        name: user.name,
-        phone: user.phone,
-        role: newMemberRole.value
-      })
-    }
-    showAddMemberModal.value = false
-    newMemberId.value = ''
-    newMemberRole.value = 'Member'
-  } catch (error) {
-    console.error('Failed to add member:', error)
-  }
-}
-
-async function removeMember(member) {
-  if (!confirm(`Remove ${member.name} from this department?`)) return
-  try {
-    await departmentsApi.removeMember(selectedDept.value.id, member.id)
-    deptMembers.value = deptMembers.value.filter(m => m.id !== member.id)
-  } catch (error) {
-    console.error('Failed to remove member:', error)
-  }
-}
-
-function exportDepartments() {
-  const columns = [
-    { key: 'name', header: 'Department Name' },
-    { key: 'member_count', header: 'Members Count' }
-  ]
-  exportToExcel(depts.value, columns, `Departments_${new Date().toISOString().split('T')[0]}`)
-}
-
-onMounted(() => {
-  fetchDepartments()
-  fetchUsers()
-})
+onMounted(fetchDepartments);
 </script>
 
 <style scoped>
-.page-wrap {
-  padding: 20px;
+.page-container {
+  min-height: 100vh;
 }
 
-.page-header {
-  margin-bottom: 16px;
+.dept-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
 }
 
-.dept-item:hover {
-  background-color: rgba(var(--cui-primary-rgb), 0.05);
+.dept-card {
+  background: #fff;
+  border: 1px solid #edf2f7;
+  border-radius: 12px;
+  padding: 1.25rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+}
+
+.dept-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  border-color: #6366f1;
+}
+
+.list-complete-item {
+  transition: all 0.5s ease;
+}
+
+.list-complete-enter-from,
+.list-complete-leave-to {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.modal-header-custom {
+  border-radius: 16px 16px 0 0;
 }
 </style>

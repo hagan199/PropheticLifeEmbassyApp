@@ -24,7 +24,7 @@ class DashboardController extends Controller
         try {
             // Get user role from authenticated user
             $user = $request->user();
-            $role = $user?->role?->name ?? 'admin';
+            $role = $user?->role ?? 'admin';
 
             // Get date range from request
             $range = $request->get('range', 'week');
@@ -218,6 +218,21 @@ class DashboardController extends Controller
             'converted' => Visitor::where('status', 'converted')->count(),
         ];
 
+        // Follow-up Stats
+        $followUpStats = [
+            'due' => Visitor::dueForFollowUp()->count(),
+            'completed' => FollowUp::whereBetween('updated_at', [$start, $end])->count(),
+        ];
+
+        // Conversion Rate
+        $conversionRate = [
+            'rate' => Visitor::where('status', 'converted')->count() > 0
+                ? round((Visitor::where('status', 'converted')->count() / Visitor::count()) * 100)
+                : 0,
+            'converted' => Visitor::where('status', 'converted')->count(),
+            'total' => Visitor::count(),
+        ];
+
         $analytics = [
             'attendance_trend' => [
                 'labels' => $attendanceLabels,
@@ -229,7 +244,9 @@ class DashboardController extends Controller
                 'expenses' => $expenses,
             ],
             'visitor_conversion' => $visitorConversion,
-            'department_distribution' => [], 
+            'follow_up_stats' => $followUpStats,
+            'conversion_rate' => $conversionRate,
+            'department_distribution' => [],
             // Finance Breakdowns
             'finance_category' => [
                 'labels' => Contribution::whereBetween('date', [$start, $end])
@@ -243,44 +260,44 @@ class DashboardController extends Controller
             ],
             'finance_method' => [
                 'labels' => Contribution::whereBetween('date', [$start, $end])
-                     ->select('payment_method')
-                     ->distinct()
-                     ->pluck('payment_method'),
+                    ->select('payment_method')
+                    ->distinct()
+                    ->pluck('payment_method'),
                 'data' => Contribution::whereBetween('date', [$start, $end])
-                     ->groupBy('payment_method')
-                     ->selectRaw('sum(amount) as total')
-                     ->pluck('total')
+                    ->groupBy('payment_method')
+                    ->selectRaw('sum(amount) as total')
+                    ->pluck('total')
             ],
-             'expense_category' => [
+            'expense_category' => [
                 'labels' => Expense::whereBetween('expense_date', [$start, $end])
-                     ->select('category')
-                     ->distinct()
-                     ->pluck('category'),
+                    ->select('category')
+                    ->distinct()
+                    ->pluck('category'),
                 'data' => Expense::whereBetween('expense_date', [$start, $end])
-                     ->groupBy('category')
-                     ->selectRaw('sum(amount) as total')
-                     ->pluck('total')
+                    ->groupBy('category')
+                    ->selectRaw('sum(amount) as total')
+                    ->pluck('total')
             ],
             // Visitor Analytics
             'visitor_sources' => [
                 'labels' => Visitor::whereBetween('first_visit_date', [$start, $end])
-                     ->select('source')
-                     ->distinct()
-                     ->pluck('source'),
+                    ->select('source')
+                    ->distinct()
+                    ->pluck('source'),
                 'data' => Visitor::whereBetween('first_visit_date', [$start, $end])
-                     ->groupBy('source')
-                     ->selectRaw('count(*) as total')
-                     ->pluck('total')
+                    ->groupBy('source')
+                    ->selectRaw('count(*) as total')
+                    ->pluck('total')
             ],
             // Member Stats
             'user_growth' => [
-                'labels' => User::selectRaw("DATE_FORMAT(created_at, '%Y-%m') as date")
-                    ->whereBetween('created_at', [$start->subMonths(6), $end]) // Always show 6 month trend
+                'labels' => User::selectRaw("TO_CHAR(created_at, 'YYYY-MM') as date")
+                    ->whereBetween('created_at', [$start->copy()->subMonths(6), $end]) // Always show 6 month trend
                     ->groupBy('date')
                     ->pluck('date'),
                 'data' => User::selectRaw("count(*) as total")
-                    ->whereBetween('created_at', [$start->subMonths(6), $end])
-                    ->groupBy(User::raw("DATE_FORMAT(created_at, '%Y-%m')"))
+                    ->whereBetween('created_at', [$start->copy()->subMonths(6), $end])
+                    ->groupBy(User::raw("TO_CHAR(created_at, 'YYYY-MM')"))
                     ->pluck('total')
             ],
             'user_roles' => [
@@ -290,7 +307,18 @@ class DashboardController extends Controller
             // Department Stats
             'department_distribution' => [
                 'labels' => \App\Models\Department::pluck('name'),
-                'data' => \App\Models\Department::pluck('member_count')
+                // Members per department
+                'data' => \App\Models\User::selectRaw('department_id, count(*) as total')
+                    ->groupBy('department_id')
+                    ->pluck('total'),
+                // Department growth (monthly trend)
+                'growth' => \App\Models\User::selectRaw("department_id, TO_CHAR(created_at, 'YYYY-MM') as month, count(*) as total")
+                    ->groupBy('department_id', 'month')
+                    ->get(),
+                // Active departments (with active members)
+                'active' => \App\Models\Department::whereHas('members', function ($q) {
+                    $q->where('status', 'active');
+                })->pluck('name'),
             ]
         ];
 
@@ -359,6 +387,7 @@ class DashboardController extends Controller
         $conversionRate = $totalVisitors > 0 ? round(($convertedVisitors / $totalVisitors) * 100) : 0;
 
         // Recent members in the range
+
         $recentMembers = User::whereBetween('created_at', [$startDate, $endDate])
             ->orderBy('created_at', 'desc')
             ->take(5)
@@ -367,6 +396,7 @@ class DashboardController extends Controller
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
+                    'phone' => $user->phone ?? null,
                     'status' => $user->status ?? 'active',
                     'joined' => $user->created_at->diffForHumans(),
                 ];
@@ -381,6 +411,7 @@ class DashboardController extends Controller
                     return [
                         'id' => $user->id,
                         'name' => $user->name,
+                        'phone' => $user->phone ?? null,
                         'status' => $user->status ?? 'active',
                         'joined' => $user->created_at->diffForHumans(),
                     ];

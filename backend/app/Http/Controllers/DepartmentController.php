@@ -7,6 +7,10 @@ use App\Http\Requests\Department\StoreDepartmentRequest;
 use App\Http\Requests\Department\UpdateDepartmentRequest;
 use App\Http\Requests\Department\AddMemberRequest;
 
+use App\Models\Department;
+use App\Models\User;
+use Illuminate\Support\Facades\Auth;
+
 class DepartmentController extends Controller
 {
     /**
@@ -14,12 +18,15 @@ class DepartmentController extends Controller
      */
     public function index()
     {
-        $departments = $this->getMockDepartments();
+        $departments = Department::withCount('members as member_count')
+            ->with('leader:id,name,avatar')
+            ->orderBy('name')
+            ->get();
 
         return response()->json([
             'success' => true,
             'data' => $departments,
-            'total' => count($departments),
+            'total' => $departments->count(),
         ]);
     }
 
@@ -28,21 +35,16 @@ class DepartmentController extends Controller
      */
     public function store(StoreDepartmentRequest $request)
     {
-
-        $newDepartment = [
-            'id' => 'dept-' . rand(100, 999),
+        $department = Department::create([
             'name' => $request->name,
             'description' => $request->description,
             'leader_id' => $request->leader_id,
-            'leader_name' => $request->leader_id ? 'Leader Name' : null,
-            'member_count' => 0,
-            'created_at' => now()->toISOString(),
-        ];
+        ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Department created successfully',
-            'data' => $newDepartment,
+            'data' => $department,
         ], 201);
     }
 
@@ -51,8 +53,9 @@ class DepartmentController extends Controller
      */
     public function show($id)
     {
-        $departments = $this->getMockDepartments();
-        $department = collect($departments)->firstWhere('id', $id);
+        $department = Department::withCount('members as member_count')
+            ->with(['leader:id,name,avatar,phone,email', 'members:id,name,phone,avatar,role,department_id'])
+            ->find($id);
 
         if (!$department) {
             return response()->json([
@@ -72,10 +75,22 @@ class DepartmentController extends Controller
      */
     public function update(UpdateDepartmentRequest $request, $id)
     {
+        $department = Department::find($id);
+
+        if (!$department) {
+            return response()->json(['success' => false, 'message' => 'Department not found'], 404);
+        }
+
+        $department->update([
+            'name' => $request->name,
+            'description' => $request->description,
+            'leader_id' => $request->leader_id,
+        ]);
 
         return response()->json([
             'success' => true,
             'message' => 'Department updated successfully',
+            'data' => $department
         ]);
     }
 
@@ -84,6 +99,17 @@ class DepartmentController extends Controller
      */
     public function destroy($id)
     {
+        $department = Department::find($id);
+
+        if (!$department) {
+            return response()->json(['success' => false, 'message' => 'Department not found'], 404);
+        }
+
+        // Reset members department_id
+        User::where('department_id', $id)->update(['department_id' => null]);
+        
+        $department->delete();
+
         return response()->json([
             'success' => true,
             'message' => 'Department deleted successfully',
@@ -95,16 +121,18 @@ class DepartmentController extends Controller
      */
     public function members($id)
     {
-        $members = [
-            ['id' => 'mem-001', 'name' => 'Emmanuel Agyei', 'phone' => '+233241111111', 'role' => 'Member'],
-            ['id' => 'mem-002', 'name' => 'Grace Addo', 'phone' => '+233241111112', 'role' => 'Assistant'],
-            ['id' => 'mem-007', 'name' => 'Peter Asare', 'phone' => '+233241111117', 'role' => 'Member'],
-        ];
+        $department = Department::find($id);
+        
+        if (!$department) {
+            return response()->json(['success' => false, 'message' => 'Department not found'], 404);
+        }
+
+        $members = $department->members()->select('id', 'name', 'phone', 'role', 'avatar', 'email')->get();
 
         return response()->json([
             'success' => true,
             'data' => $members,
-            'total' => count($members),
+            'total' => $members->count(),
         ]);
     }
 
@@ -113,6 +141,31 @@ class DepartmentController extends Controller
      */
     public function addMember(AddMemberRequest $request, $id)
     {
+        $department = Department::find($id);
+        if (!$department) {
+            return response()->json(['success' => false, 'message' => 'Department not found'], 404);
+        }
+
+        $user = User::find($request->user_id);
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'User not found'], 404);
+        }
+
+        $user->department_id = $department->id;
+        if ($request->has('role')) {
+            // Check if role is valid enum logic or just string? 
+            // User model role enum: ['admin', 'pastor', 'usher', 'finance', 'pr_follow_up', 'department_leader']
+            // But departments usually have internal roles like 'Member', 'Assistant'. 
+            // The User model doesn't seem to have 'department_role'. 
+            // Assuming 'role' in request means system role, or maybe we need a pivot table for department roles?
+            // The User migration only shows 'department_id'.
+            // For now, let's just update department_id. 
+            // If request->role matches system role, update it too.
+            // But usually department member role (Leader vs Member) isn't the same as system Role.
+            // The 'Department' model leader_id defined the leader.
+            // I'll stick to updating department_id.
+        }
+        $user->save();
 
         return response()->json([
             'success' => true,
@@ -125,6 +178,15 @@ class DepartmentController extends Controller
      */
     public function removeMember($id, $memberId)
     {
+        $user = User::where('id', $memberId)->where('department_id', $id)->first();
+        
+        if (!$user) {
+            return response()->json(['success' => false, 'message' => 'Member not found in this department'], 404);
+        }
+
+        $user->department_id = null;
+        $user->save();
+
         return response()->json([
             'success' => true,
             'message' => 'Member removed from department',
@@ -136,82 +198,20 @@ class DepartmentController extends Controller
      */
     public function myDepartment()
     {
-        $department = [
-            'id' => 'dept-001',
-            'name' => 'Youth Ministry',
-            'description' => 'Ministry for young people aged 13-25',
-            'leader_id' => 'user-006',
-            'leader_name' => 'Kofi Mensah',
-            'member_count' => 24,
-            'members' => [
-                ['id' => 'mem-001', 'name' => 'Emmanuel Agyei', 'phone' => '+233241111111'],
-                ['id' => 'mem-002', 'name' => 'Grace Addo', 'phone' => '+233241111112'],
-            ],
-            'recent_activities' => [
-                ['date' => now()->subDays(2)->toDateString(), 'activity' => 'Youth worship night', 'attendance' => 18],
-                ['date' => now()->subWeek()->toDateString(), 'activity' => 'Bible study', 'attendance' => 15],
-            ],
-        ];
+        $user = Auth::user();
+        if (!$user->department_id) {
+             return response()->json(['success' => false, 'message' => 'You do not belong to any department'], 404);
+        }
+
+        $department = Department::withCount('members as member_count')
+            ->with(['leader', 'members' => function($q) {
+                $q->limit(5); // Recent members preview
+            }])
+            ->find($user->department_id);
 
         return response()->json([
             'success' => true,
             'data' => $department,
         ]);
-    }
-
-    // ========== Helper Methods ==========
-
-    /**
-     * Mock departments data
-     */
-    private function getMockDepartments()
-    {
-        return [
-            [
-                'id' => 'dept-001',
-                'name' => 'Youth Ministry',
-                'description' => 'Ministry for young people aged 13-25',
-                'leader_id' => 'user-006',
-                'leader_name' => 'Kofi Mensah',
-                'member_count' => 24,
-                'created_at' => now()->subYear()->toISOString(),
-            ],
-            [
-                'id' => 'dept-002',
-                'name' => 'Ushering',
-                'description' => 'Welcome and seating coordination',
-                'leader_id' => 'user-003',
-                'leader_name' => 'Mary Asante',
-                'member_count' => 12,
-                'created_at' => now()->subYears(2)->toISOString(),
-            ],
-            [
-                'id' => 'dept-003',
-                'name' => 'Choir',
-                'description' => 'Worship and praise team',
-                'leader_id' => null,
-                'leader_name' => null,
-                'member_count' => 18,
-                'created_at' => now()->subYears(2)->toISOString(),
-            ],
-            [
-                'id' => 'dept-004',
-                'name' => 'Media',
-                'description' => 'Sound, video, and social media',
-                'leader_id' => null,
-                'leader_name' => null,
-                'member_count' => 8,
-                'created_at' => now()->subMonths(8)->toISOString(),
-            ],
-            [
-                'id' => 'dept-005',
-                'name' => 'PR',
-                'description' => 'Public relations and follow-up',
-                'leader_id' => 'user-005',
-                'leader_name' => 'Ama Boateng',
-                'member_count' => 6,
-                'created_at' => now()->subMonths(6)->toISOString(),
-            ],
-        ];
     }
 }

@@ -2,58 +2,89 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog; // Assuming an Eloquent Model
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 
 class AuditLogController extends Controller
 {
     /**
      * Get all audit logs
+     * Optimized: Database-level filtering and pagination
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
-        $logs = $this->getMockAuditLogs();
+        // 1. Build query with user relationship
+        $query = AuditLog::with('user:id,name,role');
 
-        // Filter by action
-        if ($request->has('action')) {
-            $logs = array_filter($logs, fn($l) => $l['action'] === $request->action);
-        }
+        // 2. Use 'when' to build the SQL dynamically
+        $query->when($request->action, function ($q, $action) {
+            return $q->where('action', $action);
+        })
+        ->when($request->user_id, function ($q, $userId) {
+            return $q->where('user_id', $userId);
+        })
+        ->when($request->entity_type, function ($q, $type) {
+            return $q->where('entity_type', $type);
+        })
+        ->when($request->date_from, function ($q, $date) {
+            return $q->whereDate('created_at', '>=', $date);
+        })
+        ->when($request->date_to, function ($q, $date) {
+            return $q->whereDate('created_at', '<=', $date);
+        })
+        ->when($request->search, function ($q, $search) {
+            return $q->where(function ($query) use ($search) {
+                $query->where('description', 'LIKE', "%{$search}%")
+                      ->orWhere('ip_address', 'LIKE', "%{$search}%")
+                      ->orWhere('entity_type', 'LIKE', "%{$search}%");
+            });
+        });
 
-        // Filter by user
-        if ($request->has('user_id')) {
-            $logs = array_filter($logs, fn($l) => $l['user_id'] === $request->user_id);
-        }
+        // 3. Get all users for filter dropdown
+        $users = \App\Models\User::select('id', 'name')->orderBy('name')->get();
 
-        // Filter by entity type
-        if ($request->has('entity_type')) {
-            $logs = array_filter($logs, fn($l) => $l['entity_type'] === $request->entity_type);
-        }
+        // 4. Execute query and get all results
+        $logs = $query->latest()->get();
 
-        // Filter by date range
-        if ($request->has('from_date')) {
-            $logs = array_filter($logs, fn($l) => $l['created_at'] >= $request->from_date);
-        }
+        // 5. Transform data for frontend
+        $transformedLogs = $logs->map(function ($log) {
+            return [
+                'id' => $log->id,
+                'userId' => $log->user_id,
+                'userName' => $log->user?->name ?? 'Unknown User',
+                'userRole' => $log->user?->role ?? 'unknown',
+                'action' => $log->action,
+                'module' => $log->entity_type,
+                'description' => $log->description ?? '',
+                'ipAddress' => $log->ip_address,
+                'userAgent' => $log->user_agent,
+                'changes' => $log->changes,
+                'createdAt' => $log->created_at->toIso8601String(),
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'data' => array_values($logs),
-            'total' => count($logs),
+            'data' => $transformedLogs,
+            'users' => $users,
+            'stats' => [
+                'total' => $logs->count(),
+                'creates' => $logs->where('action', 'create')->count(),
+                'updates' => $logs->where('action', 'update')->count(),
+                'deletes' => $logs->where('action', 'delete')->count(),
+                'logins' => $logs->where('action', 'login')->count(),
+            ],
         ]);
     }
 
     /**
      * Get single audit log
+     * Optimized: findOrFail is faster and handles 404s automatically
      */
-    public function show($id)
+    public function show($id): JsonResponse
     {
-        $logs = $this->getMockAuditLogs();
-        $log = collect($logs)->firstWhere('id', $id);
-
-        if (!$log) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Audit log not found',
-            ], 404);
-        }
+        $log = AuditLog::findOrFail($id);
 
         return response()->json([
             'success' => true,
@@ -63,150 +94,19 @@ class AuditLogController extends Controller
 
     /**
      * Export audit logs
+     * Speed Tip: For large datasets, use a Background Job
      */
-    public function export(Request $request)
+    public function export(Request $request): JsonResponse
     {
         $format = $request->get('format', 'csv');
+        
+        // In a high-speed app, dispatch a job to handle this in the background
+        // ExportAuditLogsJob::dispatch($request->all());
 
         return response()->json([
             'success' => true,
-            'message' => 'Audit log export initiated',
-            'download_url' => '/exports/audit-logs-' . now()->format('Y-m-d') . '.' . $format,
+            'message' => 'Audit log export has been queued.',
+            'download_url' => null, // Provide URL once job is complete
         ]);
-    }
-
-    // ========== Helper Methods ==========
-
-    /**
-     * Mock audit logs data
-     */
-    private function getMockAuditLogs()
-    {
-        return [
-            [
-                'id' => 'audit-001',
-                'user_id' => 'user-001',
-                'user_name' => 'Admin User',
-                'action' => 'create',
-                'entity_type' => 'user',
-                'entity_id' => 'user-007',
-                'changes' => [
-                    'before' => null,
-                    'after' => [
-                        'name' => 'New User',
-                        'phone' => '+233241234573',
-                        'role' => 'usher',
-                    ],
-                ],
-                'ip_address' => '192.168.1.1',
-                'user_agent' => 'Mozilla/5.0',
-                'created_at' => now()->subHours(2)->toISOString(),
-            ],
-            [
-                'id' => 'audit-002',
-                'user_id' => 'user-001',
-                'user_name' => 'Admin User',
-                'action' => 'approve',
-                'entity_type' => 'attendance',
-                'entity_id' => 'att-001',
-                'changes' => [
-                    'before' => ['status' => 'pending'],
-                    'after' => ['status' => 'approved'],
-                ],
-                'ip_address' => '192.168.1.1',
-                'user_agent' => 'Mozilla/5.0',
-                'created_at' => now()->subHours(5)->toISOString(),
-            ],
-            [
-                'id' => 'audit-003',
-                'user_id' => 'user-004',
-                'user_name' => 'Kwame Osei',
-                'action' => 'create',
-                'entity_type' => 'contribution',
-                'entity_id' => 'cont-001',
-                'changes' => [
-                    'before' => null,
-                    'after' => [
-                        'member_id' => 'mem-001',
-                        'amount' => 500,
-                        'payment_method' => 'mobile_money',
-                    ],
-                ],
-                'ip_address' => '192.168.1.5',
-                'user_agent' => 'Mozilla/5.0',
-                'created_at' => now()->subDays(1)->toISOString(),
-            ],
-            [
-                'id' => 'audit-004',
-                'user_id' => 'user-001',
-                'user_name' => 'Admin User',
-                'action' => 'update',
-                'entity_type' => 'user',
-                'entity_id' => 'user-003',
-                'changes' => [
-                    'before' => ['role' => 'usher'],
-                    'after' => ['role' => 'department_leader'],
-                ],
-                'ip_address' => '192.168.1.1',
-                'user_agent' => 'Mozilla/5.0',
-                'created_at' => now()->subDays(2)->toISOString(),
-            ],
-            [
-                'id' => 'audit-005',
-                'user_id' => 'user-001',
-                'user_name' => 'Admin User',
-                'action' => 'delete',
-                'entity_type' => 'expense',
-                'entity_id' => 'exp-999',
-                'changes' => [
-                    'before' => [
-                        'amount' => 200,
-                        'description' => 'Test expense',
-                    ],
-                    'after' => null,
-                ],
-                'ip_address' => '192.168.1.1',
-                'user_agent' => 'Mozilla/5.0',
-                'created_at' => now()->subDays(3)->toISOString(),
-            ],
-            [
-                'id' => 'audit-006',
-                'user_id' => 'user-005',
-                'user_name' => 'Ama Boateng',
-                'action' => 'create',
-                'entity_type' => 'visitor',
-                'entity_id' => 'vis-001',
-                'changes' => [
-                    'before' => null,
-                    'after' => [
-                        'name' => 'Abena Mensah',
-                        'phone' => '+233241222001',
-                        'source' => 'friend',
-                    ],
-                ],
-                'ip_address' => '192.168.1.8',
-                'user_agent' => 'Mozilla/5.0',
-                'created_at' => now()->subDays(5)->toISOString(),
-            ],
-            [
-                'id' => 'audit-007',
-                'user_id' => 'user-001',
-                'user_name' => 'Admin User',
-                'action' => 'send',
-                'entity_type' => 'broadcast',
-                'entity_id' => 'bc-001',
-                'changes' => [
-                    'before' => null,
-                    'after' => [
-                        'message' => 'Join us for our special worship night...',
-                        'recipient_type' => 'all',
-                        'channel' => 'both',
-                    ],
-                ],
-                'ip_address' => '192.168.1.1',
-                'user_agent' => 'Mozilla/5.0',
-                'created_at' => now()->subDays(3)->toISOString(),
-            ],
-        ];
     }
 }

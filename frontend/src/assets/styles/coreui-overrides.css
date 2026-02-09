@@ -1,0 +1,493 @@
+/**
+ * CoreUI Override Styles
+ * Makes CoreUI components compatible with Material Design 3 theme
+ */
+
+/* ========================================
+   COREUI BUTTON OVERRIDES
+   ======================================== */
+
+.btn {
+  font: var(--md-label-large);
+  border-radius: var(--md-shape-full);
+  padding: var(--md-space-3) var(--md-space-5);
+  border: none;
+  transition: all var(--md-motion-duration-short4) var(--md-motion-easing-standard);
+}
+
+.btn-primary {
+  background: var(--md-primary) !important;
+  color: var(--md-on-primary) !important;
+  border: none !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+  background: var(--md-primary-dark) !important;
+  box-shadow: var(--md-shadow-primary) !important;
+}
+
+.btn-success {
+  background: var(--md-success) !important;
+  color: var(--md-on-success) !important;
+  border: none !important;
+}
+
+.btn-success:hover,
+.btn-success:focus {
+  box-shadow: var(--md-shadow-success) !important;
+}
+
+.btn-warning {
+  background: var(--md-warning) !important;
+  color: var(--md-on-warning) !important;
+  border: none !important;
+}
+
+.btn-info {
+  background: var(--md-info) !important;
+  color: var(--md-on-info) !important;
+  border: none !important;
+}
+
+.btn-danger {
+  background: var(--md-error) !important;
+  color: var(--md-on-error) !important;
+  border: none !important;
+}
+
+.btn-light {
+  background: var(--md-surface-container) !important;
+  color: var(--md-on-surface) !important;
+  border: none !important;
+}
+
+.btn-light:hover {
+  background: var(--md-surface-container-high) !important;
+}
+
+.btn-outline-primary {
+  background: transparent !important;
+  color: var(--md-primary) !important;
+  border: 1px solid var(--md-primary) !important;
+}
+
+.btn-outline-primary:hover {
+  background: var(--md-primary-container) !important;
+  color: var(--md-on-primary-container) !important;
+}
+
+/* Button Group */
+.btn-group {
+  border-radius: var(--md-shape-full);
+  overflow: hidden;
+}
+
+.btn-group .btn {
+  border-radius: 0 !important;
+}
+
+.btn-group .btn:first-child {
+  border-top-left-radius: var(--md-shape-full) !important;
+  border-bottom-left-radius: var(--md-shape-full) !important;
+}
+
+.btn-group .btn:last-child {
+  border-top-right-radius: var(--md-shape-full) !important;
+  border-bottom-right-radius: var(--md-shape-full) !important;
+}
+
+/* ========================================
+   COREUI CARD OVERRIDES
+   ======================================== */
+
+.card {
+  background: var(--md-surface) !important;
+  border: none !important;
+  border-radius: var(--md-shape-lg) !important;
+  box-shadow: var(--md-elevation-2) !important;
+}
+
+.card-header {
+  background: transparent !important;
+  border-bottom: 1px solid var(--md-outline-variant) !important;
+  padding: var(--md-space-5) var(--md-space-6) !important;
+  font: var(--md-title-medium);
+  color: var(--md-on-surface);
+}
+
+.card-body {
+  padding: var(--md-space-5) var(--md-space-6) !important;
+}
+
+.card-footer {
+  background: var(--md-surface-container-low) !important;
+  border-top: 1px solid var(--md-outline-variant) !important;
+  padding: var(--md-space-4) var(--md-space-6) !important;
+}
+
+/* ========================================
+   COREUI FORM OVERRIDES
+   ======================================== */
+
+.form-control,
+.form-select {
+  background: var(--md-surface) !important;
+  border: 1px solid var(--md-outline) !important;
+  border-radius: var(--md-shape-sm) !important;
+  color: var(--md-on-surface) !important;
+  padding: var(--md-space-3) var(--md-space-4) !important;
+  font: var(--md-body-large);
+  transition: all var(--md-motion-duration-short4) var(--md-motion-easing-standard);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--md-primary) !important;
+  box-shadow: 0 0 0 3px var(--md-primary-container) !important;
+}
+
+.form-label {
+  font: var(--md-label-large);
+  color: var(--md-on-surface-variant);
+  margin-bottom: var(--md-space-2);
+}
+
+/* ========================================
+   COREUI TABLE OVERRIDES
+   ======================================== */
+
+.table {
+  color: var(--md-on-surface);
+}
+
+.table thead th {
+  background: var(--md-surface-container-low) !important;
+  color: var(--md-on-surface-variant) !important;
+  font: var(--md-label-large);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  border-bottom: 1px solid var(--md-outline-variant) !important;
+  padding: var(--md-space-4) !important;
+}
+
+.table tbody td {
+  padding: var(--md-space-4) !important;
+  border-bottom: 1px solid var(--md-outline-variant) !important;
+  vertical-align: middle;
+}
+
+.table-hover tbody tr:hover {
+  background: var(--md-surface-container-low) !important;
+}
+
+/* ========================================
+   COREUI BADGE OVERRIDES
+   ======================================== */
+
+.badge {
+  font: var(--md-label-small);
+  padding: var(--md-space-1) var(--md-space-3);
+  border-radius: var(--md-shape-full);
+}
+
+.badge.bg-primary {
+  background: var(--md-primary) !important;
+  color: var(--md-on-primary) !important;
+}
+
+.badge.bg-success {
+  background: var(--md-success) !important;
+  color: var(--md-on-success) !important;
+}
+
+.badge.bg-warning {
+  background: var(--md-warning) !important;
+  color: var(--md-on-warning) !important;
+}
+
+.badge.bg-danger {
+  background: var(--md-error) !important;
+  color: var(--md-on-error) !important;
+}
+
+.badge.bg-info {
+  background: var(--md-info) !important;
+  color: var(--md-on-info) !important;
+}
+
+.badge.bg-light {
+  background: var(--md-surface-container-high) !important;
+  color: var(--md-on-surface) !important;
+}
+
+/* ========================================
+   COREUI MODAL OVERRIDES
+   ======================================== */
+
+.modal-content {
+  background: var(--md-surface) !important;
+  border: none !important;
+  border-radius: var(--md-shape-xl) !important;
+  box-shadow: var(--md-elevation-5) !important;
+}
+
+.modal-header {
+  border-bottom: 1px solid var(--md-outline-variant) !important;
+  padding: var(--md-space-5) var(--md-space-6) !important;
+}
+
+.modal-title {
+  font: var(--md-title-large);
+  color: var(--md-on-surface);
+}
+
+.modal-body {
+  padding: var(--md-space-6) !important;
+}
+
+.modal-footer {
+  border-top: 1px solid var(--md-outline-variant) !important;
+  padding: var(--md-space-4) var(--md-space-6) !important;
+}
+
+.modal-backdrop {
+  background: var(--md-scrim) !important;
+}
+
+/* ========================================
+   COREUI SPINNER OVERRIDE
+   ======================================== */
+
+.spinner-border {
+  color: var(--md-primary) !important;
+}
+
+/* ========================================
+   COREUI PROGRESS OVERRIDE
+   ======================================== */
+
+.progress {
+  height: 6px;
+  background: var(--md-surface-container-high) !important;
+  border-radius: var(--md-shape-full) !important;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background: var(--md-primary) !important;
+  border-radius: var(--md-shape-full) !important;
+}
+
+.progress-bar.bg-success {
+  background: var(--md-success) !important;
+}
+
+.progress-bar.bg-warning {
+  background: var(--md-warning) !important;
+}
+
+.progress-bar.bg-info {
+  background: var(--md-info) !important;
+}
+
+.progress-bar.bg-danger {
+  background: var(--md-error) !important;
+}
+
+/* ========================================
+   COREUI ROW/COL SPACING FIX
+   ======================================== */
+
+.row {
+  --bs-gutter-x: var(--md-space-6);
+  --bs-gutter-y: var(--md-space-6);
+}
+
+.g-4 {
+  --bs-gutter-x: var(--md-space-6);
+  --bs-gutter-y: var(--md-space-6);
+}
+
+/* ========================================
+   CHART CONTAINERS
+   ======================================== */
+
+.chart-wrapper {
+  min-height: 220px;
+}
+
+/* ========================================
+   COREUI ALERT OVERRIDES
+   ======================================== */
+
+.alert {
+  border: none !important;
+  border-radius: var(--md-shape-lg) !important;
+  padding: var(--md-space-4) var(--md-space-5) !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: var(--md-space-4) !important;
+  font: var(--md-body-medium) !important;
+  box-shadow: var(--md-elevation-1) !important;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--md-motion-duration-short4) var(--md-motion-easing-standard);
+  margin-bottom: var(--md-space-4) !important;
+}
+
+.alert:hover {
+  box-shadow: var(--md-elevation-2) !important;
+  transform: translateY(-1px);
+}
+
+.alert::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  border-radius: 0 4px 4px 0;
+}
+
+.alert-primary {
+  background: var(--md-primary-container) !important;
+  color: var(--md-on-primary-container) !important;
+}
+
+.alert-primary::before {
+  background: var(--md-primary);
+}
+
+.alert-success {
+  background: var(--md-success-container) !important;
+  color: #15803d !important;
+}
+
+.alert-success::before {
+  background: var(--md-success);
+}
+
+.alert-danger {
+  background: var(--md-error-container) !important;
+  color: #b91c1c !important;
+}
+
+.alert-danger::before {
+  background: var(--md-error);
+}
+
+.alert-warning {
+  background: var(--md-warning-container) !important;
+  color: #a16207 !important;
+}
+
+.alert-warning::before {
+  background: var(--md-warning);
+}
+
+.alert-info {
+  background: var(--md-info-container) !important;
+  color: #0369a1 !important;
+}
+
+.alert-info::before {
+  background: var(--md-info);
+}
+
+/* Dark Mode Support for Alerts */
+:global(.theme-dark) .alert-success {
+  background: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(34, 197, 94, 0.2) !important;
+}
+
+:global(.theme-dark) .alert-danger {
+  background: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+}
+
+:global(.theme-dark) .alert-warning {
+  background: rgba(234, 179, 8, 0.15) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(234, 179, 8, 0.2) !important;
+}
+
+:global(.theme-dark) .alert-info {
+  background: rgba(56, 189, 248, 0.15) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+}
+
+/* Dismiss Button Position Fix */
+.alert-dismissible .btn-close {
+  padding: 1.25rem 1.25rem !important;
+  position: absolute !important;
+  right: 0 !important;
+  top: 0 !important;
+  margin: 0 !important;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+}
+
+.alert-dismissible .btn-close:hover {
+  opacity: 1;
+}
+
+/* ========================================
+   COREUI MODAL - BOTTOM SHEET VARIATION
+   ======================================== */
+
+.modal-bottom-sheet .modal-dialog {
+  display: flex !important;
+  align-items: flex-end !important;
+  min-height: 100vh !important;
+  margin: 0 !important;
+  max-width: 100% !important;
+}
+
+.modal-bottom-sheet .modal-content {
+  border-radius: var(--md-shape-xl) var(--md-shape-xl) 0 0 !important;
+  border: none !important;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: sheet-slide-up 0.4s cubic-bezier(0.1, 0.7, 0.1, 1);
+}
+
+@keyframes sheet-slide-up {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* For larger screens, we can keep it contained but still bottom-aligned */
+@media (min-width: 992px) {
+  .modal-bottom-sheet .modal-dialog {
+    max-width: 900px !important;
+    margin: 0 auto !important;
+  }
+}
+
+.modal-bottom-sheet .modal-header {
+  border: none !important;
+}
+
+/* Handle for the bottom sheet */
+.modal-bottom-sheet .modal-content::before {
+  content: '';
+  width: 40px;
+  height: 4px;
+  background: var(--md-outline-variant);
+  border-radius: var(--md-shape-full);
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}

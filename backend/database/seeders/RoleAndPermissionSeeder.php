@@ -62,9 +62,13 @@ class RoleAndPermissionSeeder extends Seeder
       ['name' => 'broadcasts.view', 'display_name' => 'View Broadcasts', 'module' => 'broadcasts'],
       ['name' => 'broadcasts.create', 'display_name' => 'Send Broadcasts', 'module' => 'broadcasts'],
 
+
       // Reports
       ['name' => 'reports.view', 'display_name' => 'View Reports', 'module' => 'reports'],
       ['name' => 'reports.export', 'display_name' => 'Export Reports', 'module' => 'reports'],
+
+      // Import Insights
+      ['name' => 'import-insights.view', 'display_name' => 'View Import Insights', 'module' => 'import-insights'],
 
       // Audit
       ['name' => 'audit.view', 'display_name' => 'View Audit Logs', 'module' => 'audit'],
@@ -106,7 +110,8 @@ class RoleAndPermissionSeeder extends Seeder
         'expenses.create',
         'expenses.approve',
         'reports.view',
-        'reports.export'
+        'reports.export',
+        'import-insights.view'
       ])->get()
     );
 

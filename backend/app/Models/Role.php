@@ -22,6 +22,14 @@ class Role extends Model
     ];
 
     /**
+     * Get all users with this role
+     */
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'role_user', 'role_id', 'user_id')->withTimestamps();
+    }
+
+    /**
      * Get all permissions for this role
      */
     public function permissions()

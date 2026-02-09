@@ -18,6 +18,7 @@ class UpdateUserRequest extends FormRequest
             'phone' => 'sometimes|string',
             'email' => 'sometimes|nullable|email',
             'role' => 'sometimes|in:admin,pastor,usher,finance,pr_follow_up,department_leader',
+            'role_ids' => 'sometimes|array',
             'department_id' => 'sometimes|nullable|string',
         ];
     }
