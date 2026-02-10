@@ -175,7 +175,7 @@
 
     <!-- Edit Modal -->
     <Teleport to="body">
-      <CModal :visible="!!catToRename" alignment="center" class="modal-bottom-sheet" @close="catToRename = null">
+      <CModal v-model:visible="showRenameModal" alignment="center" class="modal-bottom-sheet">
         <CModalHeader>
           <CModalTitle class="fw-bold fs-5">Edit Expense Type</CModalTitle>
         </CModalHeader>
@@ -210,7 +210,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import {
   CRow,
   CCol,
@@ -234,6 +234,10 @@ const meta = ref(null);
 
 // Edit modal state
 const catToRename = ref(null);
+const showRenameModal = computed({
+  get: () => !!catToRename.value,
+  set: (v) => { if (!v) catToRename.value = null; },
+});
 const renameValue = ref('');
 const descriptionValue = ref('');
 

@@ -15,13 +15,23 @@
         <div class="action-group">
           <div class="search-wrapper">
             <i class="bi bi-search search-icon"></i>
-            <input 
-              :value="searchQuery" 
-              @input="$emit('update:searchQuery', $event.target.value)" 
-              type="text"
-              class="search-input" 
-              placeholder="Search visitors..." 
-            />
+            <input :value="searchQuery" @input="$emit('update:searchQuery', $event.target.value)" type="text"
+              class="search-input" placeholder="Search visitors..." />
+          </div>
+
+          <div class="date-filter">
+            <div class="date-input-wrap">
+              <i class="bi bi-calendar2-week date-icon"></i>
+              <input type="date" class="date-input" :value="dateFrom"
+                @change="$emit('update:dateFrom', $event.target.value)" />
+            </div>
+            <span class="date-sep">—</span>
+            <div class="date-input-wrap">
+              <i class="bi bi-calendar2-event date-icon"></i>
+              <input type="date" class="date-input" :value="dateTo"
+                @change="$emit('update:dateTo', $event.target.value)" />
+            </div>
+            <button class="btn-apply" @click="$emit('change-page', 1)">Apply</button>
           </div>
         </div>
       </div>
@@ -51,6 +61,7 @@
             <CTableRow class="border-bottom">
               <CTableHeaderCell class="table-head-label ps-4">Visitor Info</CTableHeaderCell>
               <CTableHeaderCell class="table-head-label">Details</CTableHeaderCell>
+              <CTableHeaderCell class="table-head-label">Service</CTableHeaderCell>
               <CTableHeaderCell class="table-head-label">Category</CTableHeaderCell>
               <CTableHeaderCell class="table-head-label">Visit Date</CTableHeaderCell>
               <CTableHeaderCell class="table-head-label text-end pe-4">Actions</CTableHeaderCell>
@@ -60,11 +71,7 @@
             <CTableRow v-for="v in visitors" :key="v.id" class="visitor-row">
               <CTableDataCell class="ps-4">
                 <div class="d-flex align-items-center gap-3">
-                  <CAvatar
-                    :color="getCategoryColor(v.category)"
-                    size="md" 
-                    class="avatar-custom"
-                  >
+                  <CAvatar :color="getCategoryColor(v.category)" size="md" class="avatar-custom">
                     {{ getInitials(v.name) }}
                   </CAvatar>
                   <div>
@@ -75,24 +82,28 @@
                   </div>
                 </div>
               </CTableDataCell>
-              
+
               <CTableDataCell>
                 <div class="text-dark small fw-medium">{{ v.occupation || 'Not Specified' }}</div>
-                <div class="text-muted x-small text-uppercase ls-1">{{ v.service_type || 'Sunday' }} Service</div>
               </CTableDataCell>
-              
+
+              <CTableDataCell>
+                <div class="text-dark small fw-medium">{{ v.service_type || 'Sunday' }}</div>
+                <div class="text-muted x-small text-uppercase ls-1">Service</div>
+              </CTableDataCell>
+
               <CTableDataCell>
                 <span :class="getBadgeClasses(v.category)">
                   <i :class="getCategoryIcon(v.category)" class="me-1"></i>
                   {{ v.category === 'Wants to be a Member' ? 'Member Prospect' : v.category }}
                 </span>
               </CTableDataCell>
-              
+
               <CTableDataCell>
                 <div class="text-dark small fw-bold">{{ formatDate(v.first_visit_date || v.date) }}</div>
                 <div class="text-muted x-small">Date Joined</div>
               </CTableDataCell>
-              
+
               <CTableDataCell class="text-end pe-4">
                 <div class="action-btns">
                   <button class="action-btn edit" @click.stop="$emit('edit', v)" title="Edit">
@@ -113,34 +124,49 @@
 
       <div class="pagination-footer border-top">
         <div class="pagination-meta">
-          Showing <strong>{{ (pagination.current_page - 1) * pagination.per_page + 1 }}</strong> 
-          to <strong>{{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }}</strong> 
+          Showing <strong>{{ (pagination.current_page - 1) * pagination.per_page + 1 }}</strong>
+          to <strong>{{ Math.min(pagination.current_page * pagination.per_page, pagination.total) }}</strong>
           of <strong>{{ pagination.total }}</strong>
         </div>
-        <CPagination class="mb-0 custom-pagination">
-          <CPaginationItem 
-            :disabled="pagination.current_page === 1" 
-            @click="$emit('change-page', pagination.current_page - 1)"
-          >
-            <i class="bi bi-chevron-left"></i>
-          </CPaginationItem>
-          
-          <CPaginationItem 
-            v-for="page in displayPages" 
-            :key="page" 
-            :active="page === pagination.current_page"
-            @click="page !== '...' && $emit('change-page', page)"
-          >
-            {{ page }}
-          </CPaginationItem>
 
-          <CPaginationItem 
-            :disabled="pagination.current_page === pagination.last_page" 
-            @click="$emit('change-page', pagination.current_page + 1)"
-          >
-            <i class="bi bi-chevron-right"></i>
-          </CPaginationItem>
-        </CPagination>
+        <div class="pagination-controls">
+          <div class="per-page">
+            <label class="per-label">Per page</label>
+            <select class="per-select" :value="pagination.per_page"
+              @change="$emit('change-per-page', Number($event.target.value))">
+              <option :value="10">10</option>
+              <option :value="25">25</option>
+              <option :value="50">50</option>
+              <option :value="100">100</option>
+            </select>
+          </div>
+
+          <CPagination class="mb-0 custom-pagination">
+            <CPaginationItem :disabled="pagination.current_page === 1" @click="$emit('change-page', 1)">
+              <i class="bi bi-chevron-bar-left"></i>
+            </CPaginationItem>
+
+            <CPaginationItem :disabled="pagination.current_page === 1"
+              @click="$emit('change-page', pagination.current_page - 1)">
+              <i class="bi bi-chevron-left"></i>
+            </CPaginationItem>
+
+            <CPaginationItem v-for="page in displayPages" :key="page" :active="page === pagination.current_page"
+              @click="page !== '...' && $emit('change-page', page)">
+              {{ page }}
+            </CPaginationItem>
+
+            <CPaginationItem :disabled="pagination.current_page === pagination.last_page"
+              @click="$emit('change-page', pagination.current_page + 1)">
+              <i class="bi bi-chevron-right"></i>
+            </CPaginationItem>
+
+            <CPaginationItem :disabled="pagination.current_page === pagination.last_page"
+              @click="$emit('change-page', pagination.last_page)">
+              <i class="bi bi-chevron-bar-right"></i>
+            </CPaginationItem>
+          </CPagination>
+        </div>
       </div>
     </div>
   </MaterialCard>
@@ -148,9 +174,9 @@
 
 <script setup>
 import { defineProps, defineEmits } from 'vue';
-import { 
-  CTable, CTableHead, CTableRow, CTableHeaderCell, 
-  CTableBody, CTableDataCell, CAvatar, CPagination, CPaginationItem 
+import {
+  CTable, CTableHead, CTableRow, CTableHeaderCell,
+  CTableBody, CTableDataCell, CAvatar, CPagination, CPaginationItem
 } from '@coreui/vue';
 import { MaterialCard } from '../../components/material';
 
@@ -160,9 +186,20 @@ const props = defineProps({
   pagination: { type: Object, required: true },
   displayPages: { type: Array, default: () => [] },
   searchQuery: { type: String, default: '' },
+  dateFrom: { type: String, default: '' },
+  dateTo: { type: String, default: '' },
 });
 
-const emit = defineEmits(['update:searchQuery', 'edit', 'delete', 'convert', 'change-page']);
+const emit = defineEmits([
+  'update:searchQuery',
+  'edit',
+  'delete',
+  'convert',
+  'change-page',
+  'update:dateFrom',
+  'update:dateTo',
+  'change-per-page'
+]);
 
 // Helper Logic
 const getInitials = (name) => {
@@ -173,8 +210,8 @@ const getInitials = (name) => {
 const formatDate = (date) => {
   if (!date) return '-';
   const d = new Date(date);
-  return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-US', { 
-    month: 'short', day: 'numeric', year: 'numeric' 
+  return isNaN(d.getTime()) ? '-' : d.toLocaleDateString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric'
   });
 };
 
@@ -285,7 +322,9 @@ const getBadgeClasses = (cat) => {
   color: #636e72;
 }
 
-.ls-1 { letter-spacing: 0.5px; }
+.ls-1 {
+  letter-spacing: 0.5px;
+}
 
 /* Action Buttons */
 .action-btns {
@@ -310,9 +349,20 @@ const getBadgeClasses = (cat) => {
   transform: translateY(-2px);
 }
 
-.action-btn.edit:hover { background: #e7f1ff; color: #0d6efd; }
-.action-btn.convert:hover { background: #e6fcf5; color: #087f5b; }
-.action-btn.delete:hover { background: #fff5f5; color: #fa5252; }
+.action-btn.edit:hover {
+  background: #e7f1ff;
+  color: #0d6efd;
+}
+
+.action-btn.convert:hover {
+  background: #e6fcf5;
+  color: #087f5b;
+}
+
+.action-btn.delete:hover {
+  background: #fff5f5;
+  color: #fa5252;
+}
 
 /* Pagination Footer */
 .pagination-footer {
@@ -336,18 +386,32 @@ const getBadgeClasses = (cat) => {
 }
 
 .skeleton-avatar {
-  width: 40px; height: 40px; border-radius: 50%; background: #eee;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #eee;
 }
 
 .skeleton-text {
-  height: 12px; background: #eee; border-radius: 4px;
+  height: 12px;
+  background: #eee;
+  border-radius: 4px;
 }
 
-.skeleton-text.long { width: 40%; }
-.skeleton-text.short { width: 15%; }
+.skeleton-text.long {
+  width: 40%;
+}
+
+.skeleton-text.short {
+  width: 15%;
+}
 
 .skeleton-button {
-  margin-left: auto; width: 80px; height: 30px; background: #eee; border-radius: 4px;
+  margin-left: auto;
+  width: 80px;
+  height: 30px;
+  background: #eee;
+  border-radius: 4px;
 }
 
 /* Empty State */
@@ -362,9 +426,111 @@ const getBadgeClasses = (cat) => {
   margin-bottom: 1rem;
 }
 
+/* Pagination */
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.per-page {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.per-label {
+  font-size: 0.85rem;
+  color: #6c757d;
+  white-space: nowrap;
+}
+
+.per-select {
+  padding: 6px 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  background: white;
+  color: #475569;
+  cursor: pointer;
+}
+
+.custom-pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 4px;
+}
+
+.custom-pagination :deep(ul) {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 4px;
+}
+
+.custom-pagination :deep(li) {
+  list-style: none;
+}
+
+.custom-pagination :deep(.page-item) {
+  margin: 0;
+}
+
+.custom-pagination :deep(.page-link) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.custom-pagination :deep(.page-link:hover) {
+  background-color: #f8fafc;
+  border-color: #6366f1;
+  color: #6366f1;
+}
+
+.custom-pagination :deep(.page-item.active .page-link),
+.custom-pagination :deep(li.active .page-link) {
+  background-color: #6366f1;
+  border-color: #6366f1;
+  color: white;
+}
+
+.custom-pagination :deep(.page-item.disabled .page-link),
+.custom-pagination :deep(li.disabled .page-link) {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 @media (max-width: 768px) {
-  .header-container { flex-direction: column; align-items: stretch; }
-  .search-wrapper { min-width: 100%; }
-  .pagination-footer { flex-direction: column; gap: 1rem; text-align: center; }
+  .header-container {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-wrapper {
+    min-width: 100%;
+  }
+
+  .pagination-footer {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
 }
 </style>

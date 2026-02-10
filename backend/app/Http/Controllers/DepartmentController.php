@@ -146,7 +146,7 @@ class DepartmentController extends Controller
             return response()->json(['success' => false, 'message' => 'Department not found'], 404);
         }
 
-        $user = User::find($request->user_id);
+        $user = User::find($request->member_id);
         if (!$user) {
             return response()->json(['success' => false, 'message' => 'User not found'], 404);
         }

@@ -235,8 +235,8 @@ import PageHeader from '../components/shared/PageHeader.vue';
 import MaterialCard from '../components/material/MaterialCard.vue';
 import { useToast } from '../composables/useToast';
 import { exportToExcel } from '../utils/export.js';
-import { attendanceApi } from '../api/attendance.js';
-import { ministryApi } from '../api/ministry.js';
+import { attendanceApi } from '../api/attendance';
+import { ministryApi } from '../api/ministry';
 import { useAuthStore } from '../store/auth';
 
 useAuthStore();
@@ -318,8 +318,8 @@ async function fetchMembers(unitId) {
 
   isLoadingMembers.value = true;
   try {
-    const res = await ministryApi.getUnitMembers(unitId);
-    // ministryApi.getUnitMembers() now returns the list directly
+    const res = await ministryApi.getMembers(unitId);
+    // ministryApi.getMembers() returns the list directly
     members.value = res || [];
 
     // Auto-mark all as present by default

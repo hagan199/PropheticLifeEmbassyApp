@@ -629,10 +629,9 @@
 
     <!-- Preview Modal -->
     <CModal
-      :visible="showPreviewModal"
+      v-model:visible="showPreviewModal"
       size="md"
       alignment="center"
-      @close="showPreviewModal = false"
     >
       <CModalHeader>
         <CModalTitle>Message Preview</CModalTitle>
@@ -686,7 +685,7 @@
     </CModal>
 
     <!-- Broadcast Details Modal -->
-    <CModal :visible="showDetailsModal" size="xl" @close="showDetailsModal = false">
+    <CModal v-model:visible="showDetailsModal" size="xl">
       <CModalHeader>
         <CModalTitle>Broadcast Details</CModalTitle>
       </CModalHeader>

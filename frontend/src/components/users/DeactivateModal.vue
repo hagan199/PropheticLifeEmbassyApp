@@ -1,6 +1,6 @@
 <template>
   <Teleport to="body">
-    <CModal :visible="visible" alignment="center" backdrop="static" class="modal-bottom-sheet" @close="$emit('close')">
+    <CModal v-model:visible="localVisible" alignment="center" backdrop="static" class="modal-bottom-sheet">
       <div class="modal-header-custom">
         <div class="modal-header-icon deactivate">
           <i class="bi bi-person-slash"></i>
@@ -48,7 +48,14 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['close', 'deactivate']);
+const emit = defineEmits(['update:visible', 'close', 'deactivate']);
+
+const localVisible = ref(props.visible);
+watch(() => props.visible, (v) => { localVisible.value = v; });
+watch(localVisible, (v) => {
+  emit('update:visible', v);
+  if (!v) emit('close');
+});
 
 const reason = ref('');
 

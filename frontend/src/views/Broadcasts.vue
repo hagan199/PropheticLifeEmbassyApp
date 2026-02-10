@@ -416,7 +416,7 @@
 
     <!-- History Modal -->
     <Teleport to="body">
-      <CModal :visible="activeTab === 'history'" size="xl" @close="activeTab = 'compose'">
+      <CModal v-model:visible="showHistoryModal" size="xl">
         <CModalHeader>
           <CModalTitle>Broadcast History</CModalTitle>
         </CModalHeader>
@@ -480,7 +480,7 @@
 
     <!-- Scheduled Modal -->
     <Teleport to="body">
-      <CModal :visible="activeTab === 'scheduled'" @close="activeTab = 'compose'">
+      <CModal v-model:visible="showScheduledModal">
         <CModalHeader>
           <CModalTitle>Scheduled Broadcasts</CModalTitle>
         </CModalHeader>
@@ -516,7 +516,7 @@
 
     <!-- Preview Modal -->
     <Teleport to="body">
-      <CModal :visible="showPreview" size="md" alignment="center" @close="showPreview = false">
+      <CModal v-model:visible="showPreview" size="md" alignment="center">
         <CModalHeader>
           <CModalTitle>Message Preview</CModalTitle>
         </CModalHeader>
@@ -589,6 +589,14 @@ const activeTab = ref('compose');
 const showComposer = ref(true);
 const sending = ref(false);
 const showPreview = ref(false);
+const showHistoryModal = computed({
+  get: () => activeTab.value === 'history',
+  set: (v) => { if (!v) activeTab.value = 'compose'; },
+});
+const showScheduledModal = computed({
+  get: () => activeTab.value === 'scheduled',
+  set: (v) => { if (!v) activeTab.value = 'compose'; },
+});
 
 // Form
 const form = reactive({

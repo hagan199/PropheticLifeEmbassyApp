@@ -24,6 +24,12 @@ export const departmentsApi = {
   getMembers(unitId: number | string) {
     return api.get(`/departments/${unitId}/members`);
   },
+  addMember(deptId: number | string, memberId: number | string) {
+    return api.post(`/departments/${deptId}/members`, { member_id: memberId });
+  },
+  removeMember(deptId: number | string, memberId: number | string) {
+    return api.delete(`/departments/${deptId}/members/${memberId}`);
+  },
 };
 
 export default departmentsApi;

@@ -42,12 +42,12 @@
       </CAlert>
     </MaterialCard>
 
-    <UserFormModal :visible="showModal" :isEditing="isEditing" :form="form" :errors="errors" :roleOptions="roleOptions"
+    <UserFormModal v-model:visible="showModal" :isEditing="isEditing" :form="form" :errors="errors" :roleOptions="roleOptions"
       :departments="departments" :isLoadingDepartments="isLoadingDepartments" :saving="saving" @close="closeModal"
       @save="saveUser" @update-field="updateFormField" @update-role-ids="updateRoleIds"
       @update-department="updateDepartment" />
 
-    <DeactivateModal :visible="showDeactivateModal" :user="userToDeactivate" @close="closeDeactivateModal"
+    <DeactivateModal v-model:visible="showDeactivateModal" :user="userToDeactivate" @close="closeDeactivateModal"
       @deactivate="handleDeactivate" />
   </div>
 </template>

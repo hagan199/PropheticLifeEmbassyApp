@@ -85,7 +85,7 @@
     </div>
 
     <Teleport to="body">
-      <CModal :visible="showEditModal" alignment="center" @close="showEditModal = false">
+      <CModal v-model:visible="showEditModal" alignment="center">
         <div
           class="modal-header-custom border-bottom p-3"
           :class="deptForm.id ? 'bg-info-container' : 'bg-primary-container'"
@@ -112,8 +112,14 @@
       </CModal>
     </Teleport>
 
+    <DepartmentMembersModal
+      v-model:visible="showMembersModal"
+      :department="selectedDept"
+      @updated="fetchDepartments"
+    />
+
     <Teleport to="body">
-      <CModal :visible="confirmModal.show" alignment="center" @close="confirmModal.show = false">
+      <CModal v-model:visible="confirmModal.show" alignment="center">
         <div class="p-4 text-center">
           <div class="md-avatar md-avatar-xl bg-error-container text-error mx-auto mb-3">
             <i class="bi bi-exclamation-triangle"></i>
@@ -144,6 +150,7 @@ import MaterialCard from '../components/material/MaterialCard.vue';
 import { exportToExcel } from '../utils/export.js';
 import { departmentsApi } from '../api/departments';
 import { useToast } from '../composables/useToast';
+import DepartmentMembersModal from '../components/departments/DepartmentMembersModal.vue';
 
 // Types
 interface Department {
@@ -177,11 +184,10 @@ const isDeleting = ref<boolean>(false);
 
 // Modal Logic
 const showEditModal = ref<boolean>(false);
-const _showMembersModal = ref<boolean>(false);
+const showMembersModal = ref<boolean>(false);
 const confirmModal = reactive<ConfirmModal>({ show: false, title: '', message: '', onConfirm: () => { } });
 const deptForm = reactive<DeptForm>({ id: null, name: '', description: '' });
 const selectedDept = ref<Department | null>(null);
-const _deptMembers = ref<any[]>([]);
 
 // Computed Pagination
 const paginatedDepartments = computed<Department[]>(() => {
@@ -252,12 +258,7 @@ function confirmDeleteRequest(dept: Department): void {
 
 function viewDepartment(dept: Department): void {
   selectedDept.value = dept;
-  // TODO: Implement department view - perhaps show members or navigate to department page
-  // For now, just log or show a placeholder
-  console.log('Viewing department:', dept);
-  // You could open a modal or navigate
-  // showMembersModal.value = true;
-  // fetchDeptMembers(dept.id);
+  showMembersModal.value = true;
 }
 
 // Helpers

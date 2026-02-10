@@ -9,7 +9,8 @@ return new class extends Migration {
   {
     Schema::create('broadcast_deliveries', function (Blueprint $table) {
       $table->id();
-      $table->uuid('broadcast_id');
+      // broadcast_id should be a uuid that references broadcasts.id (uuid)
+      $table->foreignUuid('broadcast_id')->constrained('broadcasts')->onDelete('cascade');
       $table->string('recipient_name');
       $table->string('recipient_phone');
       $table->string('channel');
@@ -18,7 +19,7 @@ return new class extends Migration {
       $table->timestamp('delivered_at')->nullable();
       $table->timestamps();
 
-      $table->foreign('broadcast_id')->references('id')->on('broadcasts')->onDelete('cascade');
+      // foreign key created by foreignUuid above
     });
   }
 

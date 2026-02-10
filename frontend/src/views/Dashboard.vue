@@ -34,7 +34,7 @@
     </PageHeader>
 
     <!-- Custom Date Range Modal -->
-    <CModal :visible="showCustomRange" @close="showCustomRange = false">
+    <CModal v-model:visible="showCustomRange">
       <CModalHeader>
         <CModalTitle><i class="bi bi-calendar-range me-2"></i>Select Date Range</CModalTitle>
       </CModalHeader>
@@ -274,7 +274,7 @@
     </template>
 
     <!-- Edit Member Modal -->
-    <CModal :visible="editModalVisible" alignment="center" @close="editModalVisible = false">
+    <CModal v-model:visible="editModalVisible" alignment="center">
       <div class="p-0 overflow-hidden">
         <div class="modal-header border-0 bg-surface-container-high p-4">
           <div>

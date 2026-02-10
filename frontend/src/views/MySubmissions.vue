@@ -210,7 +210,7 @@
 
     <!-- Attendance Modal -->
     <Teleport to="body">
-      <CModal :visible="showAttendanceModal" size="lg" @close="showAttendanceModal = false">
+      <CModal v-model:visible="showAttendanceModal" size="lg">
         <CModalHeader>
           <CModalTitle>{{ editingId ? 'Edit Attendance' : 'Submit Attendance' }}</CModalTitle>
         </CModalHeader>
@@ -264,7 +264,7 @@
 
     <!-- Visitor Modal -->
     <Teleport to="body">
-      <CModal :visible="showVisitorModal" size="lg" @close="showVisitorModal = false">
+      <CModal v-model:visible="showVisitorModal" size="lg">
         <CModalHeader>
           <CModalTitle>Register Visitor</CModalTitle>
         </CModalHeader>
@@ -317,7 +317,7 @@
 
     <!-- Details Modal -->
     <Teleport to="body">
-      <CModal :visible="showDetailsModal" @close="showDetailsModal = false">
+      <CModal v-model:visible="showDetailsModal">
         <CModalHeader>
           <CModalTitle>Submission Details</CModalTitle>
         </CModalHeader>

@@ -236,7 +236,7 @@
 
     <!-- Add/Edit Member Modal -->
     <Teleport to="body">
-      <CModal :visible="showMemberModal" @close="showMemberModal = false">
+      <CModal v-model:visible="showMemberModal">
         <CModalHeader>
           <CModalTitle>{{ editingId ? 'Edit Member' : 'Add Member' }}</CModalTitle>
         </CModalHeader>
@@ -271,7 +271,7 @@
 
     <!-- Meeting Modal -->
     <Teleport to="body">
-      <CModal :visible="showMeetingModal" @close="showMeetingModal = false">
+      <CModal v-model:visible="showMeetingModal">
         <CModalHeader>
           <CModalTitle>Schedule Meeting</CModalTitle>
         </CModalHeader>
@@ -307,7 +307,7 @@
 
     <!-- Message Modal -->
     <Teleport to="body">
-      <CModal :visible="showMessageModal" @close="showMessageModal = false">
+      <CModal v-model:visible="showMessageModal">
         <CModalHeader>
           <CModalTitle>Message All Members</CModalTitle>
         </CModalHeader>

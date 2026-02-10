@@ -121,17 +121,11 @@
             </CTableRow>
           </CTableHead>
           <CTableBody>
-            <CTableRow
-              v-for="record in filteredRecords"
-              :key="record.id"
-              :class="{ 'table-warning': record.status === 'pending' }"
-            >
+            <CTableRow v-for="record in filteredRecords" :key="record.id"
+              :class="{ 'table-warning': record.status === 'pending' }">
               <CTableDataCell>
-                <CFormCheck
-                  :checked="selectedIds.includes(record.id)"
-                  :disabled="record.status !== 'pending'"
-                  @change="toggleSelect(record.id)"
-                />
+                <CFormCheck :checked="selectedIds.includes(record.id)" :disabled="record.status !== 'pending'"
+                  @change="toggleSelect(record.id)" />
               </CTableDataCell>
               <CTableDataCell>
                 <div class="d-flex align-items-center">
@@ -164,12 +158,7 @@
                   <CButton color="success" size="sm" class="me-1" @click="approveRecord(record)">
                     <i class="bi bi-check-lg"></i> Approve
                   </CButton>
-                  <CButton
-                    color="danger"
-                    size="sm"
-                    variant="ghost"
-                    @click="openRejectModal(record)"
-                  >
+                  <CButton color="danger" size="sm" variant="ghost" @click="openRejectModal(record)">
                     <i class="bi bi-x-lg"></i>
                   </CButton>
                 </template>
@@ -190,113 +179,16 @@
       </CCardBody>
     </CCard>
 
-    <!-- Reject Modal -->
-    <CModal :visible="showRejectModal" @close="showRejectModal = false">
-      <CModalHeader>
-        <CModalTitle>Reject Attendance</CModalTitle>
-      </CModalHeader>
-      <CModalBody>
-        <p>
-          Rejecting attendance for <strong>{{ rejectingRecord?.serviceType }}</strong> on
-          <strong>{{ formatDate(rejectingRecord?.date) }}</strong>
-        </p>
-        <CAlert color="info" class="mb-3">
-          <i class="bi bi-info-circle me-2"></i>
-          The usher will be notified via SMS and can resubmit.
-        </CAlert>
-        <CFormLabel>Reason <span class="text-danger">*</span></CFormLabel>
-        <CFormTextarea
-          v-model="rejectReason"
-          rows="3"
-          placeholder="Provide a reason for rejection..."
-          maxlength="255"
-        />
-        <div class="text-muted small mt-1">{{ rejectReason.length }}/255 characters</div>
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="showRejectModal = false">Cancel</CButton>
-        <CButton color="danger" :disabled="!rejectReason.trim()" @click="rejectRecord">
-          Reject
-        </CButton>
-      </CModalFooter>
-    </CModal>
+    <!-- Reject Modal (component) -->
+    <RejectModal v-model:visible="showRejectModal" :record="rejectingRecord"
+      @rejected="rejectRecord" />
 
-    <!-- Bulk Approve Confirmation -->
-    <CModal :visible="showBulkApproveModal" @close="showBulkApproveModal = false">
-      <CModalHeader>
-        <CModalTitle>Confirm Bulk Approval</CModalTitle>
-      </CModalHeader>
-      <CModalBody>
-        <p>
-          Approve <strong>{{ selectedIds.length }}</strong> attendance records?
-        </p>
-        <ul class="list-unstyled">
-          <li v-for="id in selectedIds" :key="id" class="mb-1">
-            <i class="bi bi-check-circle text-success me-2"></i>
-            {{ getRecordSummary(id) }}
-          </li>
-        </ul>
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="showBulkApproveModal = false">Cancel</CButton>
-        <CButton color="success" @click="confirmBulkApprove"> Approve All </CButton>
-      </CModalFooter>
-    </CModal>
+    <!-- Bulk Approve Confirmation (component) -->
+    <BulkApproveModal v-model:visible="showBulkApproveModal" :selectedCount="selectedIds.length" :summaries="selectedSummaries"
+      @confirmed="confirmBulkApprove" />
 
-    <!-- Details Modal -->
-    <CModal :visible="showDetailsModal" size="lg" @close="showDetailsModal = false">
-      <CModalHeader>
-        <CModalTitle>Attendance Details</CModalTitle>
-      </CModalHeader>
-      <CModalBody v-if="viewingRecord">
-        <CRow class="g-3">
-          <CCol md="6">
-            <div class="text-muted small">Service</div>
-            <div class="fw-semibold">{{ serviceLabel(viewingRecord.serviceType) }}</div>
-          </CCol>
-          <CCol md="6">
-            <div class="text-muted small">Date</div>
-            <div class="fw-semibold">{{ formatDate(viewingRecord.date) }}</div>
-          </CCol>
-          <CCol md="6">
-            <div class="text-muted small">Count</div>
-            <div class="fw-semibold fs-4">{{ viewingRecord.count }}</div>
-          </CCol>
-          <CCol md="6">
-            <div class="text-muted small">Status</div>
-            <CBadge :color="statusColor(viewingRecord.status)" class="fs-6">
-              {{ viewingRecord.status }}
-            </CBadge>
-          </CCol>
-          <CCol md="6">
-            <div class="text-muted small">Submitted By</div>
-            <div class="d-flex align-items-center">
-              <CAvatar :src="viewingRecord.submittedBy.avatar" size="sm" class="me-2" />
-              {{ viewingRecord.submittedBy.name }}
-            </div>
-          </CCol>
-          <CCol md="6">
-            <div class="text-muted small">Submitted At</div>
-            <div>{{ viewingRecord.submittedAt }}</div>
-          </CCol>
-          <CCol v-if="viewingRecord.approvedBy" md="6">
-            <div class="text-muted small">Approved By</div>
-            <div>{{ viewingRecord.approvedBy }}</div>
-          </CCol>
-          <CCol v-if="viewingRecord.rejectionReason" md="12">
-            <div class="text-muted small">Rejection Reason</div>
-            <CAlert color="danger">{{ viewingRecord.rejectionReason }}</CAlert>
-          </CCol>
-          <CCol v-if="viewingRecord.notes" md="12">
-            <div class="text-muted small">Notes</div>
-            <div>{{ viewingRecord.notes }}</div>
-          </CCol>
-        </CRow>
-      </CModalBody>
-      <CModalFooter>
-        <CButton color="secondary" @click="showDetailsModal = false">Close</CButton>
-      </CModalFooter>
-    </CModal>
+    <!-- Details Modal (component) -->
+    <DetailsModal v-model:visible="showDetailsModal" :record="viewingRecord" />
   </div>
 </template>
 
@@ -331,8 +223,11 @@ import {
 } from '@coreui/vue';
 import Breadcrumbs from '../components/Breadcrumbs.vue';
 import { exportToExcel, formatDateForExport } from '../utils/export.js';
-import { attendanceApi } from '../api/attendance.js';
+import { attendanceApi } from '../api/attendance';
 import { useToast } from '../composables/useToast';
+import RejectModal from '../components/attendance/RejectModal.vue';
+import BulkApproveModal from '../components/attendance/BulkApproveModal.vue';
+import DetailsModal from '../components/attendance/DetailsModal.vue';
 
 // Data
 const records = ref([]);
@@ -462,18 +357,16 @@ async function approveRecord(record) {
 
 const showRejectModal = ref(false);
 const rejectingRecord = ref(null);
-const rejectReason = ref('');
 
 function openRejectModal(record) {
   rejectingRecord.value = record;
-  rejectReason.value = '';
   showRejectModal.value = true;
 }
 
-async function rejectRecord() {
+async function rejectRecord(reason) {
   if (rejectingRecord.value) {
     try {
-      await attendanceApi.reject(rejectingRecord.value.id, rejectReason.value);
+      await attendanceApi.reject(rejectingRecord.value.id, reason);
       toast.info(`Rejected attendance. Usher notified.`);
       fetchAttendance(); // Refresh data
     } catch (error) {
@@ -486,6 +379,8 @@ async function rejectRecord() {
 
 // Bulk Approve
 const showBulkApproveModal = ref(false);
+
+const selectedSummaries = computed(() => selectedIds.value.map(id => getRecordSummary(id)));
 
 function bulkApprove() {
   showBulkApproveModal.value = true;

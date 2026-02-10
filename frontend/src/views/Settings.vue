@@ -386,18 +386,23 @@
 
               <!-- Pagination -->
               <div v-if="totalPages > 1" class="users-pagination px-3 py-2 border-top">
-                <CPagination align="center" size="sm" class="mb-0">
-                  <CPaginationItem :disabled="currentPage === 1" @click="handlePageChange(currentPage - 1)">
-                    <i class="bi bi-chevron-left"></i>
-                  </CPaginationItem>
-                  <CPaginationItem v-for="p in totalPages" :key="p" :active="p === currentPage"
-                    @click="handlePageChange(p)">
-                    {{ p }}
-                  </CPaginationItem>
-                  <CPaginationItem :disabled="currentPage === totalPages" @click="handlePageChange(currentPage + 1)">
-                    <i class="bi bi-chevron-right"></i>
-                  </CPaginationItem>
-                </CPagination>
+                <div class="d-flex justify-content-between align-items-center">
+                  <span class="text-muted small">Page {{ currentPage }} of {{ totalPages }}</span>
+                  <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" :disabled="currentPage === 1" @click="handlePageChange(currentPage - 1)">
+                      <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <button v-for="p in visiblePages" :key="p"
+                      class="btn btn-sm rounded-pill px-3"
+                      :class="p === currentPage ? 'btn-primary' : 'btn-outline-secondary'"
+                      @click="handlePageChange(p)">
+                      {{ p }}
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" :disabled="currentPage === totalPages" @click="handlePageChange(currentPage + 1)">
+                      <i class="bi bi-chevron-right"></i>
+                    </button>
+                  </div>
+                </div>
               </div>
               <!-- pagination -->
             </div>
@@ -827,10 +832,20 @@ async function saveRolePerms() {
 }
 
 function labelFor(p) {
-  return p
-    .split('.')
-    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(': ');
+  // Accept either a permission name string or a Permission object
+  if (typeof p === 'object' && p !== null) {
+    if (p.display_name) return p.display_name;
+    p = p.name || '';
+  }
+  const name = String(p || '');
+  if (!name) return '';
+  if (name.includes('.')) {
+    return name
+      .split('.')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(': ');
+  }
+  return name.charAt(0).toUpperCase() + name.slice(1);
 }
 
 // --- Users ---
@@ -847,6 +862,21 @@ const currentPage = ref(1);
 const perPage = ref(10);
 const totalUsers = ref(0);
 const totalPages = computed(() => Math.ceil(totalUsers.value / perPage.value));
+const visiblePages = computed(() => {
+  const pages = [];
+  const total = totalPages.value;
+  const current = currentPage.value;
+  const maxVisible = 5;
+  if (total <= maxVisible) {
+    for (let i = 1; i <= total; i++) pages.push(i);
+  } else {
+    let start = Math.max(1, current - Math.floor(maxVisible / 2));
+    let end = Math.min(total, start + maxVisible - 1);
+    if (end - start + 1 < maxVisible) start = Math.max(1, end - maxVisible + 1);
+    for (let i = start; i <= end; i++) pages.push(i);
+  }
+  return pages;
+});
 
 async function loadUsers(search = '', roleFilter = null) {
   isLoadingUsers.value = true;
@@ -947,8 +977,7 @@ async function saveUserRoles() {
   isSaving.value = true;
   try {
     await usersApi.update(selectedUser.value.id, {
-      role: selectedUserRoles.value[0], // Keep first role as primary for backward compatibility
-      role_ids: selectedUserRoles.value, // Send all role IDs
+      role_ids: selectedUserRoles.value,
     });
     toast.success(`Roles updated for ${selectedUser.value.name}`, { color: 'success' });
 

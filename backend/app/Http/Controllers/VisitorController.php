@@ -49,6 +49,14 @@ class VisitorController extends Controller
             });
         }
 
+        // Date range filter
+        if ($request->filled('date_from')) {
+            $query->whereDate('first_visit_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('first_visit_date', '<=', $request->date_to);
+        }
+
         $perPage = $request->get('per_page', 10);
         $paginated = $query->orderBy('created_at', 'desc')->paginate($perPage);
 
@@ -264,7 +272,7 @@ class VisitorController extends Controller
                 $existingUser->roles()->syncWithoutDetaching($roleIds);
             }
 
-            $visitor->category = 'Member';
+            $visitor->status = 'converted';
             $visitor->converted_user_id = $existingUser->id;
             $visitor->converted_at = now();
             $visitor->save();
@@ -282,7 +290,7 @@ class VisitorController extends Controller
         // Create new user
         $newUser = User::create([
             'name' => $visitor->name,
-            'email' => $visitor->email,
+            'email' => $visitor->email ?: null,
             'phone' => $visitor->phone,
             'password' => bcrypt(Str::random(12)),
             'status' => 'active',
@@ -292,7 +300,7 @@ class VisitorController extends Controller
             $newUser->roles()->syncWithoutDetaching($roleIds);
         }
 
-        $visitor->category = 'Member';
+        $visitor->status = 'converted';
         $visitor->converted_user_id = $newUser->id;
         $visitor->converted_at = now();
         $visitor->save();

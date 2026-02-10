@@ -1,16 +1,4 @@
 <template>
-  <div class="page-wrap">
-    <div class="page-header d-flex flex-wrap justify-content-between align-items-center mb-4 pb-2 border-bottom">
-      <div>
-        <h2 class="title mb-1 fw-bold" style="font-size:2rem;">Expense</h2>
-        <Breadcrumbs />
-        <div class="text-muted small">Track expenses and spending</div>
-      </div>
-      <div>
-        <CButton color="primary" class="shadow-sm px-4 py-2" title="Export all expenses to Excel"
-          @click="exportExpenses">
-          <i class="bi bi-file-earmark-excel me-1"></i> Export Excel
-        </CButton>
         <div class="page-wrap expense-page">
           <div class="page-header d-flex justify-content-between align-items-center flex-wrap">
             <div class="header-title-group">
@@ -109,7 +97,7 @@
 
           <!-- Delete Confirmation Modal -->
           <Teleport to="body">
-            <CModal :visible="showDeleteModal" alignment="center" @close="showDeleteModal = false">
+            <CModal v-model:visible="showDeleteModal" alignment="center">
               <CModalHeader>
                 <CModalTitle>Confirm Delete</CModalTitle>
               </CModalHeader>
@@ -126,6 +114,7 @@
               </CModalFooter>
             </CModal>
           </Teleport>
+        </div>
 </template>
 
 <script setup>

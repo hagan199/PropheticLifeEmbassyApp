@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Http\Requests\Attendance\{StoreAttendanceRequest, BulkApproveRequest, BulkRejectRequest, RejectAttendanceRequest};
+use App\Http\Requests\Attendance\StoreAttendanceRequest;
+use App\Http\Requests\Attendance\BulkApproveRequest;
+use App\Http\Requests\Attendance\BulkRejectRequest;
+use App\Http\Requests\Attendance\RejectAttendanceRequest;
 use App\Models\Attendance;
 use App\Models\MinisterUnitAttendance;
 use App\Models\Department;
@@ -16,7 +19,7 @@ class AttendanceController extends Controller
      * Get paginated list of all attendance records.
      * Supports filtering by status, service_type, date range.
      */
-    public function index(Request $request): JsonResponse
+    public function index(Request $request)
     {
         // Require authenticated user to view attendance index
         if (!Auth::check()) {
@@ -64,7 +67,9 @@ class AttendanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $records->map(fn($a) => $this->transformRecord($a)),
+            'data' => $records->map(function ($a) {
+                return $this->transformRecord($a);
+            }),
             'stats' => $stats,
             'total' => $records->count(),
         ]);
@@ -73,7 +78,7 @@ class AttendanceController extends Controller
     /**
      * Store a new attendance record.
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request)
     {
         $user = $request->user();
         if (!$user || !$user->hasAnyRole(['admin'])) {
@@ -110,7 +115,7 @@ class AttendanceController extends Controller
     /**
      * Update an attendance record.
      */
-    public function update(Request $request, $id): JsonResponse
+    public function update(Request $request, $id)
     {
         $attendance = Attendance::findOrFail($id);
 
@@ -149,7 +154,7 @@ class AttendanceController extends Controller
     /**
      * Delete an attendance record.
      */
-    public function destroy($id): JsonResponse
+    public function destroy($id)
     {
         $attendance = Attendance::findOrFail($id);
 
@@ -180,7 +185,7 @@ class AttendanceController extends Controller
     /**
      * Approve a single attendance record.
      */
-    public function approve($id): JsonResponse
+    public function approve($id)
     {
         $attendance = Attendance::findOrFail($id);
 
@@ -215,7 +220,7 @@ class AttendanceController extends Controller
     /**
      * Reject a single attendance record.
      */
-    public function reject(Request $request, $id): JsonResponse
+    public function reject(Request $request, $id)
     {
         $validated = $request->validate([
             'reason' => 'required|string|max:255',
@@ -255,7 +260,7 @@ class AttendanceController extends Controller
     /**
      * Bulk reject attendance records.
      */
-    public function bulkReject(Request $request): JsonResponse
+    public function bulkReject(Request $request)
     {
         $validated = $request->validate([
             'ids' => 'required|array',
@@ -289,7 +294,7 @@ class AttendanceController extends Controller
     /**
      * Optimized: Use mass assignment for speed.
      */
-    public function storeUnitAttendance(Request $request): JsonResponse
+    public function storeUnitAttendance(Request $request)
     {
         $user = $request->user();
         if (!$user || !$user->hasAnyRole(['admin'])) {
@@ -333,7 +338,7 @@ class AttendanceController extends Controller
     /**
      * Optimized: Eager load only necessary columns to save memory.
      */
-    public function show($id): JsonResponse
+    public function show($id)
     {
         // speed optimization: select only columns needed from relationship
         $record = Attendance::with([
@@ -350,7 +355,7 @@ class AttendanceController extends Controller
     /**
      * Optimized: Use cursor() for memory efficiency in large lists.
      */
-    public function pendingApprovals(): JsonResponse
+    public function pendingApprovals()
     {
         // Memory optimization: use cursor() for large datasets
         $pendingQuery = Attendance::with('submittedBy:id,name,avatar')
@@ -361,7 +366,9 @@ class AttendanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $pendingQuery->get()->map(fn($a) => $this->transformRecord($a)),
+            'data' => $pendingQuery->get()->map(function ($a) {
+                return $this->transformRecord($a);
+            }),
             'total' => $total,
         ]);
     }
@@ -369,7 +376,7 @@ class AttendanceController extends Controller
     /**
      * Optimized: Single DB query for bulk operations.
      */
-    public function bulkApprove(BulkApproveRequest $request): JsonResponse
+    public function bulkApprove(BulkApproveRequest $request)
     {
         $user = $request->user();
         if (!$user || !$user->hasAnyRole(['admin'])) {
@@ -396,7 +403,7 @@ class AttendanceController extends Controller
     /**
      * Optimized: Use Collection methods for stats to avoid extra DB queries.
      */
-    public function mySubmissions(): JsonResponse
+    public function mySubmissions()
     {
         $submissions = Attendance::with('approvedBy:id,name')
             ->where('submitted_by', Auth::id())
@@ -405,7 +412,9 @@ class AttendanceController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $submissions->map(fn($a) => $this->transformRecord($a, true)),
+            'data' => $submissions->map(function ($a) {
+                return $this->transformRecord($a, true);
+            }),
             'total' => $submissions->count(),
             'stats' => [
                 'pending' => $submissions->where('status', 'pending')->count(),
@@ -418,7 +427,7 @@ class AttendanceController extends Controller
     /**
      * Get weekly attendance summary report.
      */
-    public function weeklyReport(): JsonResponse
+    public function weeklyReport()
     {
         $startOfWeek = now()->startOfWeek();
         $endOfWeek = now()->endOfWeek();
@@ -449,12 +458,28 @@ class AttendanceController extends Controller
     /**
      * Private helper to dry up the code and centralize transformation logic.
      */
-    private function transformRecord($a, $includeApproval = false): array
+    private function transformRecord($a, $includeApproval = false)
     {
+        // Compute a safe submitted_at value without using PHP 8 nullsafe operator
+        $submittedAt = null;
+        if (isset($a->submitted_at) && $a->submitted_at) {
+            if (is_object($a->submitted_at) && method_exists($a->submitted_at, 'diffForHumans')) {
+                $submittedAt = $a->submitted_at->diffForHumans();
+            } else {
+                $submittedAt = (string) $a->submitted_at;
+            }
+        } elseif (isset($a->created_at) && $a->created_at) {
+            if (is_object($a->created_at) && method_exists($a->created_at, 'diffForHumans')) {
+                $submittedAt = $a->created_at->diffForHumans();
+            } else {
+                $submittedAt = (string) $a->created_at;
+            }
+        }
+
         return [
             'id' => $a->id,
             'service_type' => $a->service_type,
-            'service_date' => $a->service_date->format('Y-m-d'),
+            'service_date' => is_object($a->service_date) && method_exists($a->service_date, 'format') ? $a->service_date->format('Y-m-d') : (string) $a->service_date,
             'count' => $a->count,
             'status' => $a->status,
             'submitted_by' => $a->submittedBy ? [
@@ -462,8 +487,8 @@ class AttendanceController extends Controller
                 'name' => $a->submittedBy->name,
                 'avatar' => $a->submittedBy->avatar,
             ] : null,
-            'submitted_at' => $a->submitted_at?->diffForHumans() ?? $a->created_at->diffForHumans(),
-            'approved_by' => $a->approvedBy?->name,
+            'submitted_at' => $submittedAt,
+            'approved_by' => $a->approvedBy ? $a->approvedBy->name : null,
             'rejection_reason' => $a->rejection_reason,
             'notes' => $a->notes,
         ];

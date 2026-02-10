@@ -1,7 +1,7 @@
 <template>
   <Teleport to="body">
-    <CModal :visible="props.visible" alignment="center" backdrop="static" class="modal-bottom-sheet user-modal"
-      size="lg" @close="$emit('close')">
+    <CModal v-model:visible="localVisible" alignment="center" backdrop="static" class="modal-bottom-sheet user-modal"
+      size="lg">
       <div class="modal-header-custom enhanced">
         <div class="modal-header-icon" :class="props.isEditing ? 'edit' : 'add'">
           <i :class="props.isEditing ? 'bi bi-pencil-square' : 'bi bi-person-plus-fill'"></i>
@@ -86,7 +86,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import RoleSelector from './RoleSelector.vue';
 import DepartmentSelect from './DepartmentSelect.vue';
 import SelectedRolesDisplay from './SelectedRolesDisplay.vue';
@@ -102,7 +102,14 @@ const props = defineProps({
   saving: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['close', 'save', 'update-field', 'update-role-ids', 'update-department']);
+const emit = defineEmits(['update:visible', 'close', 'save', 'update-field', 'update-role-ids', 'update-department']);
+
+const localVisible = ref(props.visible);
+watch(() => props.visible, (v) => { localVisible.value = v; });
+watch(localVisible, (v) => {
+  emit('update:visible', v);
+  if (!v) emit('close');
+});
 
 const phoneDisplay = computed({
   get() {

@@ -43,6 +43,10 @@ defineProps({
   flush: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
 });
+
+</script>
+<script lang="ts">
+export default {};
 </script>
 
 <style scoped>
